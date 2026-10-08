@@ -450,34 +450,76 @@
             });
         }
 
-        // === 離開程式時：自動同步與自動匯出備份 ===
+        // === 離開程式／切到背景時：嘗試自動備份，失敗後在回到程式時提示 ===
+        let lastAutoBackupAt = 0;
+        const AUTO_BACKUP_NOTICE_KEY = 'cloud_exp_auto_backup_notice';
+
+        function autoBackupOnExit() {
+            const now = Date.now();
+            // visibilitychange 與 pagehide 可能連續觸發，短時間內只備份一次
+            if (now - lastAutoBackupAt < 2000) return;
+            lastAutoBackupAt = now;
+
+            try {
+                const n = new Date();
+                const ds = `${n.getFullYear()}${String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}${String(n.getSeconds()).padStart(2,'0')}`;
+                const c = JSON.stringify({db, cats, sets});
+                const f = `個人雲帳本_自動備份_${ds}.json`;
+                const blob = new Blob([new Uint8Array([0xEF,0xBB,0xBF]), c], {type:'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = f;
+                a.style.display = 'none';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                // 延後釋放 URL，避免部分瀏覽器尚未開始讀取就被撤銷
+                setTimeout(() => URL.revokeObjectURL(url), 1500);
+                // 瀏覽器不會回報下載是否真的完成；此處只能確認已發出下載請求
+                localStorage.removeItem(AUTO_BACKUP_NOTICE_KEY);
+            } catch (e) {
+                console.error('自動備份失敗：', e);
+                try { localStorage.setItem(AUTO_BACKUP_NOTICE_KEY, 'failed'); } catch (_) {}
+            }
+        }
+
+        function showAutoBackupNoticeIfNeeded() {
+            try {
+                if (localStorage.getItem(AUTO_BACKUP_NOTICE_KEY) === 'failed') {
+                    localStorage.removeItem(AUTO_BACKUP_NOTICE_KEY);
+                    toast('⚠️ 自動備份失敗，請到「備份/還原」手動匯出 JSON');
+                }
+            } catch (_) {
+                toast('⚠️ 無法確認自動備份狀態，請手動匯出 JSON 備份');
+            }
+        }
+
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'hidden') {
-                // 1. 背景雲端同步 (試算表)
+                // 1. 背景雲端同步（試算表）
                 if (navigator.onLine) {
-                    let p = db.filter(r=>r.syncStatus==='pending');
-                    if(p.length > 0) {
-                        fetch(GAS_URL, { method:'POST', body:JSON.stringify(p), keepalive:true }).then(r=>r.json()).then(r=>{
-                            if(r.status==='success'||r.status==='ok') { db.forEach(x=>{if(x.syncStatus==='pending')x.syncStatus='synced';}); saveDB(); }
-                        }).catch(()=>{});
+                    const pending = db.filter(r => r.syncStatus === 'pending');
+                    if (pending.length > 0) {
+                        fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(pending), keepalive:true })
+                            .then(r => r.json())
+                            .then(r => {
+                                if (r.status === 'success' || r.status === 'ok') {
+                                    db.forEach(x => { if (x.syncStatus === 'pending') x.syncStatus = 'synced'; });
+                                    saveDB();
+                                }
+                            }).catch(() => {});
                     }
                 }
-                
-                // 2. 自動匯出實體備份檔 (JSON 格式)
-                try {
-                    let n = new Date(), ds = `${n.getFullYear()}${String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}`;
-                    let c = JSON.stringify({db, cats, sets});
-                    let f = `個人雲帳本_自動備份_${ds}.json`;
-                    const a = document.createElement('a'); 
-                    a.href = URL.createObjectURL(new Blob([new Uint8Array([0xEF,0xBB,0xBF]), c], {type: 'application/json'})); 
-                    a.download = f; 
-                    a.click(); 
-                    URL.revokeObjectURL(a.href);
-                } catch(e) {
-                    console.log('瀏覽器阻擋了背景下載');
-                }
+                // 2. 自動匯出本機 JSON 備份
+                autoBackupOnExit();
+            } else if (document.visibilityState === 'visible') {
+                showAutoBackupNoticeIfNeeded();
             }
         });
+
+        // 有些瀏覽器離開頁面時不一定會送出 visibilitychange，再補上 pagehide
+        window.addEventListener('pagehide', autoBackupOnExit);
 
         function autoPocket() {
             const mStr = `${cDate.getFullYear()}-${String(cDate.getMonth()+1).padStart(2,'0')}`;
