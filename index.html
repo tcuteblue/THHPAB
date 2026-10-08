@@ -360,13 +360,36 @@
         const $ = id => document.getElementById(id);
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz9Tohi--mDE6Pk5u6P20xBiHsQ-yMR1rDmfG5Q7LBmxaOeLxedtHp0iMwh4AuCyt4Ncw/exec";
         
+        // 內建全新的預設分類清單
         const defCats = {
-            expense: { "🍔 食品餐飲": ["早餐", "午餐", "晚餐", "飲料點心", "聚餐"], "🏠 家用開銷": ["日常用品", "水族用品", "汽機用品", "理髮美容", "網路購物", "文具用品", "園藝用品", "郵寄費用"], "🚗 行車交通": ["大眾運輸", "機車加油", "汽車加油", "停車", "計程車"], "🎮 休閒娛樂": ["電影展覽", "遊戲課金", "國內旅遊", "出國旅遊"], "👗 服飾美容": ["衣服鞋包", "保養彩妝"], "🏥 醫療保健": ["看診掛號", "保健食品"], "📚 學習進修": ["書籍雜誌", "線上課程"], "🎁 人情往來": ["送禮請客", "孝親支出", "紅包"], "❓ 其他雜項": ["其他"] },
-            income: { "💰 其他收入": ["每月零用", "意外收入", "紅包"], "💼 工作收入": ["薪資", "獎金", "津貼"] }
+            expense: {
+                "🍔 食品餐飲": ["營養豆漿", "新鮮水果", "新鮮雞蛋", "早餐花費", "午餐花費", "晚餐花費", "飲料點心", "聚餐交際"],
+                "🍽️ 家用飲食": ["小孩早餐", "小孩午餐", "小孩晚餐", "小孩點心", "小孩消夜"],
+                "🏠 居家生活": ["日常用品", "水族用品", "汽機用品", "理髮美容", "網路購物", "文具用品", "園藝用品", "郵寄費用"],
+                "🛒 家用開銷": ["日常用品", "水族用品", "汽機用品", "理髮美容", "網路購物", "文具用品", "園藝用品", "郵寄費用"],
+                "🚗 行車交通": ["台鐵車資", "高鐵車資", "捷運車資", "公車車資", "計程車資", "機車加油", "汽車加油", "停車費用", "共享機車", "公共單車", "洗車費用"],
+                "🎮 休閒娛樂": ["幸運樂透", "遊戲投幣", "奢侈敗家", "小賭怡情", "街藝贊助", "電影展覽", "遊戲課金", "國內旅遊", "出國旅遊", "運動健身"],
+                "👗 服飾美容": ["衣服鞋包", "保養彩妝", "剪髮造型", "配件飾品"],
+                "🏥 醫療保健": ["看診掛號", "按摩保健", "保健食品", "醫美保養", "健身器材"],
+                "📚 學習進修": ["書籍雜誌", "線上課程", "實體補習", "技能考試"],
+                "🎁 人情往來": ["送禮請客", "孝親支出", "慈善捐款", "獎勵晚軰"],
+                "❓ 其他雜項": ["呆帳損失", "教會奉獻"]
+            },
+            income: {
+                "💰 個人收入": ["每月零用", "意外收入", "幸運樂透", "節慶紅包"],
+                "💼 工作收入": ["旅費補助", "出差津貼"]
+            }
         };
 
         let db = JSON.parse(localStorage.getItem('cloud_exp_db')) || [];
         let cats = JSON.parse(localStorage.getItem('cloud_exp_cats')) || defCats;
+        
+        // 自動偵測：如果 localStorage 裡的分類沒有「家用飲食」，代表是舊版設定，則強制覆蓋為新的預設分類
+        if(!cats.expense['🍽️ 家用飲食']) {
+            cats = defCats;
+            localStorage.setItem('cloud_exp_cats', JSON.stringify(cats));
+        }
+
         let sets = JSON.parse(localStorage.getItem('cloud_exp_sets')) || { b: 5000, a: ["💵 現金", "🏦 銀行"], l: "" };
         
         let needsUpdate = false;
@@ -439,7 +462,7 @@
         function autoPocket() {
             const mStr = `${cDate.getFullYear()}-${String(cDate.getMonth()+1).padStart(2,'0')}`;
             if (sets.l !== mStr) {
-                db.push({ id:'a_'+Date.now(), type:'income', mainCat:'💰 其他收入', subCat:'每月零用', date:`${mStr}-01`, account:sets.a[0], amount:Number(sets.b)||5000, note:'系統自動結轉', syncStatus:'pending' });
+                db.push({ id:'a_'+Date.now(), type:'income', mainCat:'💰 個人收入', subCat:'每月零用', date:`${mStr}-01`, account:sets.a[0], amount:Number(sets.b)||5000, note:'系統自動結轉', syncStatus:'pending' });
                 sets.l = mStr; saveDB(); toast(`已自動存入本月預算 $${sets.b}`);
             }
         }
