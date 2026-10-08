@@ -16,11 +16,11 @@
         :root {
             --bg-color: #F2F5F8;
             --text-color: #2F3640;
-            --primary: #00A8FF;       /* 亮藍色 */
+            --primary: #00A8FF;       /* 亮藍色 (正數/收入) */
             --primary-dark: #0082C8;
-            --expense: #FF4757;       /* 亮紅色 */
-            --income: #20BF6B;        /* 翠綠色 */
-            --transfer: #A55EEA;      /* 亮紫色 */
+            --expense: #FF4757;       /* 亮紅色 (負數/支出) */
+            --income: #20BF6B;        /* 翠綠色 (預算/結餘) */
+            --transfer: #A55EEA;      /* 亮紫色 (轉帳) */
             --border: #DFE4EA;
             --header-bg: linear-gradient(135deg, #F39C12, #E67E22); 
         }
@@ -56,22 +56,26 @@
         .dash-item:active { background: #f8f9fa; }
         .dash-label { font-size: 15px; color: #7f8fa6; font-weight: 900; margin-bottom: 8px; display: block; }
         .dash-value { font-size: 24px; font-weight: 900; }
-        .t-exp { color: var(--expense); } .t-inc { color: var(--income); } .t-bal { color: var(--primary); }
-
-        /* 首頁三大動作按鈕區塊 - 改為網格排版 */
-        .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 35px; }
-        .btn-main { padding: 16px 5px; border-radius: 20px; font-size: 18px; font-weight: 900; border: none; color: #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 6px; transition: all .1s; letter-spacing: 1px; }
         
-        /* 記帳 (佔滿寬度，最長) */
-        .btn-record { grid-column: span 2; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); box-shadow: 0 6px 0 #0073B0, 0 8px 20px rgba(0,168,255,.3); }
+        /* 儀表板數字顏色 */
+        .t-exp { color: var(--expense); } 
+        .t-inc { color: var(--primary); } 
+        .t-bal { color: var(--income); }
+
+        /* 首頁三大動作按鈕區塊 - 2:1:1 網格排版 */
+        .action-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-bottom: 35px; }
+        .btn-main { padding: 16px 4px; border-radius: 20px; font-size: 18px; font-weight: 900; border: none; color: #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 6px; transition: all .1s; letter-spacing: 1px; }
+        
+        /* 記帳 (佔 50%) */
+        .btn-record { grid-column: span 1; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); box-shadow: 0 6px 0 #0073B0, 0 8px 20px rgba(0,168,255,.3); }
         .btn-record:active { transform: translateY(6px); box-shadow: 0 0 0 #0073B0; }
         
-        /* 帳戶 (佔一半寬度) */
-        .btn-acc { background: linear-gradient(135deg, #1DD1A1, #10AC84); box-shadow: 0 6px 0 #0D8C6B, 0 8px 20px rgba(29,209,161,.3); }
+        /* 帳戶 (佔 25%) */
+        .btn-acc { grid-column: span 1; font-size: 16px; gap: 4px; background: linear-gradient(135deg, #1DD1A1, #10AC84); box-shadow: 0 6px 0 #0D8C6B, 0 8px 20px rgba(29,209,161,.3); }
         .btn-acc:active { transform: translateY(6px); box-shadow: 0 0 0 #0D8C6B; }
         
-        /* 分析 (佔一半寬度，改為亮紫色系區隔標題) */
-        .btn-chart { background: linear-gradient(135deg, #9C88FF, #8C7AE6); box-shadow: 0 6px 0 #7158E2, 0 8px 20px rgba(156,136,255,.3); }
+        /* 分析 (佔 25%) */
+        .btn-chart { grid-column: span 1; font-size: 16px; gap: 4px; background: linear-gradient(135deg, #9C88FF, #8C7AE6); box-shadow: 0 6px 0 #7158E2, 0 8px 20px rgba(156,136,255,.3); }
         .btn-chart:active { transform: translateY(6px); box-shadow: 0 0 0 #7158E2; }
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 30px; }
@@ -85,7 +89,7 @@
         
         .record-item { background: #fff; border-radius: 18px; padding: 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,.05); border-left: 8px solid transparent; }
         .record-item.exp { border-left-color: var(--expense); }
-        .record-item.inc { border-left-color: var(--income); }
+        .record-item.inc { border-left-color: var(--primary); } /* 收入邊框改為藍色 */
         .record-item.tra { border-left-color: var(--transfer); }
         .r-info { flex: 1; }
         .r-date { font-size: 14px; color: #95a5a6; font-weight: 900; margin-bottom: 6px; }
@@ -109,16 +113,17 @@
         .tabs { display: flex; background: #fff; border-radius: 18px; padding: 8px; margin: 0 20px 25px; box-shadow: 0 4px 12px rgba(0,0,0,.06); gap: 6px; }
         .tab { flex: 1; text-align: center; padding: 14px; font-size: 18px; font-weight: 900; color: #7f8fa6; border-radius: 14px; cursor: pointer; transition: all 0.2s; background: #F8F9FA; }
         .tab.active.exp { background: var(--expense); color: #fff; box-shadow: 0 4px 12px rgba(255,71,87,.4); }
-        .tab.active.inc { background: var(--income); color: #fff; box-shadow: 0 4px 12px rgba(32,191,107,.4); }
+        .tab.active.inc { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(0,168,255,.4); } /* 收入按鈕改為藍色 */
         .tab.active.tra { background: var(--transfer); color: #fff; box-shadow: 0 4px 12px rgba(165,94,234,.4); }
+        .tab.active.tot { background: var(--income); color: #fff; box-shadow: 0 4px 12px rgba(32,191,107,.4); }  /* 結餘按鈕改為綠色 */
 
         .amt-box { background: #fff; margin: 0 20px 25px; padding: 25px; border-radius: 22px; text-align: right; box-shadow: 0 5px 15px rgba(0,0,0,.08); border: 2px solid transparent; transition: all .2s; }
         .amt-box.active { border-color: var(--primary); background: #fdfefe; box-shadow: 0 0 0 5px rgba(0,168,255,.2); }
         .amt-val { font-size: 52px; font-weight: 900; font-family: monospace; letter-spacing: 1px; color: var(--text-color); }
         .bal-hint { font-size: 16px; margin-top: 10px; text-align: right; font-weight: 900; }
 
-        .btn-save { background: var(--income); color: #fff; width: calc(100% - 40px); margin: 20px; padding: 20px; border-radius: 22px; font-size: 24px; font-weight: 900; border: none; box-shadow: 0 6px 0 #189855, 0 8px 20px rgba(32,191,107,.3); cursor: pointer; }
-        .btn-save:active { transform: translateY(6px); box-shadow: 0 0 0 #189855; }
+        .btn-save { background: var(--primary); color: #fff; width: calc(100% - 40px); margin: 20px; padding: 20px; border-radius: 22px; font-size: 24px; font-weight: 900; border: none; box-shadow: 0 6px 0 var(--primary-dark), 0 8px 20px rgba(0,168,255,.3); cursor: pointer; }
+        .btn-save:active { transform: translateY(6px); box-shadow: 0 0 0 var(--primary-dark); }
 
         .autocomplete-list { display: none; position: absolute; top: calc(100% + 5px); left: 20px; right: 20px; background: #fff; border: 2px solid var(--primary); border-radius: 14px; z-index: 100; max-height: 200px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,.15); }
         .ac-item { padding: 14px 18px; border-bottom: 1px solid #f1f2f6; font-size: 18px; font-weight: 900; color: #2F3640; cursor: pointer; }
@@ -161,7 +166,8 @@
     <header>
         <div>☁️ 個人雲帳本</div>
         <div class="header-actions">
-            <button class="btn-action" onclick="openGlobalSearch()">🔍 萬用搜尋</button>
+            <!-- 按鈕顯示縮短為搜尋 -->
+            <button class="btn-action" onclick="openGlobalSearch()">🔍 搜尋</button>
             <button class="btn-action" onclick="syncToGAS(true)" id="btn-sync">🔄 同步</button>
         </div>
     </header>
@@ -268,6 +274,7 @@
 
     <!-- ===== 列表與搜尋 Modal ===== -->
     <div id="m-list" class="modal">
+        <!-- 內頁保持「萬用搜尋」不變 -->
         <div class="m-header"><span id="l-title">歷史明細</span><button class="m-close" onclick="closeModal()">✖</button></div>
         <div class="search-bar"><input type="text" id="l-search" placeholder="搜尋分類、金額、備註..." oninput="renderListModal()"></div>
         <div style="padding: 15px;" id="l-container"></div>
@@ -291,7 +298,8 @@
         <div class="tabs" id="c-tabs" style="margin-top:0;">
             <div class="tab active exp" data-t="expense" onclick="switchChart('expense')">支出</div>
             <div class="tab inc" data-t="income" onclick="switchChart('income')">收入</div>
-            <div class="tab tra" data-t="total" onclick="switchChart('total')">結餘</div>
+            <!-- 修改結餘的 class 綁定為 tot (對應綠色) -->
+            <div class="tab tot" data-t="total" onclick="switchChart('total')">結餘</div>
         </div>
         <div style="background:#fff; margin:0 20px; padding:20px; border-radius:24px; box-shadow:0 6px 16px rgba(0,0,0,.06);">
             <canvas id="c-canvas"></canvas>
@@ -302,7 +310,8 @@
     <div id="m-set" class="modal">
         <div class="m-header"><span>系統設定</span><button class="m-close" onclick="closeModal()">✖</button></div>
         
-        <div class="form-group"><label>每月預算 (每月1號自動轉為零用錢)</label><input type="number" id="s-budget" onchange="saveSet()" style="font-family:monospace; font-size:28px; font-weight:900; color:var(--primary);"></div>
+        <!-- 預算數字改為綠色 (var(--income)) -->
+        <div class="form-group"><label>每月預算 (每月1號自動轉為零用錢)</label><input type="number" id="s-budget" onchange="saveSet()" style="font-family:monospace; font-size:28px; font-weight:900; color:var(--income);"></div>
         
         <button class="btn-big-action" style="background:#fff; color:var(--text-color); border:2px solid #DFE4EA; box-shadow:0 4px 0 #DFE4EA;" onclick="openCatMgr()">🏷️ 分類管理</button>
         <button class="btn-big-action" style="background:#fff; color:var(--text-color); border:2px solid #DFE4EA; box-shadow:0 4px 0 #DFE4EA;" onclick="openAccMgr()">💳 帳戶管理</button>
@@ -348,7 +357,6 @@
     </div>
 
     <script>
-        // 效能優化: 新增 DOM 選擇小幫手減少重複程式碼
         const $ = id => document.getElementById(id);
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz9Tohi--mDE6Pk5u6P20xBiHsQ-yMR1rDmfG5Q7LBmxaOeLxedtHp0iMwh4AuCyt4Ncw/exec";
         
@@ -361,7 +369,6 @@
         let cats = JSON.parse(localStorage.getItem('cloud_exp_cats')) || defCats;
         let sets = JSON.parse(localStorage.getItem('cloud_exp_sets')) || { b: 5000, a: ["💵 現金", "🏦 銀行"], l: "" };
         
-        // 初始化修復
         let needsUpdate = false;
         if(sets.a.includes('現金') || sets.a.includes('銀行') || sets.a.includes('信用卡')) {
             sets.a = sets.a.filter(x => x !== '信用卡').map(x => x === '現金' ? '💵 現金' : (x === '銀行' ? '🏦 銀行' : x));
@@ -475,7 +482,9 @@
 
             $('d-inc').innerText = dmI.toLocaleString();$('d-exp').innerText = dmE.toLocaleString();
             let bal = dmI - dmE;
-            $('d-bal').innerText = bal.toLocaleString();$('d-bal').style.color = bal>=0?'var(--primary)':'var(--expense)';
+            $('d-bal').innerText = bal.toLocaleString();
+            // 預算強制改為綠色顯示
+            $('d-bal').style.color = 'var(--income)';
 
             $('s-d-today').innerText = tStr; $('s-i-today').innerText=dtI.toLocaleString(); $('s-e-today').innerText=dtE.toLocaleString();$('s-d-week').innerText = `${String(wStart.getMonth()+1).padStart(2,'0')}/${String(wStart.getDate()).padStart(2,'0')}-${String(wEnd.getMonth()+1).padStart(2,'0')}/${String(wEnd.getDate()).padStart(2,'0')}`; $('s-i-week').innerText=dwI.toLocaleString();$('s-e-week').innerText=dwE.toLocaleString();
             $('s-d-month').innerText = mStr; $('s-i-month').innerText=dmI.toLocaleString(); $('s-e-month').innerText=dmE.toLocaleString();$('s-d-year').innerText = yStr; $('s-i-year').innerText=dyI.toLocaleString();$('s-e-year').innerText=dyE.toLocaleString();
@@ -497,7 +506,9 @@
 
         function rHtml(r) {
             let i = r.type==='expense', t = r.type==='transfer';
-            let cls = i?'exp':(t?'tra':'inc'), col = i?'var(--expense)':(t?'var(--transfer)':'var(--income)');
+            let cls = i?'exp':(t?'tra':'inc');
+            // 收入/正數改為藍色(--primary)
+            let col = i ? 'var(--expense)' : (t ? 'var(--transfer)' : 'var(--primary)');
             let pre = i ? '-' : (t ? '' : '+');
             let mStr = t?`轉至：${r.toAccount}`:`${r.mainCat} - ${r.subCat}`;
             return `<div class="record-item ${cls}"><div class="r-info"><div class="r-date">${r.date} · ${r.account} ${r.syncStatus==='pending'?'⏳':''}</div><div class="r-cat">${mStr}</div>${r.note?`<div class="r-sub">${r.note}</div>`:''}</div><div class="r-amt" style="color:${col}">${pre}$${r.amount.toLocaleString()}</div><button class="del-btn" onclick="delRec('${r.id}')">刪除</button></div>`;
@@ -518,7 +529,6 @@
             updRT(); loadMainCat(); updBal(); $('m-record').style.display='block'; pushM('m-record');
         }
 
-        // 修正切換分類時，CSS Class 會被洗掉的 Bug
         $('r-tabs').addEventListener('click', e => { 
             if(e.target.dataset.t) { 
                 rTyp = e.target.dataset.t; 
@@ -528,7 +538,6 @@
         });
         
         function updRT() {
-            // 移除所有 active 確保底色可以還原，保留原始的 class (exp, inc, tra) 才能變色
             document.querySelectorAll('#r-tabs .tab').forEach(t => t.classList.remove('active'));
             document.querySelector(`#r-tabs .tab[data-t="${rTyp}"]`).classList.add('active');
             
@@ -586,6 +595,7 @@
             let acc = $('r-acc').value, b = 0;
             db.forEach(r=>{ if(r.account===acc) { if(r.type==='income')b+=r.amount; else b-=r.amount; } if(r.type==='transfer' && r.toAccount===acc) b+=r.amount; });
             $('r-bal').innerText = `餘額: $${b.toLocaleString()}`;
+            // 結餘正數藍色，負數紅色
             $('r-bal').style.color = b >= 0 ? 'var(--primary)' : 'var(--expense)';
         }
 
@@ -661,7 +671,6 @@
         function switchChart(t) { cTyp=t; renderChart(); }
         
         function renderChart() {
-            // 修復分析 Modal 標籤點擊不變色的 Bug
             document.querySelectorAll('#c-tabs .tab').forEach(t => t.classList.remove('active'));
             document.querySelector(`#c-tabs .tab[data-t="${cTyp}"]`).classList.add('active');
             
@@ -679,12 +688,11 @@
             const ctx = $('c-canvas').getContext('2d');
             Chart.defaults.font.size = 18;
             
-            // 色系設定：支出紅色系、收入藍色系
             let expColors = ['#FF4757', '#FF6B81', '#FF9F43', '#EE5A24', '#EA2027', '#B33939', '#CD6133'];
             let incColors = ['#00A8FF', '#48DBFB', '#0984E3', '#74B9FF', '#1E90FF', '#3742FA', '#5352ED'];
 
             if(cTyp==='total') {
-                // 長條圖統一：收入(藍) / 支出(紅) / 結餘(綠)
+                // 收入(藍) / 支出(紅) / 結餘(綠)
                 chartObj = new Chart(ctx, { type:'bar', data: { labels:['收入', '支出', '結餘'], datasets:[{ data:[ti, te, ti-te], backgroundColor:['#00A8FF', '#FF4757', '#20BF6B'], borderRadius:16 }] }, options: { plugins:{legend:{display:false}} } });
             } else {
                 let lbl = Object.keys(dt), val = Object.values(dt);
@@ -714,6 +722,7 @@
             
             $('acc-mgr-container').innerHTML = sets.a.map(a => {
                 let bal = accBals[a] || 0;
+                // 正數藍色，負數紅色
                 let balColor = bal >= 0 ? 'var(--primary)' : 'var(--expense)';
                 return `<div class="mgr-card"><div class="mgr-title"><span>💳 ${a} <span style="color:${balColor}; font-size:18px; margin-left:8px;">($${bal.toLocaleString()})</span></span><span class="mgr-del" onclick="delAcc('${a}')">刪除</span></div></div>`;
             }).join('');
