@@ -7,7 +7,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="個人雲帳本">
-    <link rel="apple-touch-icon" href="icon.ico">
+    <link rel="apple-touch-icon" href="icon.png">
     
     <!-- Chart.js 圖表套件 -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -57,44 +57,40 @@
         .dash-label { font-size: 15px; color: #7f8fa6; font-weight: 900; margin-bottom: 8px; display: block; }
         .dash-value { font-size: 24px; font-weight: 900; }
         
-        /* 儀表板數字顏色 */
         .t-exp { color: var(--expense); } 
         .t-inc { color: var(--primary); } 
         .t-bal { color: var(--income); }
 
-        /* 首頁三大動作按鈕區塊 - 2:1:1 網格排版 */
         .action-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-bottom: 35px; }
         .btn-main { padding: 16px 4px; border-radius: 20px; font-size: 18px; font-weight: 900; border: none; color: #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 6px; transition: all .1s; letter-spacing: 1px; }
         
-        /* 記帳 (佔 50%) */
         .btn-record { grid-column: span 1; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); box-shadow: 0 6px 0 #0073B0, 0 8px 20px rgba(0,168,255,.3); }
         .btn-record:active { transform: translateY(6px); box-shadow: 0 0 0 #0073B0; }
         
-        /* 帳戶 (佔 25%) */
         .btn-acc { grid-column: span 1; font-size: 16px; gap: 4px; background: linear-gradient(135deg, #1DD1A1, #10AC84); box-shadow: 0 6px 0 #0D8C6B, 0 8px 20px rgba(29,209,161,.3); }
         .btn-acc:active { transform: translateY(6px); box-shadow: 0 0 0 #0D8C6B; }
         
-        /* 分析 (佔 25%) */
         .btn-chart { grid-column: span 1; font-size: 16px; gap: 4px; background: linear-gradient(135deg, #9C88FF, #8C7AE6); box-shadow: 0 6px 0 #7158E2, 0 8px 20px rgba(156,136,255,.3); }
         .btn-chart:active { transform: translateY(6px); box-shadow: 0 0 0 #7158E2; }
 
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 30px; }
-        .stat-box { background: #fff; border-radius: 22px; padding: 18px; box-shadow: 0 5px 12px rgba(0,0,0,.06); cursor: pointer; transition: all 0.1s; border: 2px solid transparent; }
+        /* 縮小四個統計方塊的間距與字體大小 */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        .stat-box { background: #fff; border-radius: 18px; padding: 14px 15px; box-shadow: 0 4px 10px rgba(0,0,0,.05); cursor: pointer; transition: all 0.1s; border: 2px solid transparent; }
         .stat-box:active { transform: scale(0.97); border-color: var(--primary); background: #fdfefe; }
-        .stat-title { font-size: 18px; font-weight: 900; color: #34495e; border-bottom: 1px solid #f1f2f6; padding-bottom: 12px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-end; }
-        .stat-date { font-size: 14px; color: #95a5a6; font-weight: bold; }
-        .stat-row { display: flex; justify-content: space-between; font-size: 16px; font-weight: 900; margin-bottom: 8px; }
+        .stat-title { font-size: 16px; font-weight: 900; color: #34495e; border-bottom: 1px solid #f1f2f6; padding-bottom: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .stat-date { font-size: 13px; color: #95a5a6; font-weight: bold; }
+        .stat-row { display: flex; justify-content: space-between; font-size: 15px; font-weight: 900; margin-bottom: 4px; }
 
         .list-header { font-size: 20px; font-weight: 900; color: #2F3640; margin: 25px 5px 15px; display: flex; justify-content: space-between; align-items: center; }
         
         .record-item { background: #fff; border-radius: 18px; padding: 18px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,.05); border-left: 8px solid transparent; }
         .record-item.exp { border-left-color: var(--expense); }
-        .record-item.inc { border-left-color: var(--primary); } /* 收入邊框改為藍色 */
+        .record-item.inc { border-left-color: var(--primary); }
         .record-item.tra { border-left-color: var(--transfer); }
         .r-info { flex: 1; }
         .r-date { font-size: 14px; color: #95a5a6; font-weight: 900; margin-bottom: 6px; }
-        .r-cat { font-size: 20px; font-weight: 900; color: #2F3640; }
-        .r-sub { font-size: 16px; color: #7f8fa6; margin-top: 6px; font-weight: bold; }
+        .r-cat { font-size: 19px; font-weight: 900; color: #2F3640; }
+        .r-sub { font-size: 15px; color: #7f8fa6; margin-top: 6px; font-weight: bold; }
         .r-amt { font-size: 22px; font-weight: 900; font-family: monospace; letter-spacing: 1px; }
         .del-btn { background: #ffefef; color: var(--expense); border: none; border-radius: 12px; padding: 12px 16px; font-size: 16px; margin-left: 15px; font-weight: 900; cursor: pointer; }
 
@@ -113,9 +109,9 @@
         .tabs { display: flex; background: #fff; border-radius: 18px; padding: 8px; margin: 0 20px 25px; box-shadow: 0 4px 12px rgba(0,0,0,.06); gap: 6px; }
         .tab { flex: 1; text-align: center; padding: 14px; font-size: 18px; font-weight: 900; color: #7f8fa6; border-radius: 14px; cursor: pointer; transition: all 0.2s; background: #F8F9FA; }
         .tab.active.exp { background: var(--expense); color: #fff; box-shadow: 0 4px 12px rgba(255,71,87,.4); }
-        .tab.active.inc { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(0,168,255,.4); } /* 收入按鈕改為藍色 */
+        .tab.active.inc { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(0,168,255,.4); } 
         .tab.active.tra { background: var(--transfer); color: #fff; box-shadow: 0 4px 12px rgba(165,94,234,.4); }
-        .tab.active.tot { background: var(--income); color: #fff; box-shadow: 0 4px 12px rgba(32,191,107,.4); }  /* 結餘按鈕改為綠色 */
+        .tab.active.tot { background: var(--income); color: #fff; box-shadow: 0 4px 12px rgba(32,191,107,.4); } 
 
         .amt-box { background: #fff; margin: 0 20px 25px; padding: 25px; border-radius: 22px; text-align: right; box-shadow: 0 5px 15px rgba(0,0,0,.08); border: 2px solid transparent; transition: all .2s; }
         .amt-box.active { border-color: var(--primary); background: #fdfefe; box-shadow: 0 0 0 5px rgba(0,168,255,.2); }
@@ -166,7 +162,6 @@
     <header>
         <div>☁️ 個人雲帳本</div>
         <div class="header-actions">
-            <!-- 按鈕顯示縮短為搜尋 -->
             <button class="btn-action" onclick="openGlobalSearch()">🔍 搜尋</button>
             <button class="btn-action" onclick="syncToGAS(true)" id="btn-sync">🔄 同步</button>
         </div>
@@ -198,7 +193,7 @@
             <button class="btn-main btn-chart" onclick="openChart('expense')">📊 分析</button>
         </div>
 
-        <!-- 統計區塊 -->
+        <!-- 統計區塊 (高度、間距與文字已縮小，增加下方可用空間) -->
         <div class="stats-grid">
             <div class="stat-box" onclick="openList('today')">
                 <div class="stat-title">本日 <span class="stat-date" id="s-d-today"></span></div>
@@ -274,7 +269,6 @@
 
     <!-- ===== 列表與搜尋 Modal ===== -->
     <div id="m-list" class="modal">
-        <!-- 內頁保持「萬用搜尋」不變 -->
         <div class="m-header"><span id="l-title">歷史明細</span><button class="m-close" onclick="closeModal()">✖</button></div>
         <div class="search-bar"><input type="text" id="l-search" placeholder="搜尋分類、金額、備註..." oninput="renderListModal()"></div>
         <div style="padding: 15px;" id="l-container"></div>
@@ -298,7 +292,6 @@
         <div class="tabs" id="c-tabs" style="margin-top:0;">
             <div class="tab active exp" data-t="expense" onclick="switchChart('expense')">支出</div>
             <div class="tab inc" data-t="income" onclick="switchChart('income')">收入</div>
-            <!-- 修改結餘的 class 綁定為 tot (對應綠色) -->
             <div class="tab tot" data-t="total" onclick="switchChart('total')">結餘</div>
         </div>
         <div style="background:#fff; margin:0 20px; padding:20px; border-radius:24px; box-shadow:0 6px 16px rgba(0,0,0,.06);">
@@ -310,7 +303,6 @@
     <div id="m-set" class="modal">
         <div class="m-header"><span>系統設定</span><button class="m-close" onclick="closeModal()">✖</button></div>
         
-        <!-- 預算數字改為綠色 (var(--income)) -->
         <div class="form-group"><label>每月預算 (每月1號自動轉為零用錢)</label><input type="number" id="s-budget" onchange="saveSet()" style="font-family:monospace; font-size:28px; font-weight:900; color:var(--income);"></div>
         
         <button class="btn-big-action" style="background:#fff; color:var(--text-color); border:2px solid #DFE4EA; box-shadow:0 4px 0 #DFE4EA;" onclick="openCatMgr()">🏷️ 分類管理</button>
@@ -360,7 +352,6 @@
         const $ = id => document.getElementById(id);
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz9Tohi--mDE6Pk5u6P20xBiHsQ-yMR1rDmfG5Q7LBmxaOeLxedtHp0iMwh4AuCyt4Ncw/exec";
         
-        // 內建全新的預設分類清單
         const defCats = {
             expense: {
                 "🍔 食品餐飲": ["營養豆漿", "新鮮水果", "新鮮雞蛋", "早餐花費", "午餐花費", "晚餐花費", "飲料點心", "聚餐交際"],
@@ -381,10 +372,20 @@
             }
         };
 
+        // 幫手函數：安全地從主分類中提取第一個 Emoji/字元
+        const getEmoji = str => {
+            if (!str) return '';
+            try { 
+                if (window.Intl && Intl.Segmenter) {
+                    return [...new Intl.Segmenter('zh-TW', {granularity: 'grapheme'}).segment(str)][0].segment;
+                }
+            } catch(e) {}
+            return [...str][0]; 
+        };
+
         let db = JSON.parse(localStorage.getItem('cloud_exp_db')) || [];
         let cats = JSON.parse(localStorage.getItem('cloud_exp_cats')) || defCats;
         
-        // 自動偵測：如果 localStorage 裡的分類沒有「家用飲食」，代表是舊版設定，則強制覆蓋為新的預設分類
         if(!cats.expense['🍽️ 家用飲食']) {
             cats = defCats;
             localStorage.setItem('cloud_exp_cats', JSON.stringify(cats));
@@ -505,9 +506,7 @@
 
             $('d-inc').innerText = dmI.toLocaleString();$('d-exp').innerText = dmE.toLocaleString();
             let bal = dmI - dmE;
-            $('d-bal').innerText = bal.toLocaleString();
-            // 預算強制改為綠色顯示
-            $('d-bal').style.color = 'var(--income)';
+            $('d-bal').innerText = bal.toLocaleString();$('d-bal').style.color = 'var(--income)';
 
             $('s-d-today').innerText = tStr; $('s-i-today').innerText=dtI.toLocaleString(); $('s-e-today').innerText=dtE.toLocaleString();$('s-d-week').innerText = `${String(wStart.getMonth()+1).padStart(2,'0')}/${String(wStart.getDate()).padStart(2,'0')}-${String(wEnd.getMonth()+1).padStart(2,'0')}/${String(wEnd.getDate()).padStart(2,'0')}`; $('s-i-week').innerText=dwI.toLocaleString();$('s-e-week').innerText=dwE.toLocaleString();
             $('s-d-month').innerText = mStr; $('s-i-month').innerText=dmI.toLocaleString(); $('s-e-month').innerText=dmE.toLocaleString();$('s-d-year').innerText = yStr; $('s-i-year').innerText=dyI.toLocaleString();$('s-e-year').innerText=dyE.toLocaleString();
@@ -527,13 +526,17 @@
             tl.innerHTML = tr.length ? tr.map(r => rHtml(r)).join('') : '<div style="text-align:center;padding:40px;color:#95a5a6;font-weight:900;font-size:20px;">該日尚無紀錄</div>';
         }
 
+        // 動態替換子分類的文字內容（加上主分類 Emoji）
         function rHtml(r) {
             let i = r.type==='expense', t = r.type==='transfer';
             let cls = i?'exp':(t?'tra':'inc');
-            // 收入/正數改為藍色(--primary)
             let col = i ? 'var(--expense)' : (t ? 'var(--transfer)' : 'var(--primary)');
             let pre = i ? '-' : (t ? '' : '+');
-            let mStr = t?`轉至：${r.toAccount}`:`${r.mainCat} - ${r.subCat}`;
+            
+            // 提取主分類 emoji，若無則為空，並將它加在子分類前
+            let emoji = getEmoji(r.mainCat);
+            let mStr = t ? `轉至：${r.toAccount}` : `${r.mainCat} - ${emoji} ${r.subCat}`;
+            
             return `<div class="record-item ${cls}"><div class="r-info"><div class="r-date">${r.date} · ${r.account} ${r.syncStatus==='pending'?'⏳':''}</div><div class="r-cat">${mStr}</div>${r.note?`<div class="r-sub">${r.note}</div>`:''}</div><div class="r-amt" style="color:${col}">${pre}$${r.amount.toLocaleString()}</div><button class="del-btn" onclick="delRec('${r.id}')">刪除</button></div>`;
         }
 
@@ -598,11 +601,17 @@
             opts.push('<option value="_ADD_">➕ 新增分類...</option>');
             $('r-mcat').innerHTML = opts.join(''); loadSubCat();
         }
+        
+        // 在選單中，也把 emoji 自動加上去顯示
         function loadSubCat() {
             const m = $('r-mcat').value;
             if(m === '_ADD_') { checkNewCat($('r-mcat'), true); return; }
-            if(m && cats[rTyp][m]) $('r-scat').innerHTML = cats[rTyp][m].map(c=>`<option value="${c}">${c}</option>`).join('') + '<option value="_ADD_">➕ 新增分類...</option>';
+            if(m && cats[rTyp][m]) {
+                let emoji = getEmoji(m);
+                $('r-scat').innerHTML = cats[rTyp][m].map(c=>`<option value="${c}">${emoji} ${c}</option>`).join('') + '<option value="_ADD_">➕ 新增分類...</option>';
+            }
         }
+        
         function checkNewCat(el, isMain = false) {
             if(el.value==='_ADD_') {
                 let n = prompt(`輸入新${isMain?'主':'子'}分類名稱 (支援 Emoji)：`);
@@ -618,7 +627,6 @@
             let acc = $('r-acc').value, b = 0;
             db.forEach(r=>{ if(r.account===acc) { if(r.type==='income')b+=r.amount; else b-=r.amount; } if(r.type==='transfer' && r.toAccount===acc) b+=r.amount; });
             $('r-bal').innerText = `餘額: $${b.toLocaleString()}`;
-            // 結餘正數藍色，負數紅色
             $('r-bal').style.color = b >= 0 ? 'var(--primary)' : 'var(--expense)';
         }
 
@@ -632,6 +640,7 @@
 
         function saveRec() {
             let a = Number(kpStr); if(a<=0) return toast('金額需大於0');
+            // 注意儲存進資料庫的是原本單純的 r-scat (沒有包含後來動態補上的emoji)，這樣資料最乾淨
             let rec = { id:'c_'+Date.now(), type:rTyp, date:$('r-date').value, amount:a, note:$('r-note').value.trim(), syncStatus:'pending' };
             if(rTyp==='transfer') { rec.account = $('r-acc-out').value; rec.toAccount =$('r-acc-in').value; if(rec.account===rec.toAccount) return toast('轉出與轉入不可相同'); }
             else { rec.mainCat=$('r-mcat').value; rec.subCat=$('r-scat').value; rec.account=$('r-acc').value; }
@@ -715,7 +724,6 @@
             let incColors = ['#00A8FF', '#48DBFB', '#0984E3', '#74B9FF', '#1E90FF', '#3742FA', '#5352ED'];
 
             if(cTyp==='total') {
-                // 收入(藍) / 支出(紅) / 結餘(綠)
                 chartObj = new Chart(ctx, { type:'bar', data: { labels:['收入', '支出', '結餘'], datasets:[{ data:[ti, te, ti-te], backgroundColor:['#00A8FF', '#FF4757', '#20BF6B'], borderRadius:16 }] }, options: { plugins:{legend:{display:false}} } });
             } else {
                 let lbl = Object.keys(dt), val = Object.values(dt);
@@ -745,7 +753,6 @@
             
             $('acc-mgr-container').innerHTML = sets.a.map(a => {
                 let bal = accBals[a] || 0;
-                // 正數藍色，負數紅色
                 let balColor = bal >= 0 ? 'var(--primary)' : 'var(--expense)';
                 return `<div class="mgr-card"><div class="mgr-title"><span>💳 ${a} <span style="color:${balColor}; font-size:18px; margin-left:8px;">($${bal.toLocaleString()})</span></span><span class="mgr-del" onclick="delAcc('${a}')">刪除</span></div></div>`;
             }).join('');
@@ -759,17 +766,21 @@
         }
 
         function openCatMgr() { mgrCatTyp = 'expense'; renderCatMgr('expense'); $('m-cat-mgr').style.display='block'; pushM('m-cat-mgr'); }
+        
+        // 在分類管理中，也讓子分類標籤動態加上主分類的 emoji
         function renderCatMgr(typ) {
             mgrCatTyp = typ;
             document.querySelectorAll('#cat-tabs .tab').forEach(t=>t.className='tab '+(t.classList.contains('exp')?'exp':'inc'));
             document.querySelector(`#cat-tabs .tab.${typ==='expense'?'exp':'inc'}`).classList.add('active');
             let html = '';
             for(let m in cats[typ]) {
-                let subs = cats[typ][m].map(s=>`<div class="mgr-chip">${s} <span class="mgr-del" onclick="delSubCat('${typ}','${m}','${s}')">✖</span></div>`).join('');
+                let emoji = getEmoji(m);
+                let subs = cats[typ][m].map(s=>`<div class="mgr-chip">${emoji} ${s} <span class="mgr-del" onclick="delSubCat('${typ}','${m}','${s}')">✖</span></div>`).join('');
                 html += `<div class="mgr-card"><div class="mgr-title"><span>${m}</span><div><span class="mgr-del" style="color:var(--primary);" onclick="addSubCat('${typ}','${m}')">➕</span> <span class="mgr-del" onclick="delMainCat('${typ}','${m}')">🗑️</span></div></div><div>${subs}</div></div>`;
             }
             $('cat-mgr-container').innerHTML = html;
         }
+        
         function addMainCat() { let n=prompt('輸入新主分類：'); if(n&&n.trim()){ cats[mgrCatTyp][n.trim()]=["一般"]; saveDB(); renderCatMgr(mgrCatTyp); } }
         function addSubCat(t, m) { let n=prompt(`在「${m}」新增子分類：`); if(n&&n.trim()){ cats[t][m].push(n.trim()); saveDB(); renderCatMgr(t); } }
         function delMainCat(t, m) { let u=db.some(r=>r.type===t&&r.mainCat===m); if(u&&!confirm('此分類已有紀錄，確定刪除？'))return; delete cats[t][m]; saveDB(); renderCatMgr(t); }
