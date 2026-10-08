@@ -449,13 +449,31 @@
             });
         }
 
+        // === 離開程式時：自動同步與自動匯出備份 ===
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden' && navigator.onLine) {
-                let p = db.filter(r=>r.syncStatus==='pending');
-                if(p.length > 0) {
-                    fetch(GAS_URL, { method:'POST', body:JSON.stringify(p), keepalive:true }).then(r=>r.json()).then(r=>{
-                        if(r.status==='success'||r.status==='ok') { db.forEach(x=>{if(x.syncStatus==='pending')x.syncStatus='synced';}); saveDB(); }
-                    }).catch(()=>{});
+            if (document.visibilityState === 'hidden') {
+                // 1. 背景雲端同步 (試算表)
+                if (navigator.onLine) {
+                    let p = db.filter(r=>r.syncStatus==='pending');
+                    if(p.length > 0) {
+                        fetch(GAS_URL, { method:'POST', body:JSON.stringify(p), keepalive:true }).then(r=>r.json()).then(r=>{
+                            if(r.status==='success'||r.status==='ok') { db.forEach(x=>{if(x.syncStatus==='pending')x.syncStatus='synced';}); saveDB(); }
+                        }).catch(()=>{});
+                    }
+                }
+                
+                // 2. 自動匯出實體備份檔 (JSON 格式)
+                try {
+                    let n = new Date(), ds = `${n.getFullYear()}${String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}`;
+                    let c = JSON.stringify({db, cats, sets});
+                    let f = `個人雲帳本_自動備份_${ds}.json`;
+                    const a = document.createElement('a'); 
+                    a.href = URL.createObjectURL(new Blob([new Uint8Array([0xEF,0xBB,0xBF]), c], {type: 'application/json'})); 
+                    a.download = f; 
+                    a.click(); 
+                    URL.revokeObjectURL(a.href);
+                } catch(e) {
+                    console.log('瀏覽器阻擋了背景下載');
                 }
             }
         });
