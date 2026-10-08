@@ -422,7 +422,16 @@
         function pushM(id) { curS++; history.pushState({ s: curS, t: 'modal', id }, ''); }
         function pushK() { if(history.state.t !== 'keypad') { curS++; history.pushState({ s: curS, t: 'keypad' }, ''); } }
         function closeAll() { document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); $('v-keypad').style.display='none'; $('note-sugg').style.display='none'; }
-        function closeModal() { history.back(); }
+        function closeModal() {
+            // 先立即關閉目前最上層的視窗，避免歷史紀錄狀態不同時需要按兩次。
+            const visibleModals = [...document.querySelectorAll('.modal')].filter(m => getComputedStyle(m).display !== 'none');
+            if (visibleModals.length) visibleModals[visibleModals.length - 1].style.display = 'none';
+            $('v-keypad').style.display = 'none';
+            $('r-amt-box').classList.remove('active');
+            $('note-sugg').style.display = 'none';
+            // 同步瀏覽器返回堆疊；若已在主畫面狀態則不再多退一次。
+            if (history.state && history.state.t !== 'main') history.back();
+        }
 
         const toast = m => { const t=$('toast'); t.innerText=m; t.style.opacity=1; setTimeout(()=>t.style.opacity=0,2500); };
         const dStr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -849,11 +858,25 @@
 
         function openBackupOpt() { $('m-backup').style.display='block'; pushM('m-backup'); }
         function expData(t) {
-            let n=new Date(), ds=`${n.getFullYear()}${String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}`;
-            let c='', f='', m='';
-            if(t==='json') { c=JSON.stringify({db,cats,sets}); f=`個人雲帳本_${ds}.json`; m='application/json'; }
-            else { c="系統ID,日期,類型,大分類,小分類,轉出帳戶,轉入帳戶,金額,備註\n"; db.forEach(r=>{ let tStr=r.type==='expense'?'支出':(r.type==='income'?'收入':'轉帳'); c+=`${r.id},${r.date},${tStr},${r.mainCat||''},${r.subCat||''},${r.account},${r.toAccount||''},${r.amount},${r.note||''}\n`; }); f=`個人雲帳本_${ds}.csv`; m='text/csv'; }
-            const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([new Uint8Array([0xEF,0xBB,0xBF]), c], {type:m})); a.download=f; a.click(); URL.revokeObjectURL(a.href); closeModal();
+            let url = '';
+            try {
+                const n=new Date(), ds=`${n.getFullYear()}${String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}`;
+                let c='', f='', m='';
+                if(t==='json') { c=JSON.stringify({db,cats,sets}); f=`個人雲帳本_${ds}.json`; m='application/json'; }
+                else { c="系統ID,日期,類型,大分類,小分類,轉出帳戶,轉入帳戶,金額,備註\n"; db.forEach(r=>{ let tStr=r.type==='expense'?'支出':(r.type==='income'?'收入':'轉帳'); c+=`${r.id},${r.date},${tStr},${r.mainCat||''},${r.subCat||''},${r.account},${r.toAccount||''},${r.amount},${r.note||''}\n`; }); f=`個人雲帳本_${ds}.csv`; m='text/csv'; }
+                const blob = new Blob([new Uint8Array([0xEF,0xBB,0xBF]), c], {type:m});
+                url = URL.createObjectURL(blob);
+                const a=document.createElement('a'); a.href=url; a.download=f; a.style.display='none';
+                document.body.appendChild(a); a.click(); a.remove();
+                closeModal();
+                toast(t==='json' ? '✅ 已開始匯出 JSON 備份，請確認下載資料夾' : '✅ 已開始匯出 CSV，請確認下載資料夾');
+                setTimeout(() => URL.revokeObjectURL(url), 1500);
+            } catch (err) {
+                console.error('匯出失敗：', err);
+                closeModal();
+                toast('⚠️ 匯出失敗，請再試一次');
+                if (url) setTimeout(() => URL.revokeObjectURL(url), 1500);
+            }
         }
         function impData(e) {
             const f=e.target.files[0]; if(!f) return; const r=new FileReader();
