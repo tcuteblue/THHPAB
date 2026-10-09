@@ -423,12 +423,25 @@
                 else if(e.state.t === 'modal') { $('v-keypad').style.display='none'; $('r-amt-box').classList.remove('active'); $('note-sugg').style.display='none'; } 
             } 
         });
-        function pushM(id) { curS++; history.pushState({ s: curS, t: 'modal', id }, ''); }
+        let highestZ = 1000; // 新增：用來記錄當前最高的視窗圖層
+
+        function pushM(id) { 
+            curS++; 
+            history.pushState({ s: curS, t: 'modal', id }, ''); 
+            if (id && $(id)) $(id).style.zIndex = ++highestZ; // 自動將新打開的視窗提至最上層
+        }
+        
         function pushK() { if(history.state.t !== 'keypad') { curS++; history.pushState({ s: curS, t: 'keypad' }, ''); } }
+        
         function closeAll() { document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); $('v-keypad').style.display='none'; $('note-sugg').style.display='none'; }
+        
         function closeModal() {
             const visibleModals = [...document.querySelectorAll('.modal')].filter(m => getComputedStyle(m).display !== 'none');
-            if (visibleModals.length) visibleModals[visibleModals.length - 1].style.display = 'none';
+            if (visibleModals.length) {
+                // 找出目前 z-index 最高的視窗進行關閉，而非依照原始代碼順序
+                visibleModals.sort((a, b) => (parseInt(a.style.zIndex) || 1000) - (parseInt(b.style.zIndex) || 1000));
+                visibleModals[visibleModals.length - 1].style.display = 'none';
+            }
             $('v-keypad').style.display = 'none';
             $('r-amt-box').classList.remove('active');
             $('note-sugg').style.display = 'none';
