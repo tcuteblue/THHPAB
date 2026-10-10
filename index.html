@@ -16,11 +16,11 @@
         :root {
             --bg-color: #F2F5F8;
             --text-color: #2F3640;
-            --primary: #00A8FF;       /* 亮藍色 (正數/收入) */
+            --primary: #00A8FF;       
             --primary-dark: #0082C8;
-            --expense: #FF4757;       /* 亮紅色 (負數/支出) */
-            --income: #20BF6B;        /* 翠綠色 (預算/結餘) */
-            --transfer: #A55EEA;      /* 亮紫色 (轉帳) */
+            --expense: #FF4757;       
+            --income: #20BF6B;        
+            --transfer: #A55EEA;      
             --border: #DFE4EA;
             --header-bg: linear-gradient(135deg, #F39C12, #E67E22); 
         }
@@ -82,7 +82,6 @@
 
         .list-header { font-size: 20px; font-weight: 900; color: #2F3640; margin: 25px 5px 15px; display: flex; justify-content: space-between; align-items: center; }
         
-        /* 明細卡片 */
         .record-item { background: #fff; border-radius: 18px; padding: 16px 18px; margin-bottom: 14px; box-shadow: 0 4px 10px rgba(0,0,0,.05); border-left: 8px solid transparent; display: flex; flex-direction: column; cursor: pointer; transition: transform 0.1s, background 0.1s; }
         .record-item:active { transform: scale(0.98); background: #fdfefe; }
         .record-item.exp { border-left-color: var(--expense); }
@@ -172,7 +171,6 @@
     </header>
 
     <div class="container">
-        <!-- 首頁儀表板 -->
         <div class="card-panel">
             <div class="month-header">
                 <span onclick="chgMth(-1)">◀</span>
@@ -340,7 +338,7 @@
     <script>
         const $ = id => document.getElementById(id);
         
-        // ⚠️ 記得替換成你剛剛在步驟一部署產生出來的新 GAS 網址！
+        // ⚠️ 記得替換成你的 Google Apps Script 網址！
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz9Tohi--mDE6Pk5u6P20xBiHsQ-yMR1rDmfG5Q7LBmxaOeLxedtHp0iMwh4AuCyt4Ncw/exec";
         
         const defCats = {
@@ -373,11 +371,10 @@
             return [...str][0]; 
         };
 
-        // --- 核心資料讀取 ---
         let db = JSON.parse(localStorage.getItem('cloud_exp_db')) || [];
         let cats = JSON.parse(localStorage.getItem('cloud_exp_cats')) || defCats;
         let sets = JSON.parse(localStorage.getItem('cloud_exp_sets')) || { b: 5000, a: ["💵 現金", "🏦 銀行"], l: "" };
-        let lastSyncTime = Number(localStorage.getItem('cloud_exp_lastSyncTime')) || 0; // 新增：紀錄最後同步時間
+        let lastSyncTime = Number(localStorage.getItem('cloud_exp_lastSyncTime')) || 0; 
         
         let needsUpdate = false;
         if(sets.a.includes('現金') || sets.a.includes('銀行') || sets.a.includes('信用卡')) {
@@ -433,10 +430,9 @@
             currentInlineDate = dStr(new Date());
             renderHome(); initSwipeCalendar();
             
-            // 開啟 App 時背景同步 (若無網路則忽略)
             if(navigator.onLine) {
                 if(db.some(r=>r.syncStatus==='pending') || lastSyncTime === 0) {
-                    syncToGAS(false); // 靜默同步
+                    syncToGAS(false); 
                 }
             }
         };
@@ -451,12 +447,10 @@
             });
         }
 
-        // 切換畫面時觸發背景同步 (取代舊版的自動下載備份)
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'hidden' && navigator.onLine) {
                 const pending = db.filter(r => r.syncStatus === 'pending');
                 if (pending.length > 0) {
-                    // 只做簡單上傳，不處理下載，避免佔用背景資源
                     fetch(GAS_URL, { 
                         method:'POST', 
                         headers:{'Content-Type':'text/plain;charset=utf-8'}, 
@@ -472,12 +466,10 @@
             }
         });
 
-        // 核心：當設定改變時，觸發自動下載 JSON 備份檔
         function triggerAutoConfigBackup() {
             try {
                 const n = new Date();
                 const ds = `n.getFullYear(){String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}`;
-                // 注意：這裡只備份設定，不備份 db 明細了
                 const c = JSON.stringify({ cats, sets });
                 const f = `個人雲帳本_設定備份_${ds}.json`;
                 const blob = new Blob([new Uint8Array([0xEF,0xBB,0xBF]), c], {type:'application/json'});
@@ -527,8 +519,9 @@
             
             let dtI=0, dtE=0, dwI=0, dwE=0, dmI=0, dmE=0, dyI=0, dyE=0;
 
+            // ⚠️ [修正 Safari 日期亂碼 Bug]: 替換 - 為 /
             db.forEach(r => {
-                let a = r.amount, rd = new Date(r.date);
+                let a = r.amount, rd = new Date(r.date.replace(/-/g, '/'));
                 if(r.date === tStr) r.type==='income'?dtI+=a:dtE+=a;
                 if(rd>=wStart && rd<=wEnd) r.type==='income'?dwI+=a:dwE+=a;
                 if(r.date.startsWith(mStr)) r.type==='income'?dmI+=a:dmE+=a;
@@ -656,7 +649,7 @@
                     else { cats[rTyp][$('r-mcat').value].push(n); }
                     saveDB(); 
                     if(isMain) { loadMainCat(); $('r-mcat').value = n; loadSubCat(); } else { loadSubCat(); el.value = n; }
-                    triggerAutoConfigBackup(); // 觸發設定備份
+                    triggerAutoConfigBackup(); 
                 } else { if(isMain) loadMainCat(); else loadSubCat(); }
             }
         }
@@ -745,7 +738,8 @@
             for(let i=1; i<=daysInM; i++) {
                 let ds = `y-{String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
                 let has = db.some(r=>r.date===ds), isT = (ds===tStr);
-                html += `<div class="cal-cell ${has?'has-rec':''} isT?'today':''"onclick="closeModal();weekSwipeOffset=0;cDate=newDate('{ds}'); renderHome(); loadInlineList('ds')">{i}</div>`;
+                // ⚠️ [修正 Safari 日期亂碼 Bug]: 替換 - 為 /
+                html += `<div class="cal-cell ${has?'has-rec':''} isT?'today':''"onclick="closeModal();weekSwipeOffset=0;cDate=newDate('{ds}'.replace(/-/g, '/')); renderHome(); loadInlineList('ds')">{i}</div>`;
             }
             $('ui-cal-grid').innerHTML = html;
         }
@@ -822,7 +816,6 @@
             let url = '';
             try {
                 const n=new Date(), ds=`n.getFullYear(){String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}`;
-                // 手動匯出 JSON 也只匯出設定，因為明細都在雲端
                 const c=JSON.stringify({cats,sets}); const f=`個人雲帳本_設定備份_${ds}.json`; const m='application/json'; 
                 const blob = new Blob([new Uint8Array([0xEF,0xBB,0xBF]), c], {type:m});
                 url = URL.createObjectURL(blob);
@@ -845,7 +838,6 @@
             r.readAsText(f);
         }
 
-        // --- 核心：升級版雙向增量同步 ---
         async function syncToGAS(showUI = false) {
             if(!navigator.onLine) return showUI ? toast('無網路連線，稍後再試') : null;
             
@@ -856,8 +848,8 @@
             try {
                 const reqBody = {
                     action: 'sync',
-                    data: p, // 本機需要上傳的資料
-                    lastSyncTime: lastSyncTime // 告訴伺服器我上次同步是什麼時候
+                    data: p, 
+                    lastSyncTime: lastSyncTime 
                 };
 
                 const res = await fetch(GAS_URL, { 
@@ -869,20 +861,15 @@
                 const r = await res.json();
                 
                 if(r.status==='success') { 
-                    // 1. 把剛剛上傳成功的 pending 改成 synced
                     db.forEach(x => { if(x.syncStatus==='pending') x.syncStatus='synced'; });
                     
-                    // 2. 處理從雲端載下來的新資料 (增量或全新)
                     const serverData = r.data || [];
                     if (serverData.length > 0) {
                         serverData.forEach(sRec => {
-                            // 找找看本機有沒有這筆 (用 ID 判斷)
                             let idx = db.findIndex(localRec => localRec.id === sRec.id);
                             if (idx > -1) {
-                                // 本機有，用雲端的蓋過去 (因為雲端的是最新的)
                                 db[idx] = sRec;
                             } else {
-                                // 本機沒有，新增進去
                                 db.push(sRec);
                             }
                         });
@@ -892,7 +879,6 @@
                         else if (showUI) toast(`✅ 成功上傳 ${p.length} 筆資料`);
                     }
 
-                    // 3. 更新最後同步時間 (非常重要)
                     lastSyncTime = r.serverTime;
                     localStorage.setItem('cloud_exp_lastSyncTime', lastSyncTime);
                     
