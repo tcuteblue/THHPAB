@@ -82,18 +82,15 @@
 
         .list-header { font-size: 20px; font-weight: 900; color: #2F3640; margin: 25px 5px 15px; display: flex; justify-content: space-between; align-items: center; }
         
-        /* 明細卡片：採用 Flexbox 上下分層排版，並改為整塊可點擊 */
+        /* 明細卡片 */
         .record-item { background: #fff; border-radius: 18px; padding: 16px 18px; margin-bottom: 14px; box-shadow: 0 4px 10px rgba(0,0,0,.05); border-left: 8px solid transparent; display: flex; flex-direction: column; cursor: pointer; transition: transform 0.1s, background 0.1s; }
         .record-item:active { transform: scale(0.98); background: #fdfefe; }
         .record-item.exp { border-left-color: var(--expense); }
         .record-item.inc { border-left-color: var(--primary); }
         .record-item.tra { border-left-color: var(--transfer); }
         
-        /* 頂部區域：日期 */
         .r-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
         .r-date { font-size: 14px; color: #95a5a6; font-weight: 900; }
-        
-        /* 內容區域：分類、備註、金額 */
         .r-cat { font-size: 19px; font-weight: 900; color: #2F3640; line-height: 1.4; word-break: break-word; }
         .r-sub { font-size: 15px; color: #7f8fa6; margin-top: 4px; font-weight: bold; line-height: 1.4; word-break: break-word; }
         .r-amt { font-size: 24px; font-weight: 900; font-family: monospace; letter-spacing: 1px; margin-top: 8px; }
@@ -122,7 +119,6 @@
         .amt-val { font-size: 52px; font-weight: 900; font-family: monospace; letter-spacing: 1px; color: var(--text-color); }
         .bal-hint { font-size: 16px; margin-top: 10px; text-align: right; font-weight: 900; }
 
-        /* 修改儲存按鈕容器，支援刪除與儲存並排 */
         .r-actions-row { display: flex; gap: 15px; margin: 20px; }
         .btn-save { background: var(--primary); color: #fff; padding: 20px; border-radius: 22px; font-size: 22px; font-weight: 900; border: none; box-shadow: 0 6px 0 var(--primary-dark), 0 8px 20px rgba(0,168,255,.3); cursor: pointer; flex: 2; transition: all 0.1s; }
         .btn-save:active { transform: translateY(6px); box-shadow: 0 0 0 var(--primary-dark); }
@@ -194,14 +190,12 @@
             </div>
         </div>
 
-        <!-- 記帳、帳戶、圖表分析 三大按鈕區塊 -->
         <div class="action-grid">
             <button class="btn-main btn-record" onclick="openRecord()">➕ 記帳</button>
             <button class="btn-main btn-acc" onclick="openAccMgr()">💳 帳戶</button>
             <button class="btn-main btn-chart" onclick="openChart('expense')">📊 分析</button>
         </div>
 
-        <!-- 統計區塊 -->
         <div class="stats-grid">
             <div class="stat-box" onclick="openList('today')">
                 <div class="stat-title">本日 <span class="stat-date" id="s-d-today"></span></div>
@@ -235,7 +229,6 @@
 
     <button class="btn-float" onclick="openSettings()">⚙️</button>
 
-    <!-- ===== 記帳/編輯 Modal ===== -->
     <div id="m-record" class="modal">
         <div class="m-header"><span id="m-record-title">新增紀錄</span><button class="m-close" onclick="closeModal()">✖</button></div>
         
@@ -273,21 +266,18 @@
             <div id="note-sugg" class="autocomplete-list"></div>
         </div>
 
-        <!-- 修改後的儲存與刪除按鈕區域 -->
         <div class="r-actions-row">
             <button class="btn-delete-modal" id="btn-modal-del" onclick="delRecFromModal()" style="display:none;">🗑️ 刪除</button>
             <button class="btn-save" onclick="saveRec()" id="btn-modal-save">💾 儲存紀錄</button>
         </div>
     </div>
 
-    <!-- ===== 列表與搜尋 Modal ===== -->
     <div id="m-list" class="modal">
         <div class="m-header"><span id="l-title">歷史明細</span><button class="m-close" onclick="closeModal()">✖</button></div>
         <div class="search-bar"><input type="text" id="l-search" placeholder="搜尋分類、金額、備註..." oninput="renderListModal()"></div>
         <div style="padding: 15px;" id="l-container"></div>
     </div>
 
-    <!-- ===== 月曆選擇器 Modal ===== -->
     <div id="m-cal" class="modal">
         <div class="m-header"><span>選擇日期</span><button class="m-close" onclick="closeModal()">✖</button></div>
         <div class="month-header" style="margin-top:20px;">
@@ -298,7 +288,6 @@
         <div class="cal-grid" id="ui-cal-grid"></div>
     </div>
 
-    <!-- ===== 圖表 Modal ===== -->
     <div id="m-chart" class="modal">
         <div class="m-header"><span>收支分析</span><button class="m-close" onclick="closeModal()">✖</button></div>
         <div class="form-group" style="text-align:center;"><input type="month" id="c-month" onchange="renderChart()" style="width:70%; font-size:22px; text-align:center; padding:12px;"></div>
@@ -312,33 +301,22 @@
         </div>
     </div>
 
-    <!-- ===== 設定 Modal ===== -->
     <div id="m-set" class="modal">
         <div class="m-header"><span>系統設定</span><button class="m-close" onclick="closeModal()">✖</button></div>
         
-        <div class="form-group"><label>每月預算 (每月1號自動轉為零用錢)</label><input type="number" id="s-budget" onchange="saveSet()" style="font-family:monospace; font-size:28px; font-weight:900; color:var(--income);"></div>
+        <div class="form-group"><label>每月預算 (每月1號自動轉為零用錢)</label><input type="number" id="s-budget" onchange="saveSet(true)" style="font-family:monospace; font-size:28px; font-weight:900; color:var(--income);"></div>
         
         <button class="btn-big-action" style="background:#fff; color:var(--text-color); border:2px solid #DFE4EA; box-shadow:0 4px 0 #DFE4EA;" onclick="openCatMgr()">🏷️ 分類管理</button>
         <button class="btn-big-action" style="background:#fff; color:var(--text-color); border:2px solid #DFE4EA; box-shadow:0 4px 0 #DFE4EA;" onclick="openAccMgr()">💳 帳戶管理</button>
         
         <div style="margin: 40px 20px 20px; padding-top: 30px; border-top: 2px dashed #DFE4EA;">
-            <label style="display:block; font-size:18px; font-weight:900; margin-bottom:15px; text-align:center; color:#7f8fa6;">備份與還原</label>
-            <button class="btn-big-action" style="background:var(--primary); color:#fff; box-shadow:0 5px 0 var(--primary-dark);" onclick="openBackupOpt()">📤 備份資料</button>
-            <input type="file" id="file-input" accept=".json,.csv" style="display:none;" onchange="impData(event)">
-            <button class="btn-big-action" style="background:#fff; color:var(--primary-dark); border:2px solid var(--primary-dark); box-shadow:0 5px 0 var(--primary-dark);" onclick="$('file-input').click()">📥 還原資料</button>
+            <label style="display:block; font-size:18px; font-weight:900; margin-bottom:15px; text-align:center; color:#7f8fa6;">備份與還原 (設定檔)</label>
+            <button class="btn-big-action" style="background:var(--primary); color:#fff; box-shadow:0 5px 0 var(--primary-dark);" onclick="expData('json')">📤 手動匯出 JSON</button>
+            <input type="file" id="file-input" accept=".json" style="display:none;" onchange="impData(event)">
+            <button class="btn-big-action" style="background:#fff; color:var(--primary-dark); border:2px solid var(--primary-dark); box-shadow:0 5px 0 var(--primary-dark);" onclick="$('file-input').click()">📥 還原設定資料</button>
         </div>
     </div>
 
-    <div id="m-backup" class="modal" style="background:rgba(0,0,0,0.5);">
-        <div style="background:#fff; position:absolute; bottom:0; width:100%; border-radius:30px 30px 0 0; padding:35px 20px 50px;">
-            <h3 style="margin-top:0; text-align:center; font-weight:900; font-size: 22px;">選擇備份格式</h3>
-            <button class="btn-big-action" style="background:var(--income); color:#fff; box-shadow:0 5px 0 #189855;" onclick="expData('json')">匯出 JSON (完整還原用)</button>
-            <button class="btn-big-action" style="background:#FFA502; color:#fff; box-shadow:0 5px 0 #D35400;" onclick="expData('csv')">匯出 CSV (Excel 閱讀用)</button>
-            <button class="btn-big-action" style="background:#f1f2f6; color:#7f8fa6; box-shadow:none; margin-top:25px;" onclick="closeModal()">取消</button>
-        </div>
-    </div>
-
-    <!-- 分類管理 Modal -->
     <div id="m-cat-mgr" class="modal">
         <div class="m-header"><span>分類管理</span><button class="m-close" onclick="closeModal()">✖</button></div>
         <div class="tabs" id="cat-tabs"><div class="tab active exp" onclick="renderCatMgr('expense')">支出分類</div><div class="tab inc" onclick="renderCatMgr('income')">收入分類</div></div>
@@ -346,14 +324,12 @@
         <button class="btn-main btn-record" style="width:calc(100% - 40px); margin:20px; padding:18px; border-radius:18px; font-size:18px;" onclick="addMainCat()">➕ 新增主分類</button>
     </div>
 
-    <!-- 帳戶管理 Modal -->
     <div id="m-acc-mgr" class="modal">
         <div class="m-header"><span>帳戶管理</span><button class="m-close" onclick="closeModal()">✖</button></div>
         <div id="acc-mgr-container"></div>
         <button class="btn-main btn-record" style="width:calc(100% - 40px); margin:20px; padding:18px; border-radius:18px; font-size:18px;" onclick="addAcc()">➕ 新增帳戶</button>
     </div>
 
-    <!-- ===== 虛擬鍵盤 ===== -->
     <div id="v-keypad">
         <button class="key" onclick="kp('7')">7</button><button class="key" onclick="kp('8')">8</button><button class="key" onclick="kp('9')">9</button><button class="key key-op" onclick="kp('del')">刪</button>
         <button class="key" onclick="kp('4')">4</button><button class="key" onclick="kp('5')">5</button><button class="key" onclick="kp('6')">6</button><button class="key key-op" onclick="kp('clear')">C</button>
@@ -363,6 +339,8 @@
 
     <script>
         const $ = id => document.getElementById(id);
+        
+        // ⚠️ 記得替換成你剛剛在步驟一部署產生出來的新 GAS 網址！
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz9Tohi--mDE6Pk5u6P20xBiHsQ-yMR1rDmfG5Q7LBmxaOeLxedtHp0iMwh4AuCyt4Ncw/exec";
         
         const defCats = {
@@ -395,15 +373,11 @@
             return [...str][0]; 
         };
 
+        // --- 核心資料讀取 ---
         let db = JSON.parse(localStorage.getItem('cloud_exp_db')) || [];
         let cats = JSON.parse(localStorage.getItem('cloud_exp_cats')) || defCats;
-        
-        if(!cats.expense['🍽️ 家用飲食']) {
-            cats = defCats;
-            localStorage.setItem('cloud_exp_cats', JSON.stringify(cats));
-        }
-
         let sets = JSON.parse(localStorage.getItem('cloud_exp_sets')) || { b: 5000, a: ["💵 現金", "🏦 銀行"], l: "" };
+        let lastSyncTime = Number(localStorage.getItem('cloud_exp_lastSyncTime')) || 0; // 新增：紀錄最後同步時間
         
         let needsUpdate = false;
         if(sets.a.includes('現金') || sets.a.includes('銀行') || sets.a.includes('信用卡')) {
@@ -422,7 +396,7 @@
         let cDate = new Date(), weekSwipeOffset = 0, rTyp = 'expense', kpStr = '0', chartObj = null, cTyp = 'expense', lStart = '', lEnd = '', calPickDate = new Date(), mgrCatTyp = 'expense';
         let currentInlineDate = "";
         let currentAccFilter = "";
-        let editingRecordId = null; // 記錄目前正在編輯的 ID
+        let editingRecordId = null; 
 
         history.replaceState({ s: 1, t: 'main' }, ''); let curS = 1;
         window.addEventListener('popstate', e => { 
@@ -434,47 +408,41 @@
         });
         
         let highestZ = 1000;
-
         function pushM(id) { 
-            curS++; 
-            history.pushState({ s: curS, t: 'modal', id }, ''); 
+            curS++; history.pushState({ s: curS, t: 'modal', id }, ''); 
             if (id && $(id)) $(id).style.zIndex = ++highestZ;
         }
-        
         function pushK() { if(history.state.t !== 'keypad') { curS++; history.pushState({ s: curS, t: 'keypad' }, ''); } }
         
         function closeAll() { document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); $('v-keypad').style.display='none'; $('note-sugg').style.display='none'; }
-        
         function closeModal() {
             const visibleModals = [...document.querySelectorAll('.modal')].filter(m => getComputedStyle(m).display !== 'none');
             if (visibleModals.length) {
                 visibleModals.sort((a, b) => (parseInt(a.style.zIndex) || 1000) - (parseInt(b.style.zIndex) || 1000));
                 visibleModals[visibleModals.length - 1].style.display = 'none';
             }
-            $('v-keypad').style.display = 'none';
-            $('r-amt-box').classList.remove('active');
-            $('note-sugg').style.display = 'none';
+            $('v-keypad').style.display = 'none'; $('r-amt-box').classList.remove('active'); $('note-sugg').style.display = 'none';
             if (history.state && history.state.t !== 'main') history.back();
         }
 
         const toast = m => { const t=$('toast'); t.innerText=m; t.style.opacity=1; setTimeout(()=>t.style.opacity=0,2500); };
-        const dStr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        const dStr = d => `d.getFullYear()-{String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
         window.onload = () => { 
-            setupPWA(); 
-            autoPocket(); 
+            setupPWA(); autoPocket(); 
             currentInlineDate = dStr(new Date());
-            renderHome();
-            initSwipeCalendar();
-            if(navigator.onLine && db.some(r=>r.syncStatus==='pending')) {
-                toast('發現未同步資料，背景同步中...');
-                syncToGAS(false);
+            renderHome(); initSwipeCalendar();
+            
+            // 開啟 App 時背景同步 (若無網路則忽略)
+            if(navigator.onLine) {
+                if(db.some(r=>r.syncStatus==='pending') || lastSyncTime === 0) {
+                    syncToGAS(false); // 靜默同步
+                }
             }
         };
 
         function initSwipeCalendar() {
-            let startX = 0;
-            const wCal = $('ui-calendar');
+            let startX = 0; const wCal = $('ui-calendar');
             wCal.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
             wCal.addEventListener('touchend', e => {
                 let endX = e.changedTouches[0].clientX;
@@ -483,80 +451,56 @@
             });
         }
 
-        let lastAutoBackupAt = 0;
-        const AUTO_BACKUP_NOTICE_KEY = 'cloud_exp_auto_backup_notice';
-
-        function autoBackupOnExit() {
-            const now = Date.now();
-            if (now - lastAutoBackupAt < 2000) return;
-            lastAutoBackupAt = now;
-
-            try {
-                const n = new Date();
-                const ds = `${n.getFullYear()}${String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}${String(n.getSeconds()).padStart(2,'0')}`;
-                const c = JSON.stringify({db, cats, sets});
-                const f = `個人雲帳本_自動備份_${ds}.json`;
-                const blob = new Blob([new Uint8Array([0xEF,0xBB,0xBF]), c], {type:'application/json'});
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = f;
-                a.style.display = 'none';
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                setTimeout(() => URL.revokeObjectURL(url), 1500);
-                localStorage.removeItem(AUTO_BACKUP_NOTICE_KEY);
-            } catch (e) {
-                console.error('自動備份失敗：', e);
-                try { localStorage.setItem(AUTO_BACKUP_NOTICE_KEY, 'failed'); } catch (_) {}
-            }
-        }
-
-        function showAutoBackupNoticeIfNeeded() {
-            try {
-                if (localStorage.getItem(AUTO_BACKUP_NOTICE_KEY) === 'failed') {
-                    localStorage.removeItem(AUTO_BACKUP_NOTICE_KEY);
-                    toast('⚠️ 自動備份失敗，請到「備份/還原」手動匯出 JSON');
-                }
-            } catch (_) {
-                toast('⚠️ 無法確認自動備份狀態，請手動匯出 JSON 備份');
-            }
-        }
-
+        // 切換畫面時觸發背景同步 (取代舊版的自動下載備份)
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden') {
-                if (navigator.onLine) {
-                    const pending = db.filter(r => r.syncStatus === 'pending');
-                    if (pending.length > 0) {
-                        fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(pending), keepalive:true })
-                            .then(r => r.json())
-                            .then(r => {
-                                if (r.status === 'success' || r.status === 'ok') {
-                                    db.forEach(x => { if (x.syncStatus === 'pending') x.syncStatus = 'synced'; });
-                                    saveDB();
-                                }
-                            }).catch(() => {});
-                    }
+            if (document.visibilityState === 'hidden' && navigator.onLine) {
+                const pending = db.filter(r => r.syncStatus === 'pending');
+                if (pending.length > 0) {
+                    // 只做簡單上傳，不處理下載，避免佔用背景資源
+                    fetch(GAS_URL, { 
+                        method:'POST', 
+                        headers:{'Content-Type':'text/plain;charset=utf-8'}, 
+                        body:JSON.stringify({ action: 'sync', data: pending, lastSyncTime: lastSyncTime }), 
+                        keepalive:true 
+                    }).then(r => r.json()).then(r => {
+                        if (r.status === 'success' || r.status === 'ok') {
+                            db.forEach(x => { if (x.syncStatus === 'pending') x.syncStatus = 'synced'; });
+                            saveDB();
+                        }
+                    }).catch(() => {});
                 }
-                autoBackupOnExit();
-            } else if (document.visibilityState === 'visible') {
-                showAutoBackupNoticeIfNeeded();
             }
         });
 
-        window.addEventListener('pagehide', autoBackupOnExit);
+        // 核心：當設定改變時，觸發自動下載 JSON 備份檔
+        function triggerAutoConfigBackup() {
+            try {
+                const n = new Date();
+                const ds = `n.getFullYear(){String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}`;
+                // 注意：這裡只備份設定，不備份 db 明細了
+                const c = JSON.stringify({ cats, sets });
+                const f = `個人雲帳本_設定備份_${ds}.json`;
+                const blob = new Blob([new Uint8Array([0xEF,0xBB,0xBF]), c], {type:'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a'); a.href = url; a.download = f; a.style.display = 'none';
+                document.body.appendChild(a); a.click(); a.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1500);
+                toast('⚙️ 設定已變更，已自動下載設定備份檔');
+            } catch (e) {
+                console.error('自動備份設定失敗：', e);
+            }
+        }
 
         function autoPocket() {
-            const mStr = `${cDate.getFullYear()}-${String(cDate.getMonth()+1).padStart(2,'0')}`;
+            const mStr = `cDate.getFullYear()-{String(cDate.getMonth()+1).padStart(2,'0')}`;
             if (sets.l !== mStr) {
-                db.push({ id:'a_'+Date.now(), type:'income', mainCat:'💰 個人收入', subCat:'每月零用', date:`${mStr}-01`, account:sets.a[0], amount:Number(sets.b)||5000, note:'系統自動結轉', syncStatus:'pending' });
+                db.push({ id:'c_'+Date.now(), type:'income', mainCat:'💰 個人收入', subCat:'每月零用', date:`${mStr}-01`, account:sets.a[0], amount:Number(sets.b)||5000, note:'系統自動結轉', syncStatus:'pending' });
                 sets.l = mStr; saveDB(); toast(`已自動存入本月預算 $${sets.b}`);
             }
         }
 
         function renderHome() {
-            $('txt-month').innerText = `${cDate.getFullYear()} / ${String(cDate.getMonth()+1).padStart(2,'0')}`;
+            ('txt-month').innerText=`{cDate.getFullYear()} / ${String(cDate.getMonth()+1).padStart(2,'0')}`;
             
             const cal = $('ui-calendar'); cal.innerHTML = '';
             let d = new Date(cDate); 
@@ -573,11 +517,11 @@
 
             for(let i=0;i<7;i++) {
                 let ds = dStr(d), has = db.some(r=>r.date===ds);
-                cal.innerHTML += `<div class="day-col ${has?'has-record':''}" onclick="loadInlineList('${ds}')"><span>${wk[i]}</span><div class="day-date">${d.getDate()}</div><div class="day-has-record"></div></div>`;
+                cal.innerHTML += `<div class="day-col has?'has-record':''"onclick="loadInlineList('{ds}')"><span>wk[i]</span><divclass="day-date">{d.getDate()}</div><div class="day-has-record"></div></div>`;
                 d.setDate(d.getDate()+1);
             }
 
-            const mStr = `${cDate.getFullYear()}-${String(cDate.getMonth()+1).padStart(2,'0')}`, yStr = `${cDate.getFullYear()}`;
+            const mStr = `cDate.getFullYear()-{String(cDate.getMonth()+1).padStart(2,'0')}`, yStr = `${cDate.getFullYear()}`;
             let wStart = new Date(); wStart.setDate(wStart.getDate() - wStart.getDay());
             let wEnd = new Date(wStart); wEnd.setDate(wStart.getDate() + 6);
             
@@ -591,13 +535,13 @@
                 if(r.date.startsWith(yStr)) r.type==='income'?dyI+=a:dyE+=a;
             });
 
-            $('d-inc').innerText = dmI.toLocaleString();$('d-exp').innerText = dmE.toLocaleString();
+            ('d-inc').innerText=dmI.toLocaleString();('d-exp').innerText = dmE.toLocaleString();
             
             let bal = (Number(sets.b) || 5000) - dmE;
-            $('d-bal').innerText = bal.toLocaleString();$('d-bal').style.color = bal >= 0 ? 'var(--primary)' : 'var(--expense)';
+            ('d-bal').innerText=bal.toLocaleString();('d-bal').style.color = bal >= 0 ? 'var(--primary)' : 'var(--expense)';
 
-            $('s-d-today').innerText = tStr; $('s-i-today').innerText=dtI.toLocaleString(); $('s-e-today').innerText=dtE.toLocaleString();$('s-d-week').innerText = `${String(wStart.getMonth()+1).padStart(2,'0')}/${String(wStart.getDate()).padStart(2,'0')}-${String(wEnd.getMonth()+1).padStart(2,'0')}/${String(wEnd.getDate()).padStart(2,'0')}`; $('s-i-week').innerText=dwI.toLocaleString();$('s-e-week').innerText=dwE.toLocaleString();
-            $('s-d-month').innerText = mStr; $('s-i-month').innerText=dmI.toLocaleString(); $('s-e-month').innerText=dmE.toLocaleString();$('s-d-year').innerText = yStr; $('s-i-year').innerText=dyI.toLocaleString();$('s-e-year').innerText=dyE.toLocaleString();
+            $('s-d-today').innerText = tStr; $('s-i-today').innerText=dtI.toLocaleString(); ('s-e-today').innerText=dtE.toLocaleString();('s-d-week').innerText = `String(wStart.getMonth()+1).padStart(2,'0')/{String(wStart.getDate()).padStart(2,'0')}-String(wEnd.getMonth()+1).padStart(2,'0')/{String(wEnd.getDate()).padStart(2,'0')}`; ('s-i-week').innerText=dwI.toLocaleString();('s-e-week').innerText=dwE.toLocaleString();
+            $('s-d-month').innerText = mStr; $('s-i-month').innerText=dmI.toLocaleString(); ('s-e-month').innerText=dmE.toLocaleString();('s-d-year').innerText = yStr; ('s-i-year').innerText=dyI.toLocaleString();('s-e-year').innerText=dyE.toLocaleString();
 
             loadInlineList(currentInlineDate);
         }
@@ -614,7 +558,6 @@
             tl.innerHTML = tr.length ? tr.map(r => rHtml(r)).join('') : '<div style="text-align:center;padding:40px;color:#95a5a6;font-weight:900;font-size:20px;">該日尚無紀錄</div>';
         }
 
-        // 修改：整張明細卡片都是點擊編輯，不再顯示右側的獨立按鈕
         function rHtml(r) {
             let i = r.type==='expense', t = r.type==='transfer';
             let cls = i?'exp':(t?'tra':'inc');
@@ -622,123 +565,85 @@
             let pre = i ? '-' : (t ? '' : '+');
             
             let emoji = getEmoji(r.mainCat);
-            let mStr = t ? `轉至：${r.toAccount}` : `${r.mainCat} - ${emoji} ${r.subCat}`;
+            let mStr = t ? `轉至：r.toAccount`:`{r.mainCat} - ${emoji} ${r.subCat}`;
             
             return `
-            <div class="record-item ${cls}" onclick="editRec('${r.id}')">
+            <div class="record-item cls"onclick="editRec('{r.id}')">
                 <div class="r-header">
                     <div class="r-date">${r.date} · ${r.account} ${r.syncStatus==='pending'?'⏳':''}</div>
                 </div>
                 <div class="r-cat">${mStr}</div>
                 ${r.note ? `<div class="r-sub">${r.note}</div>` : ''}
-                <div class="r-amt" style="color:${col}">${pre}$${r.amount.toLocaleString()}</div>
+                <div class="r-amt" style="color:col">{pre}$${r.amount.toLocaleString()}</div>
             </div>`;
         }
 
-        function chgMth(d) { 
-            cDate.setMonth(cDate.getMonth()+d); 
-            weekSwipeOffset = 0; 
-            renderHome(); 
-        }
+        function chgMth(d) { cDate.setMonth(cDate.getMonth()+d); weekSwipeOffset = 0; renderHome(); }
 
         function openRecord() {
             editingRecordId = null; 
             $('m-record-title').innerText = '新增紀錄';
-            $('btn-modal-del').style.display = 'none'; // 隱藏刪除按鈕
+            $('btn-modal-del').style.display = 'none';
             rTyp = 'expense'; kpStr = '0'; $('r-amt').innerText='0';
-            $('r-date').value=dStr(new Date());$('r-note').value='';
-            const opts = sets.a.map(a=>`<option value="${a}">${a}</option>`).join('');
+            ('r-date').value=dStr(newDate());('r-note').value='';
+            const opts = sets.a.map(a=>`<option value="a">{a}</option>`).join('');
             $('r-acc').innerHTML = opts; $('r-acc-out').innerHTML = opts; $('r-acc-in').innerHTML = opts;
             $('note-sugg').style.display = 'none';
             updRT(); loadMainCat(); updBal(); $('m-record').style.display='block'; pushM('m-record');
         }
 
-        // 載入舊資料進入編輯模式
         function editRec(id) {
             let rec = db.find(r => r.id === id);
             if (!rec) return;
+            editingRecordId = id; rTyp = rec.type; kpStr = rec.amount.toString();
+            $('r-amt').innerText = Number(kpStr).toLocaleString();
+            $('r-date').value = rec.date; $('r-note').value = rec.note || '';
 
-            editingRecordId = id;
-            rTyp = rec.type;
-            kpStr = rec.amount.toString();
-            $('r-amt').innerText = Number(kpStr).toLocaleString();$('r-date').value = rec.date;
-            $('r-note').value = rec.note || '';
-
-            const opts = sets.a.map(a=>`<option value="${a}">${a}</option>`).join('');
+            const opts = sets.a.map(a=>`<option value="a">{a}</option>`).join('');
             $('r-acc').innerHTML = opts; $('r-acc-out').innerHTML = opts; $('r-acc-in').innerHTML = opts;
 
             updRT();
-
             if (rTyp === 'transfer') {
-                $('r-acc-out').value = rec.account;
-                $('r-acc-in').value = rec.toAccount;
+                $('r-acc-out').value = rec.account; $('r-acc-in').value = rec.toAccount;
             } else {
-                $('r-acc').value = rec.account;
-                loadMainCat();
-                $('r-mcat').value = rec.mainCat;
-                loadSubCat();
-                $('r-scat').value = rec.subCat;
+                $('r-acc').value = rec.account; loadMainCat(); ('r-mcat').value=rec.mainCat;loadSubCat();('r-scat').value = rec.subCat;
             }
 
-            updBal();
-            $('note-sugg').style.display = 'none';$('m-record-title').innerText = '編輯紀錄'; 
-            $('btn-modal-del').style.display = 'block'; // 顯示刪除按鈕
-            $('m-record').style.display='block'; pushM('m-record');
+            updBal(); ('note-sugg').style.display='none';('m-record-title').innerText = '編輯紀錄'; 
+            ('btn-modal-del').style.display='block';('m-record').style.display='block'; pushM('m-record');
         }
 
-        $('r-tabs').addEventListener('click', e => { 
-            if(e.target.dataset.t) { 
-                rTyp = e.target.dataset.t; 
-                updRT(); 
-                loadMainCat(); 
-            } 
-        });
+        $('r-tabs').addEventListener('click', e => { if(e.target.dataset.t) { rTyp = e.target.dataset.t; updRT(); loadMainCat(); } });
         
         function updRT() {
             document.querySelectorAll('#r-tabs .tab').forEach(t => t.classList.remove('active'));
             document.querySelector(`#r-tabs .tab[data-t="${rTyp}"]`).classList.add('active');
-            
-            if(rTyp === 'transfer') { 
-                $('r-area-cat').style.display='none'; 
-                $('r-area-tra').style.display='flex';$('r-acc-container').style.display='none'; 
-            } else { 
-                $('r-area-cat').style.display='flex'; 
-                $('r-area-tra').style.display='none';$('r-acc-container').style.display='block'; 
-            }
+            if(rTyp === 'transfer') { $('r-area-cat').style.display='none'; ('r-area-tra').style.display='flex';('r-acc-container').style.display='none'; } 
+            else { $('r-area-cat').style.display='flex'; ('r-area-tra').style.display='none';('r-acc-container').style.display='block'; }
         }
 
         function handleNoteInput(val) {
-            let box = $('note-sugg');
-            let q = val.trim();
+            let box = $('note-sugg'); let q = val.trim();
             if(!q) { box.style.display = 'none'; return; }
             let historyNotes = [...new Set(db.map(r => r.note).filter(n => n))];
             let matched = historyNotes.filter(n => n.includes(q) && n !== q);
-            if(matched.length > 0) {
-                box.innerHTML = matched.map(m => `<div class="ac-item" onclick="setNote('${m}')">${m}</div>`).join('');
-                box.style.display = 'block';
-            } else {
-                box.style.display = 'none';
-            }
+            if(matched.length > 0) { box.innerHTML = matched.map(m => `<div class="ac-item" onclick="setNote('m')">{m}</div>`).join(''); box.style.display = 'block'; } 
+            else { box.style.display = 'none'; }
         }
-        
-        function setNote(val) {
-            $('r-note').value = val;
-            $('note-sugg').style.display = 'none';
-        }
+        function setNote(val) { $('r-note').value = val; $('note-sugg').style.display = 'none'; }
 
         function loadMainCat() {
             if(rTyp==='transfer') return;
-            let opts = Object.keys(cats[rTyp]).map(c=>`<option value="${c}">${c}</option>`);
+            let opts = Object.keys(cats[rTyp]).map(c=>`<option value="c">{c}</option>`);
             opts.push('<option value="_ADD_">➕ 新增分類...</option>');
             $('r-mcat').innerHTML = opts.join(''); loadSubCat();
         }
-        
         function loadSubCat() {
             const m = $('r-mcat').value;
             if(m === '_ADD_') { checkNewCat($('r-mcat'), true); return; }
             if(m && cats[rTyp][m]) {
                 let emoji = getEmoji(m);
-                $('r-scat').innerHTML = cats[rTyp][m].map(c=>`<option value="${c}">${emoji} ${c}</option>`).join('') + '<option value="_ADD_">➕ 新增分類...</option>';
+                ('r-scat').innerHTML=cats[rTyp][m].map(c=>`<optionvalue="{c}">${emoji} ${c}</option>`).join('') + '<option value="_ADD_">➕ 新增分類...</option>';
             }
         }
         
@@ -747,8 +652,11 @@
                 let n = prompt(`輸入新${isMain?'主':'子'}分類名稱 (支援 Emoji)：`);
                 if(n && n.trim()) { 
                     n = n.trim();
-                    if(isMain) { cats[rTyp][n] = ["一般"]; saveDB(); loadMainCat(); $('r-mcat').value = n; loadSubCat(); }
-                    else { cats[rTyp][$('r-mcat').value].push(n); saveDB(); loadSubCat(); el.value = n; }
+                    if(isMain) { cats[rTyp][n] = ["一般"]; }
+                    else { cats[rTyp][$('r-mcat').value].push(n); }
+                    saveDB(); 
+                    if(isMain) { loadMainCat(); $('r-mcat').value = n; loadSubCat(); } else { loadSubCat(); el.value = n; }
+                    triggerAutoConfigBackup(); // 觸發設定備份
                 } else { if(isMain) loadMainCat(); else loadSubCat(); }
             }
         }
@@ -756,12 +664,11 @@
         function updBal() {
             let acc = $('r-acc').value, b = 0;
             db.forEach(r=>{ if(r.account===acc) { if(r.type==='income')b+=r.amount; else b-=r.amount; } if(r.type==='transfer' && r.toAccount===acc) b+=r.amount; });
-            $('r-bal').innerText = `餘額: $${b.toLocaleString()}`;
-            $('r-bal').style.color = b >= 0 ? 'var(--primary)' : 'var(--expense)';
+            $('r-bal').innerText = `餘額: $${b.toLocaleString()}`; $('r-bal').style.color = b >= 0 ? 'var(--primary)' : 'var(--expense)';
         }
 
-        function openKeypad() { $('v-keypad').style.display='grid';$('r-amt-box').classList.add('active'); pushK(); }
-        function closeKeypad() { if(history.state.t==='keypad') history.back(); else { $('v-keypad').style.display='none';$('r-amt-box').classList.remove('active'); } }
+        function openKeypad() { ('v-keypad').style.display='grid';('r-amt-box').classList.add('active'); pushK(); }
+        function closeKeypad() { if(history.state.t==='keypad') history.back(); else { ('v-keypad').style.display='none';('r-amt-box').classList.remove('active'); } }
         function kp(v) {
             if(v==='clear') kpStr='0'; else if(v==='del') kpStr=kpStr.length>1?kpStr.slice(0,-1):'0';
             else { if(kpStr==='0'&&v!=='.') kpStr=v; else kpStr+=v; if(kpStr.length>10) kpStr=kpStr.slice(0,10); }
@@ -770,92 +677,50 @@
 
         function saveRec() {
             let a = Number(kpStr); if(a<=0) return toast('金額需大於0');
-            
             let isTransfer = (rTyp === 'transfer');
-            let accOut = isTransfer ? $('r-acc-out').value :$('r-acc').value;
+            let accOut = isTransfer ? ('r-acc-out').value:('r-acc').value;
             let accIn = isTransfer ? $('r-acc-in').value : '';
             if(isTransfer && accOut === accIn) return toast('轉出與轉入不可相同');
 
             if (editingRecordId) {
-                // 更新模式
                 let idx = db.findIndex(r => r.id === editingRecordId);
                 if (idx > -1) {
-                    db[idx].type = rTyp;
-                    db[idx].date = $('r-date').value;
-                    db[idx].amount = a;
-                    db[idx].note = $('r-note').value.trim();
-                    db[idx].syncStatus = 'pending';
-                    
-                    if (isTransfer) {
-                        db[idx].account = accOut;
-                        db[idx].toAccount = accIn;
-                        delete db[idx].mainCat;
-                        delete db[idx].subCat;
-                    } else {
-                        db[idx].mainCat = $('r-mcat').value;
-                        db[idx].subCat = $('r-scat').value;
-                        db[idx].account = accOut;
-                        delete db[idx].toAccount;
-                    }
+                    db[idx].type = rTyp; db[idx].date = ('r-date').value;db[idx].amount=a;db[idx].note=('r-note').value.trim(); db[idx].syncStatus = 'pending';
+                    if (isTransfer) { db[idx].account = accOut; db[idx].toAccount = accIn; delete db[idx].mainCat; delete db[idx].subCat; } 
+                    else { db[idx].mainCat = ('r-mcat').value;db[idx].subCat=('r-scat').value; db[idx].account = accOut; delete db[idx].toAccount; }
                 }
-                editingRecordId = null;
-                toast('✅ 已更新');
+                editingRecordId = null; toast('✅ 已更新 (待同步)');
             } else {
-                // 新增模式
-                let rec = { id:'c_'+Date.now(), type:rTyp, date:$('r-date').value, amount:a, note:$('r-note').value.trim(), syncStatus:'pending' };
-                if(isTransfer) { rec.account = accOut; rec.toAccount = accIn; }
-                else { rec.mainCat=$('r-mcat').value; rec.subCat=$('r-scat').value; rec.account=accOut; }
-                db.push(rec);
-                toast('✅ 已儲存');
+                let rec = { id:'c_'+Date.now(), type:rTyp, date:('r-date').value,amount:a,note:('r-note').value.trim(), syncStatus:'pending' };
+                if(isTransfer) { rec.account = accOut; rec.toAccount = accIn; } else { rec.mainCat=('r-mcat').value;rec.subCat=('r-scat').value; rec.account=accOut; }
+                db.push(rec); toast('✅ 已儲存 (待同步)');
             }
-            
             saveDB(); closeKeypad(); closeModal(); renderHome();
-            if($('m-list').style.display === 'block') renderListModal(); // 同步刷新列表
+            if($('m-list').style.display === 'block') renderListModal(); 
         }
         
-        // 從編輯視窗刪除紀錄
         function delRecFromModal() {
             if(!editingRecordId) return;
-            if(confirm('確定刪除這筆紀錄嗎？')) { 
+            if(confirm('確定刪除這筆紀錄嗎？\n(注意：目前刪除為單機操作，若需刪除雲端紀錄請至試算表操作)')) { 
                 db = db.filter(r => r.id !== editingRecordId); 
-                saveDB(); 
-                renderHome(); 
-                if($('m-list').style.display === 'block') renderListModal(); 
-                closeModal();
-                toast('✅ 已刪除');
+                saveDB(); renderHome(); if($('m-list').style.display === 'block') renderListModal(); 
+                closeModal(); toast('✅ 已刪除');
             }
         }
 
-        // 從列表直接刪除的舊函數保留備用，但目前畫面上已隱藏
-        function delRec(id) { if(confirm('確定刪除？')) { db = db.filter(r=>r.id!==id); saveDB(); renderHome(); if($('m-list').style.display==='block') renderListModal(); } }
-
         function openGlobalSearch() {
-            lStart = '1970-01-01'; lEnd = '2099-12-31';
-            currentAccFilter = ''; 
-            $('l-title').innerText = '🔍 萬用搜尋';
-            $('l-search').value = '';
-            renderListModal();
-            $('m-list').style.display = 'block';
-            pushM('m-list');
-            setTimeout(() => $('l-search').focus(), 100);
+            lStart = '1970-01-01'; lEnd = '2099-12-31'; currentAccFilter = ''; $('l-title').innerText = '🔍 萬用搜尋'; $('l-search').value = '';
+            renderListModal(); ('m-list').style.display='block';pushM('m-list');setTimeout(()=>('l-search').focus(), 100);
         }
 
         function openList(mode, p1) {
-            $('l-search').value = '';
-            currentAccFilter = ''; 
-            let n = new Date(), t = dStr(n);
-            
-            if(mode==='date') { lStart = p1; lEnd = p1; $('l-title').innerText=`明細 (${p1})`; }
+            $('l-search').value = ''; currentAccFilter = ''; let n = new Date(), t = dStr(n);
+            if(mode==='date') { lStart = p1; lEnd = p1; ('l-title').innerText=`明細({p1})`; }
             else if(mode==='today') { lStart = t; lEnd = t; $('l-title').innerText='本日明細'; }
             else if(mode==='week') { let s=new Date(n); s.setDate(s.getDate()-s.getDay()); let e=new Date(s); e.setDate(e.getDate()+6); lStart=dStr(s); lEnd=dStr(e); $('l-title').innerText='本週明細'; }
-            else if(mode==='month') { lStart=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-01`; lEnd=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-31`; $('l-title').innerText='本月明細'; }
-            else if(mode==='year') { lStart=`${n.getFullYear()}-01-01`; lEnd=`${n.getFullYear()}-12-31`; $('l-title').innerText='本年明細'; }
-            else if(mode==='account') { 
-                lStart = '1970-01-01'; lEnd = '2099-12-31'; 
-                $('l-title').innerText = `💳 ${p1} 明細`; 
-                currentAccFilter = p1; 
-            }
-            
+            else if(mode==='month') { lStart=`n.getFullYear()-{String(n.getMonth()+1).padStart(2,'0')}-01`; lEnd=`n.getFullYear()-{String(n.getMonth()+1).padStart(2,'0')}-31`; $('l-title').innerText='本月明細'; }
+            else if(mode==='year') { lStart=`n.getFullYear()-01-01`;lEnd=`{n.getFullYear()}-12-31`; $('l-title').innerText='本年明細'; }
+            else if(mode==='account') { lStart = '1970-01-01'; lEnd = '2099-12-31'; $('l-title').innerText = `💳 ${p1} 明細`; currentAccFilter = p1; }
             renderListModal(); $('m-list').style.display='block'; pushM('m-list');
         }
 
@@ -863,9 +728,7 @@
             let kw = $('l-search').value.toLowerCase();
             let arr = db.filter(r => {
                 if(r.date < lStart || r.date > lEnd) return false;
-                
                 if(currentAccFilter && r.account !== currentAccFilter && r.toAccount !== currentAccFilter) return false;
-                
                 if(kw) { let txt = (r.mainCat||'')+(r.subCat||'')+(r.note||'')+(r.account||'')+(r.amount); return txt.toLowerCase().includes(kw); } return true;
             }).reverse();
             $('l-container').innerHTML = arr.length ? arr.map(r=>rHtml(r)).join('') : '<div style="text-align:center;padding:50px;color:#95a5a6;font-weight:900;font-size:20px;">查無資料</div>';
@@ -874,30 +737,25 @@
         function openCalPicker() { calPickDate = new Date(cDate); renderCalPicker(); $('m-cal').style.display='block'; pushM('m-cal'); }
         function chgCalPicker(d) { calPickDate.setMonth(calPickDate.getMonth()+d); renderCalPicker(); }
         function renderCalPicker() {
-            $('txt-cal-month').innerText = `${calPickDate.getFullYear()} / ${String(calPickDate.getMonth()+1).padStart(2,'0')}`;
+            ('txt-cal-month').innerText=`{calPickDate.getFullYear()} / ${String(calPickDate.getMonth()+1).padStart(2,'0')}`;
             let y = calPickDate.getFullYear(), m = calPickDate.getMonth();
             let firstDay = new Date(y, m, 1).getDay(), daysInM = new Date(y, m+1, 0).getDate();
             let html = '<div class="cal-head">日</div><div class="cal-head">一</div><div class="cal-head">二</div><div class="cal-head">三</div><div class="cal-head">四</div><div class="cal-head">五</div><div class="cal-head">六</div>';
-            for(let i=0; i<firstDay; i++) html += '<div></div>';
-            let tStr = dStr(new Date());
+            for(let i=0; i<firstDay; i++) html += '<div></div>'; let tStr = dStr(new Date());
             for(let i=1; i<=daysInM; i++) {
-                let ds = `${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                let ds = `y-{String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
                 let has = db.some(r=>r.date===ds), isT = (ds===tStr);
-                html += `<div class="cal-cell ${has?'has-rec':''} ${isT?'today':''}" onclick="closeModal(); weekSwipeOffset=0; cDate = new Date('${ds}'); renderHome(); loadInlineList('${ds}')">${i}</div>`;
+                html += `<div class="cal-cell ${has?'has-rec':''} isT?'today':''"onclick="closeModal();weekSwipeOffset=0;cDate=newDate('{ds}'); renderHome(); loadInlineList('ds')">{i}</div>`;
             }
             $('ui-cal-grid').innerHTML = html;
         }
 
-        function openChart(type) {
-            $('c-month').value = `${cDate.getFullYear()}-${String(cDate.getMonth()+1).padStart(2,'0')}`;
-            cTyp = type || 'expense'; $('m-chart').style.display='block'; pushM('m-chart'); renderChart();
-        }
+        function openChart(type) { ('c-month').value=`{cDate.getFullYear()}-${String(cDate.getMonth()+1).padStart(2,'0')}`; cTyp = type || 'expense'; $('m-chart').style.display='block'; pushM('m-chart'); renderChart(); }
         function switchChart(t) { cTyp=t; renderChart(); }
         
         function renderChart() {
             document.querySelectorAll('#c-tabs .tab').forEach(t => t.classList.remove('active'));
             document.querySelector(`#c-tabs .tab[data-t="${cTyp}"]`).classList.add('active');
-            
             let mStr = $('c-month').value; if(!mStr) return;
             
             let dt = {}, ti=0, te=0;
@@ -909,135 +767,156 @@
             });
 
             if(chartObj) chartObj.destroy();
-            const ctx = $('c-canvas').getContext('2d');
-            Chart.defaults.font.size = 18;
-            
+            const ctx = $('c-canvas').getContext('2d'); Chart.defaults.font.size = 18;
             let expColors = ['#FF4757', '#FF6B81', '#FF9F43', '#EE5A24', '#EA2027', '#B33939', '#CD6133'];
             let incColors = ['#00A8FF', '#48DBFB', '#0984E3', '#74B9FF', '#1E90FF', '#3742FA', '#5352ED'];
 
-            if(cTyp==='total') {
-                chartObj = new Chart(ctx, { type:'bar', data: { labels:['收入', '支出', '結餘'], datasets:[{ data:[ti, te, ti-te], backgroundColor:['#00A8FF', '#FF4757', '#20BF6B'], borderRadius:16 }] }, options: { plugins:{legend:{display:false}} } });
-            } else {
-                let lbl = Object.keys(dt), val = Object.values(dt);
-                let currentColors = (cTyp === 'expense') ? expColors : incColors;
-                
+            if(cTyp==='total') { chartObj = new Chart(ctx, { type:'bar', data: { labels:['收入', '支出', '結餘'], datasets:[{ data:[ti, te, ti-te], backgroundColor:['#00A8FF', '#FF4757', '#20BF6B'], borderRadius:16 }] }, options: { plugins:{legend:{display:false}} } }); } 
+            else {
+                let lbl = Object.keys(dt), val = Object.values(dt); let currentColors = (cTyp === 'expense') ? expColors : incColors;
                 if(!lbl.length) chartObj = new Chart(ctx, { type:'doughnut', data:{labels:['無資料'],datasets:[{data:[1],backgroundColor:['#DFE4EA']}]} });
                 else chartObj = new Chart(ctx, { type:'doughnut', data:{labels:lbl,datasets:[{data:val,backgroundColor:currentColors,borderWidth:0}]}, options:{cutout:'65%',plugins:{legend:{position:'bottom'}}} });
             }
         }
 
         function openSettings() { $('s-budget').value=sets.b; $('m-set').style.display='block'; pushM('m-set'); }
-        function saveSet() { sets.b=Number($('s-budget').value)||5000; saveDB(); toast('設定已儲存'); renderHome(); }
+        function saveSet(isManual = false) { 
+            sets.b=Number($('s-budget').value)||5000; saveDB(); 
+            if(isManual) { toast('設定已儲存'); renderHome(); triggerAutoConfigBackup(); } 
+        }
         
         function openAccMgr() { renderAccMgr(); $('m-acc-mgr').style.display='block'; pushM('m-acc-mgr'); }
-        
         function renderAccMgr() {
             let accBals = {}; sets.a.forEach(a => accBals[a] = 0);
-            db.forEach(r => {
-                let a = r.amount;
-                if(r.type === 'income' && accBals[r.account] !== undefined) accBals[r.account] += a;
-                if(r.type === 'expense' && accBals[r.account] !== undefined) accBals[r.account] -= a;
-                if(r.type === 'transfer') {
-                    if(accBals[r.account] !== undefined) accBals[r.account] -= a;
-                    if(accBals[r.toAccount] !== undefined) accBals[r.toAccount] += a;
-                }
-            });
-            
+            db.forEach(r => { let a = r.amount; if(r.type === 'income' && accBals[r.account] !== undefined) accBals[r.account] += a; if(r.type === 'expense' && accBals[r.account] !== undefined) accBals[r.account] -= a; if(r.type === 'transfer') { if(accBals[r.account] !== undefined) accBals[r.account] -= a; if(accBals[r.toAccount] !== undefined) accBals[r.toAccount] += a; } });
             $('acc-mgr-container').innerHTML = sets.a.map(a => {
-                let bal = accBals[a] || 0;
-                let balColor = bal >= 0 ? 'var(--primary)' : 'var(--expense)';
-                
+                let bal = accBals[a] || 0; let balColor = bal >= 0 ? 'var(--primary)' : 'var(--expense)';
                 return `<div class="mgr-card" onclick="openList('account', '${a}')" style="cursor:pointer; transition: transform 0.1s;">
-                    <div class="mgr-title">
-                        <span>💳 ${a} <span style="color:${balColor}; font-size:18px; margin-left:8px;">($${bal.toLocaleString()})</span></span>
-                        <span class="mgr-del" onclick="event.stopPropagation(); delAcc('${a}')">刪除</span>
-                    </div>
-                </div>`;
+                    <div class="mgr-title"><span>💳 a<spanstyle="color:{balColor}; font-size:18px; margin-left:8px;">($bal.toLocaleString())</span></span><spanclass="mgr-del"onclick="event.stopPropagation();delAcc('{a}')">刪除</span></div></div>`;
             }).join('');
         }
-
-        function addAcc() { let n = prompt('輸入新帳戶名稱：'); if(n&&n.trim()&&!sets.a.includes(n.trim())){ sets.a.push(n.trim()); saveDB(); renderAccMgr(); renderHome(); } }
+        function addAcc() { let n = prompt('輸入新帳戶名稱：'); if(n&&n.trim()&&!sets.a.includes(n.trim())){ sets.a.push(n.trim()); saveDB(); renderAccMgr(); renderHome(); triggerAutoConfigBackup(); } }
         function delAcc(a) { 
             let used = db.some(r=>r.account===a || r.toAccount===a);
             if(used && !confirm('此帳戶已有歷史紀錄，刪除不影響過去帳目，確定刪除？')) return;
-            sets.a = sets.a.filter(x=>x!==a); if(!sets.a.length) sets.a=['💵 現金']; saveDB(); renderAccMgr(); renderHome();
+            sets.a = sets.a.filter(x=>x!==a); if(!sets.a.length) sets.a=['💵 現金']; saveDB(); renderAccMgr(); renderHome(); triggerAutoConfigBackup();
         }
 
         function openCatMgr() { mgrCatTyp = 'expense'; renderCatMgr('expense'); $('m-cat-mgr').style.display='block'; pushM('m-cat-mgr'); }
-        
         function renderCatMgr(typ) {
-            mgrCatTyp = typ;
-            document.querySelectorAll('#cat-tabs .tab').forEach(t=>t.className='tab '+(t.classList.contains('exp')?'exp':'inc'));
+            mgrCatTyp = typ; document.querySelectorAll('#cat-tabs .tab').forEach(t=>t.className='tab '+(t.classList.contains('exp')?'exp':'inc'));
             document.querySelector(`#cat-tabs .tab.${typ==='expense'?'exp':'inc'}`).classList.add('active');
             let html = '';
             for(let m in cats[typ]) {
-                let emoji = getEmoji(m);
-                let subs = cats[typ][m].map(s=>`<div class="mgr-chip">${emoji} ${s} <span class="mgr-del" onclick="delSubCat('${typ}','${m}','${s}')">✖</span></div>`).join('');
-                html += `<div class="mgr-card"><div class="mgr-title"><span>${m}</span><div><span class="mgr-del" style="color:var(--primary);" onclick="addSubCat('${typ}','${m}')">➕</span> <span class="mgr-del" onclick="delMainCat('${typ}','${m}')">🗑️</span></div></div><div>${subs}</div></div>`;
+                let emoji = getEmoji(m); let subs = cats[typ][m].map(s=>`<div class="mgr-chip">${emoji} s<spanclass="mgr-del"onclick="delSubCat('{typ}','m','{s}')">✖</span></div>`).join('');
+                html += `<div class="mgr-card"><div class="mgr-title"><span>m</span><div><spanclass="mgr-del"style="color:var(--primary);"onclick="addSubCat('{typ}','m')">➕</span><spanclass="mgr-del"onclick="delMainCat('{typ}','m')">🗑️</span></div></div><div>{subs}</div></div>`;
             }
             $('cat-mgr-container').innerHTML = html;
         }
-        
-        function addMainCat() { let n=prompt('輸入新主分類：'); if(n&&n.trim()){ cats[mgrCatTyp][n.trim()]=["一般"]; saveDB(); renderCatMgr(mgrCatTyp); } }
-        function addSubCat(t, m) { let n=prompt(`在「${m}」新增子分類：`); if(n&&n.trim()){ cats[t][m].push(n.trim()); saveDB(); renderCatMgr(t); } }
-        function delMainCat(t, m) { let u=db.some(r=>r.type===t&&r.mainCat===m); if(u&&!confirm('此分類已有紀錄，確定刪除？'))return; delete cats[t][m]; saveDB(); renderCatMgr(t); }
-        function delSubCat(t, m, s) { let u=db.some(r=>r.type===t&&r.mainCat===m&&r.subCat===s); if(u&&!confirm('此子分類已有紀錄，確定刪除？'))return; cats[t][m]=cats[t][m].filter(x=>x!==s); saveDB(); renderCatMgr(t); }
+        function addMainCat() { let n=prompt('輸入新主分類：'); if(n&&n.trim()){ cats[mgrCatTyp][n.trim()]=["一般"]; saveDB(); renderCatMgr(mgrCatTyp); triggerAutoConfigBackup(); } }
+        function addSubCat(t, m) { let n=prompt(`在「${m}」新增子分類：`); if(n&&n.trim()){ cats[t][m].push(n.trim()); saveDB(); renderCatMgr(t); triggerAutoConfigBackup(); } }
+        function delMainCat(t, m) { let u=db.some(r=>r.type===t&&r.mainCat===m); if(u&&!confirm('此分類已有紀錄，確定刪除？'))return; delete cats[t][m]; saveDB(); renderCatMgr(t); triggerAutoConfigBackup(); }
+        function delSubCat(t, m, s) { let u=db.some(r=>r.type===t&&r.mainCat===m&&r.subCat===s); if(u&&!confirm('此子分類已有紀錄，確定刪除？'))return; cats[t][m]=cats[t][m].filter(x=>x!==s); saveDB(); renderCatMgr(t); triggerAutoConfigBackup(); }
 
-        function openBackupOpt() { $('m-backup').style.display='block'; pushM('m-backup'); }
         function expData(t) {
             let url = '';
             try {
-                const n=new Date(), ds=`${n.getFullYear()}${String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}`;
-                let c='', f='', m='';
-                if(t==='json') { c=JSON.stringify({db,cats,sets}); f=`個人雲帳本_${ds}.json`; m='application/json'; }
-                else { c="系統ID,日期,類型,大分類,小分類,轉出帳戶,轉入帳戶,金額,備註\n"; db.forEach(r=>{ let tStr=r.type==='expense'?'支出':(r.type==='income'?'收入':'轉帳'); c+=`${r.id},${r.date},${tStr},${r.mainCat||''},${r.subCat||''},${r.account},${r.toAccount||''},${r.amount},${r.note||''}\n`; }); f=`個人雲帳本_${ds}.csv`; m='text/csv'; }
+                const n=new Date(), ds=`n.getFullYear(){String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}`;
+                // 手動匯出 JSON 也只匯出設定，因為明細都在雲端
+                const c=JSON.stringify({cats,sets}); const f=`個人雲帳本_設定備份_${ds}.json`; const m='application/json'; 
                 const blob = new Blob([new Uint8Array([0xEF,0xBB,0xBF]), c], {type:m});
                 url = URL.createObjectURL(blob);
                 const a=document.createElement('a'); a.href=url; a.download=f; a.style.display='none';
-                document.body.appendChild(a); a.click(); a.remove();
-                closeModal();
-                toast(t==='json' ? '✅ 已開始匯出 JSON 備份，請確認下載資料夾' : '✅ 已開始匯出 CSV，請確認下載資料夾');
-                setTimeout(() => URL.revokeObjectURL(url), 1500);
-            } catch (err) {
-                console.error('匯出失敗：', err);
-                closeModal();
-                toast('⚠️ 匯出失敗，請再試一次');
-                if (url) setTimeout(() => URL.revokeObjectURL(url), 1500);
-            }
+                document.body.appendChild(a); a.click(); a.remove(); closeModal();
+                toast('✅ 已匯出 JSON 設定備份'); setTimeout(() => URL.revokeObjectURL(url), 1500);
+            } catch (err) { closeModal(); toast('⚠️ 匯出失敗'); }
         }
+        
         function impData(e) {
             const f=e.target.files[0]; if(!f) return; const r=new FileReader();
-            r.onload = ev => { try{ let d=JSON.parse(ev.target.result); if(d.db){ db=d.db; if(d.cats)cats=d.cats; if(d.sets)sets=d.sets; saveDB(); alert('還原成功！'); window.location.reload(); }else alert('檔案格式不符'); }catch(err){alert('讀取失敗，僅支援 JSON 還原');} }; r.readAsText(f);
+            r.onload = ev => { 
+                try{ 
+                    let d=JSON.parse(ev.target.result); 
+                    if(d.cats) cats=d.cats; if(d.sets) sets=d.sets; 
+                    saveDB(); 
+                    alert('設定還原成功！(歷史明細請點擊同步按鈕從雲端拉取)'); window.location.reload(); 
+                }catch(err){alert('讀取失敗，格式錯誤');} 
+            }; 
+            r.readAsText(f);
         }
 
+        // --- 核心：升級版雙向增量同步 ---
         async function syncToGAS(showUI = false) {
-            if(!navigator.onLine) return showUI ? toast('無網路連線，下次將自動同步') : null;
-            let p = db.filter(r=>r.syncStatus==='pending'); if(!p.length) return showUI ? toast('已是最新狀態') : null;
+            if(!navigator.onLine) return showUI ? toast('無網路連線，稍後再試') : null;
+            
+            let p = db.filter(r=>r.syncStatus==='pending'); 
             
             let b = $('btn-sync'), ot = b.innerHTML; 
             b.innerHTML='🔄 同步中'; b.style.pointerEvents='none';
             try {
-                const res = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(p) });
+                const reqBody = {
+                    action: 'sync',
+                    data: p, // 本機需要上傳的資料
+                    lastSyncTime: lastSyncTime // 告訴伺服器我上次同步是什麼時候
+                };
+
+                const res = await fetch(GAS_URL, { 
+                    method:'POST', 
+                    headers:{'Content-Type':'text/plain;charset=utf-8'}, 
+                    body:JSON.stringify(reqBody) 
+                });
+                
                 const r = await res.json();
-                if(r.status==='success'||r.status==='ok') { db.forEach(x=>{if(x.syncStatus==='pending')x.syncStatus='synced';}); saveDB(); if(showUI) toast(`成功同步 ${p.length} 筆資料至雲端`); renderHome(); } else throw new Error();
-            } catch(e) { if(showUI) toast('同步失敗，稍後將自動重試'); } finally { b.innerHTML=ot; b.style.pointerEvents='auto'; }
+                
+                if(r.status==='success') { 
+                    // 1. 把剛剛上傳成功的 pending 改成 synced
+                    db.forEach(x => { if(x.syncStatus==='pending') x.syncStatus='synced'; });
+                    
+                    // 2. 處理從雲端載下來的新資料 (增量或全新)
+                    const serverData = r.data || [];
+                    if (serverData.length > 0) {
+                        serverData.forEach(sRec => {
+                            // 找找看本機有沒有這筆 (用 ID 判斷)
+                            let idx = db.findIndex(localRec => localRec.id === sRec.id);
+                            if (idx > -1) {
+                                // 本機有，用雲端的蓋過去 (因為雲端的是最新的)
+                                db[idx] = sRec;
+                            } else {
+                                // 本機沒有，新增進去
+                                db.push(sRec);
+                            }
+                        });
+                        if(showUI) toast(`✅ 同步完成！下載了 ${serverData.length} 筆新資料`);
+                    } else {
+                        if(showUI && p.length === 0) toast('✅ 已是最新狀態');
+                        else if (showUI) toast(`✅ 成功上傳 ${p.length} 筆資料`);
+                    }
+
+                    // 3. 更新最後同步時間 (非常重要)
+                    lastSyncTime = r.serverTime;
+                    localStorage.setItem('cloud_exp_lastSyncTime', lastSyncTime);
+                    
+                    saveDB(); 
+                    renderHome(); 
+                } else {
+                    throw new Error(r.message || 'Server Error');
+                }
+            } catch(e) { 
+                console.error(e);
+                if(showUI) toast('⚠️ 同步失敗，稍後請再重試'); 
+            } finally { 
+                b.innerHTML=ot; b.style.pointerEvents='auto'; 
+            }
         }
 
         function saveDB() { localStorage.setItem('cloud_exp_db',JSON.stringify(db)); localStorage.setItem('cloud_exp_cats',JSON.stringify(cats)); localStorage.setItem('cloud_exp_sets',JSON.stringify(sets)); }
         
         function setupPWA() {
             const iconUrl = new URL('icon.png', window.location.href).href;
-            
             const m = { 
-                name: "個人雲帳本", 
-                short_name: "個人雲帳本", 
-                display: "standalone", 
-                background_color: "#F2F5F8", 
-                theme_color: "#F39C12", 
-                icons: [
-                    { src: iconUrl, sizes: "192x192", type: "image/png" },
-                    { src: iconUrl, sizes: "512x512", type: "image/png" }
-                ], 
+                name: "個人雲帳本", short_name: "個人雲帳本", display: "standalone", 
+                background_color: "#F2F5F8", theme_color: "#F39C12", 
+                icons: [ { src: iconUrl, sizes: "192x192", type: "image/png" }, { src: iconUrl, sizes: "512x512", type: "image/png" } ], 
                 start_url: window.location.href 
             };
             const l = document.createElement('link'); l.rel = 'manifest'; l.href = URL.createObjectURL(new Blob([JSON.stringify(m)], { type: 'application/json' })); document.head.appendChild(l);
@@ -1047,3 +926,5 @@
     </script>
 </body>
 </html>
+
+
