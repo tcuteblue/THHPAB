@@ -62,7 +62,6 @@
         .t-inc { color: var(--primary); } 
         .t-bal { color: var(--income); }
 
-        /* 特製的高亮度預算條 */
         #budget-container { margin-top: 14px; padding: 0 6px; }
         .bg-text-row { display: flex; justify-content: space-between; align-items: flex-end; font-size: 16px; font-weight: 900; margin-bottom: 8px; }
         .bg-bar-wrap { height: 12px; background: #DFE4EA; border-radius: 6px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); }
@@ -191,7 +190,6 @@
                 <div class="dash-item" onclick="openChart('total')"><span class="dash-label">本月結餘 📊</span><span class="dash-value t-bal" id="d-bal">0</span></div>
             </div>
 
-            <!-- 特製的高亮度預算條 -->
             <div id="budget-container" style="display:none;">
                 <div class="bg-text-row">
                     <span id="bg-txt-left" style="color:#7f8fa6;">已用 $0 / 預算 $0</span>
@@ -496,6 +494,7 @@
                     syncToGAS(false); 
                 }
             }
+            if(defPrompt) $('install-btn').style.display = 'block';
         };
 
         function initSwipeCalendar() {
@@ -509,17 +508,22 @@
         }
 
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden' ? navigator.onLine : false) {
+            if (document.visibilityState === 'hidden' && navigator.onLine) {
                 const pending = db.filter(r => r.syncStatus === 'pending');
                 if (pending.length > 0) {
+                    // 移除 keepalive 以避免部分瀏覽器因為跨域擋下背景同步
                     fetch(GAS_URL, { 
                         method:'POST', 
                         headers:{'Content-Type':'text/plain;charset=utf-8'}, 
-                        body:JSON.stringify({ action: 'sync', data: pending, lastSyncTime: lastSyncTime }), 
-                        keepalive:true 
+                        body:JSON.stringify({ action: 'sync', data: pending, lastSyncTime: lastSyncTime })
                     }).then(r => r.json()).then(r => {
                         if (r.status === 'success' ? true : r.status === 'ok') {
                             db.forEach(x => { if (x.syncStatus === 'pending') x.syncStatus = 'synced'; });
+                            // 若背景同步成功，也需要更新時間戳記，避免下次誤拉
+                            if (r.serverTime) {
+                                lastSyncTime = r.serverTime; 
+                                localStorage.setItem('cloud_exp_lastSyncTime', lastSyncTime);
+                            }
                             saveDB();
                         }
                     }).catch(() => {});
@@ -766,7 +770,9 @@
         }
 
         function saveRec() {
-            let a = Number(kpStr); if(a<=0) return toast('金額需大於0');
+            let a = Number(kpStr); 
+            if(isNaN(a) || a < 0) return toast('金額不可為負數'); // 修正：允許 0 元輸入
+            
             let isTransfer = (rTyp === 'transfer');
             let accOut = isTransfer ? $('r-acc-out').value :$('r-acc').value;
             let accIn = isTransfer ? $('r-acc-in').value : '';
@@ -980,7 +986,7 @@
                         serverData.forEach(sRec => {
                             let idx = db.findIndex(localRec => localRec.id === sRec.id);
                             if (sRec.type === 'deleted') {
-                                if (idx > -1) db.splice(idx, 1); // 接收到伺服器的刪除指示，徹底在本地清除
+                                if (idx > -1) db.splice(idx, 1); 
                             } else {
                                 if (idx > -1) db[idx] = sRec; else db.push(sRec);
                             }
@@ -991,7 +997,6 @@
                         else if (showUI) toast(`✅ 上傳了 ${p.length} 筆資料`);
                     }
                     
-                    // 清理本地已經成功上傳至伺服器的「待刪除」紀錄
                     db = db.filter(x => !(x.type === 'deleted' && x.syncStatus === 'synced'));
                     
                     lastSyncTime = r.serverTime; localStorage.setItem('cloud_exp_lastSyncTime', lastSyncTime);
@@ -1002,25 +1007,22 @@
 
         function saveDB() { localStorage.setItem('cloud_exp_db',JSON.stringify(db)); localStorage.setItem('cloud_exp_cats',JSON.stringify(cats)); localStorage.setItem('cloud_exp_sets',JSON.stringify(sets)); }
         
-        // --- 修正 PWA 安裝設定 ---
         window.addEventListener('beforeinstallprompt', e => { 
             e.preventDefault(); 
             defPrompt = e; 
-            // 只有在觸發安裝提示時才顯示按鈕
-            if($('install-btn')) $('install-btn').style.display = 'block'; 
+            if($('install-btn'))$('install-btn').style.display = 'block'; 
         });
 
         function setupPWA() {
             const iconUrl = new URL('icon.png', window.location.href).href;
             
-            // 確保 start_url 與當前路徑相符，並宣告圖示尺寸
             const m = { 
                 name: "個人雲帳本", 
                 short_name: "個人雲帳本", 
                 display: "standalone", 
                 background_color: "#F2F5F8", 
                 theme_color: "#F39C12", 
-                start_url: window.location.pathname, // 使用 pathname 而非完整 href
+                start_url: window.location.pathname, 
                 icons: [ 
                     { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "any maskable" }, 
                     { src: iconUrl, sizes: "512x512", type: "image/png", purpose: "any maskable" } 
@@ -1031,7 +1033,6 @@
             l.href = URL.createObjectURL(new Blob([JSON.stringify(m)], { type: 'application/json' })); 
             document.head.appendChild(l);
 
-            // 註冊一個極簡的 Service Worker 來滿足瀏覽器的安裝條件
             if ('serviceWorker' in navigator) {
                 const swCode = `
                     self.addEventListener('install', e => self.skipWaiting());
@@ -1057,10 +1058,8 @@
             } 
         }
 
-        // 偵測是否已經是 Standalone 模式 (已安裝)
         window.matchMedia('(display-mode: standalone)').addEventListener('change', (evt) => {
-            if (evt.matches && $('install-btn')) {
-                $('install-btn').style.display = 'none';
+            if (evt.matches && $('install-btn')) {$('install-btn').style.display = 'none';
             }
         });
     </script>
