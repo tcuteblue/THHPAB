@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
     <title>個人雲帳本</title>
+    <!-- iOS support -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="個人雲帳本">
@@ -190,7 +191,7 @@
                 <div class="dash-item" onclick="openChart('total')"><span class="dash-label">本月結餘 📊</span><span class="dash-value t-bal" id="d-bal">0</span></div>
             </div>
 
-            <!-- 加大加粗版的預算進度條 -->
+            <!-- 特製的高亮度預算條 -->
             <div id="budget-container" style="display:none;">
                 <div class="bg-text-row">
                     <span id="bg-txt-left" style="color:#7f8fa6;">已用 $0 / 預算 $0</span>
@@ -239,7 +240,7 @@
         <button class="btn-main btn-record" id="install-btn" style="background:var(--income); box-shadow:0 6px 0 #189855; margin-top:20px; font-size:18px; width:100%; display:none;" onclick="handleInstall()">📱 將帳本加到手機主畫面</button>
     </div>
 
-    <!-- Modals 保持原本大小與排版 -->
+    <!-- Modals -->
     <div id="m-record" class="modal">
         <div class="m-header"><span id="m-record-title">新增紀錄</span><button class="m-close" onclick="closeModal()">✖</button></div>
         
@@ -404,7 +405,6 @@
             return [...str][0]; 
         };
 
-        // 徹底避開介面 || 亂碼 Bug 的資料讀取寫法
         let pDB = JSON.parse(localStorage.getItem('cloud_exp_db'));
         let db = pDB ? pDB : [];
         
@@ -483,6 +483,8 @@
         const toast = m => { const t=$('toast'); t.innerText=m; t.style.opacity=1; setTimeout(()=>t.style.opacity=0,2500); };
         const dStr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
+        let defPrompt = null;
+
         window.onload = () => { 
             setupPWA(); autoPocket(); 
             currentInlineDate = dStr(new Date());
@@ -494,7 +496,6 @@
                     syncToGAS(false); 
                 }
             }
-            if(defPrompt) $('install-btn').style.display = 'block';
         };
 
         function initSwipeCalendar() {
@@ -986,18 +987,66 @@
 
         function saveDB() { localStorage.setItem('cloud_exp_db',JSON.stringify(db)); localStorage.setItem('cloud_exp_cats',JSON.stringify(cats)); localStorage.setItem('cloud_exp_sets',JSON.stringify(sets)); }
         
+        // --- 修正 PWA 安裝設定 ---
+        window.addEventListener('beforeinstallprompt', e => { 
+            e.preventDefault(); 
+            defPrompt = e; 
+            // 只有在觸發安裝提示時才顯示按鈕
+            if($('install-btn'))$('install-btn').style.display = 'block'; 
+        });
+
         function setupPWA() {
             const iconUrl = new URL('icon.png', window.location.href).href;
+            
+            // 確保 start_url 與當前路徑相符，並宣告圖示尺寸
             const m = { 
-                name: "個人雲帳本", short_name: "個人雲帳本", display: "standalone", 
-                background_color: "#F2F5F8", theme_color: "#F39C12", 
-                icons: [ { src: iconUrl, sizes: "192x192", type: "image/png" }, { src: iconUrl, sizes: "512x512", type: "image/png" } ], 
-                start_url: window.location.href 
+                name: "個人雲帳本", 
+                short_name: "個人雲帳本", 
+                display: "standalone", 
+                background_color: "#F2F5F8", 
+                theme_color: "#F39C12", 
+                start_url: window.location.pathname, // 使用 pathname 而非完整 href
+                icons: [ 
+                    { src: iconUrl, sizes: "192x192", type: "image/png", purpose: "any maskable" }, 
+                    { src: iconUrl, sizes: "512x512", type: "image/png", purpose: "any maskable" } 
+                ] 
             };
-            const l = document.createElement('link'); l.rel = 'manifest'; l.href = URL.createObjectURL(new Blob([JSON.stringify(m)], { type: 'application/json' })); document.head.appendChild(l);
+            const l = document.createElement('link'); 
+            l.rel = 'manifest'; 
+            l.href = URL.createObjectURL(new Blob([JSON.stringify(m)], { type: 'application/json' })); 
+            document.head.appendChild(l);
+
+            // 註冊一個極簡的 Service Worker 來滿足瀏覽器的安裝條件
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+                    self.addEventListener('install', e => self.skipWaiting());
+                    self.addEventListener('activate', e => e.waitUntil(clients.claim()));
+                    self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => new Response('Offline'))));
+                `;
+                const swUrl = URL.createObjectURL(new Blob([swCode], { type: 'application/javascript' }));
+                navigator.serviceWorker.register(swUrl).catch(() => console.log('SW registration failed'));
+            }
         }
-        let defPrompt; window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); defPrompt = e; });
-        function handleInstall() { if (defPrompt) { defPrompt.prompt(); defPrompt.userChoice.then(() => { defPrompt = null; $('install-btn').style.display = 'none'; }); } else { alert('請點擊瀏覽器選單「加到主畫面」'); } }
+        
+        function handleInstall() { 
+            if (defPrompt) { 
+                defPrompt.prompt(); 
+                defPrompt.userChoice.then((choice) => { 
+                    if(choice.outcome === 'accepted') {
+                        $('install-btn').style.display = 'none'; 
+                    }
+                    defPrompt = null; 
+                }); 
+            } else { 
+                alert('您的瀏覽器目前未提供安裝，或請點擊瀏覽器選單的「加到主畫面」來安裝'); 
+            } 
+        }
+
+        // 偵測是否已經是 Standalone 模式 (已安裝)
+        window.matchMedia('(display-mode: standalone)').addEventListener('change', (evt) => {
+            if (evt.matches && $('install-btn')) {$('install-btn').style.display = 'none';
+            }
+        });
     </script>
 </body>
 </html>
