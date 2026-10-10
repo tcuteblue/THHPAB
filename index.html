@@ -579,7 +579,7 @@
             }
 
             for(let i=0;i<7;i++) {
-                let ds = dStr(d), has = db.some(r=>r.date===ds);
+                let ds = dStr(d), has = db.some(r=>r.date===ds && r.type !== 'deleted');
                 cal.innerHTML += `<div class="day-col ${has?'has-record':''}" onclick="loadInlineList('${ds}')"><span>${wk[i]}</span><div class="day-date">${d.getDate()}</div><div class="day-has-record"></div></div>`;
                 d.setDate(d.getDate()+1);
             }
@@ -591,6 +591,7 @@
             let dtI=0, dtE=0, dwI=0, dwE=0, dmI=0, dmE=0, dyI=0, dyE=0;
 
             db.forEach(r => {
+                if (r.type === 'deleted') return;
                 let a = r.amount, rd = new Date(r.date.replace(/-/g, '/'));
                 if(r.date === tStr) r.type==='income'?dtI+=a:dtE+=a;
                 if(rd>=wStart && rd<=wEnd) r.type==='income'?dwI+=a:dwE+=a;
@@ -645,7 +646,7 @@
             });
             $('ui-inline-title').innerText = `📝 ${dateStr.replace(/-/g, '/')} 明細`;
             const tl = $('ui-today-list');
-            const tr = db.filter(r=>r.date===dateStr).reverse();
+            const tr = db.filter(r=>r.date===dateStr && r.type !== 'deleted').reverse();
             tl.innerHTML = tr.length ? tr.map(r => rHtml(r)).join('') : '<div style="text-align:center;padding:25px;color:#95a5a6;font-weight:900;font-size:18px;">該日尚無紀錄</div>';
         }
 
@@ -715,7 +716,7 @@
         function handleNoteInput(val) {
             let box = $('note-sugg'); let q = val.trim();
             if(!q) { box.style.display = 'none'; return; }
-            let historyNotes = [...new Set(db.map(r => r.note).filter(n => n))];
+            let historyNotes = [...new Set(db.filter(r=>r.type!=='deleted').map(r => r.note).filter(n => n))];
             let matched = historyNotes.filter(n => n.includes(q) ? n !== q : false);
             if(matched.length > 0) { box.innerHTML = matched.map(m => `<div class="ac-item" onclick="setNote('${m}')">${m}</div>`).join(''); box.style.display = 'block'; } 
             else { box.style.display = 'none'; }
@@ -753,7 +754,7 @@
         
         function updBal() {
             let acc = $('r-acc').value, b = 0;
-            db.forEach(r=>{ if(r.account===acc) { if(r.type==='income')b+=r.amount; else b-=r.amount; } if(r.type==='transfer' ? r.toAccount===acc : false) b+=r.amount; });
+            db.forEach(r=>{ if(r.type==='deleted') return; if(r.account===acc) { if(r.type==='income')b+=r.amount; else b-=r.amount; } if(r.type==='transfer' ? r.toAccount===acc : false) b+=r.amount; });
             $('r-bal').innerText = `餘額: $${b.toLocaleString()}`; $('r-bal').style.color = b >= 0 ? 'var(--primary)' : 'var(--expense)';
         }
 
@@ -790,10 +791,14 @@
         
         function delRecFromModal() {
             if(!editingRecordId) return;
-            if(confirm('確定刪除這筆紀錄嗎？ (注意：目前刪除為單機操作，若需刪除雲端紀錄請至試算表操作)')) { 
-                db = db.filter(r => r.id !== editingRecordId); 
+            if(confirm('確定刪除這筆紀錄嗎？')) { 
+                let idx = db.findIndex(r => r.id === editingRecordId);
+                if (idx > -1) {
+                    db[idx].type = 'deleted';
+                    db[idx].syncStatus = 'pending';
+                }
                 saveDB(); renderHome(); if($('m-list').style.display === 'block') renderListModal(); 
-                closeModal(); toast('✅ 已刪除');
+                closeModal(); toast('✅ 已刪除 (待同步)');
             }
         }
 
@@ -816,6 +821,7 @@
         function renderListModal() {
             let kw = $('l-search').value.toLowerCase();
             let arr = db.filter(r => {
+                if(r.type === 'deleted') return false;
                 if(r.date < lStart ? true : r.date > lEnd) return false;
                 if(currentAccFilter ? (r.account !== currentAccFilter ? r.toAccount !== currentAccFilter : false) : false) return false;
                 if(kw) { 
@@ -837,7 +843,7 @@
             for(let i=0; i<firstDay; i++) html += '<div></div>'; let tStr = dStr(new Date());
             for(let i=1; i<=daysInM; i++) {
                 let ds = `${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
-                let has = db.some(r=>r.date===ds), isT = (ds===tStr);
+                let has = db.some(r=>r.date===ds && r.type!=='deleted'), isT = (ds===tStr);
                 html += `<div class="cal-cell ${has?'has-rec':''} ${isT?'today':''}" onclick="closeModal(); weekSwipeOffset=0; cDate = new Date('${ds}'.replace(/-/g, '/')); renderHome(); loadInlineList('${ds}')">${i}</div>`;
             }
             $('ui-cal-grid').innerHTML = html;
@@ -861,6 +867,7 @@
             
             let dt = {}, ti=0, te=0;
             db.forEach(r=>{
+                if(r.type==='deleted') return;
                 if(r.date.startsWith(mStr)) {
                     if(r.type==='income') ti+=r.amount; if(r.type==='expense') te+=r.amount;
                     if(r.type===cTyp) dt[r.mainCat] = (dt[r.mainCat] ? dt[r.mainCat] : 0) + r.amount;
@@ -902,7 +909,7 @@
         function openAccMgr() { renderAccMgr(); $('m-acc-mgr').style.display='block'; pushM('m-acc-mgr'); }
         function renderAccMgr() {
             let accBals = {}; sets.a.forEach(a => accBals[a] = 0);
-            db.forEach(r => { let a = r.amount; if(r.type === 'income' ? accBals[r.account] !== undefined : false) accBals[r.account] += a; if(r.type === 'expense' ? accBals[r.account] !== undefined : false) accBals[r.account] -= a; if(r.type === 'transfer') { if(accBals[r.account] !== undefined) accBals[r.account] -= a; if(accBals[r.toAccount] !== undefined) accBals[r.toAccount] += a; } });
+            db.forEach(r => { if(r.type==='deleted') return; let a = r.amount; if(r.type === 'income' ? accBals[r.account] !== undefined : false) accBals[r.account] += a; if(r.type === 'expense' ? accBals[r.account] !== undefined : false) accBals[r.account] -= a; if(r.type === 'transfer') { if(accBals[r.account] !== undefined) accBals[r.account] -= a; if(accBals[r.toAccount] !== undefined) accBals[r.toAccount] += a; } });
             $('acc-mgr-container').innerHTML = sets.a.map(a => {
                 let bal = accBals[a] ? accBals[a] : 0; let balColor = bal >= 0 ? 'var(--primary)' : 'var(--expense)';
                 return `<div class="mgr-card" onclick="openList('account', '${a}')" style="cursor:pointer; transition: transform 0.1s;">
@@ -911,7 +918,7 @@
         }
         function addAcc() { let n = prompt('輸入新帳戶名稱：'); if(n ? (n.trim() ? !sets.a.includes(n.trim()) : false) : false){ sets.a.push(n.trim()); saveDB(); renderAccMgr(); renderHome(); triggerAutoConfigBackup(); } }
         function delAcc(a) { 
-            let used = db.some(r => r.account === a ? true : r.toAccount === a);
+            let used = db.some(r => r.type!=='deleted' && (r.account === a || r.toAccount === a));
             if(used ? !confirm('此帳戶已有歷史紀錄，確定刪除？') : false) return;
             sets.a = sets.a.filter(x=>x!==a); if(!sets.a.length) sets.a=['💵 現金']; saveDB(); renderAccMgr(); renderHome(); triggerAutoConfigBackup();
         }
@@ -929,8 +936,8 @@
         }
         function addMainCat() { let n=prompt('輸入新主分類：'); if(n ? n.trim() : false){ cats[mgrCatTyp][n.trim()]=["一般"]; saveDB(); renderCatMgr(mgrCatTyp); triggerAutoConfigBackup(); } }
         function addSubCat(t, m) { let n=prompt(`在「${m}」新增子分類：`); if(n ? n.trim() : false){ cats[t][m].push(n.trim()); saveDB(); renderCatMgr(t); triggerAutoConfigBackup(); } }
-        function delMainCat(t, m) { let u=db.some(r=>r.type===t ? r.mainCat===m : false); if(u ? !confirm('此分類已有紀錄，確定刪除？') : false)return; delete cats[t][m]; saveDB(); renderCatMgr(t); triggerAutoConfigBackup(); }
-        function delSubCat(t, m, s) { let u=db.some(r=>r.type===t ? (r.mainCat===m ? r.subCat===s : false) : false); if(u ? !confirm('此子分類已有紀錄，確定刪除？') : false)return; cats[t][m]=cats[t][m].filter(x=>x!==s); saveDB(); renderCatMgr(t); triggerAutoConfigBackup(); }
+        function delMainCat(t, m) { let u=db.some(r=>r.type!=='deleted' && r.type===t && r.mainCat===m); if(u ? !confirm('此分類已有紀錄，確定刪除？') : false)return; delete cats[t][m]; saveDB(); renderCatMgr(t); triggerAutoConfigBackup(); }
+        function delSubCat(t, m, s) { let u=db.some(r=>r.type!=='deleted' && r.type===t && r.mainCat===m && r.subCat===s); if(u ? !confirm('此子分類已有紀錄，確定刪除？') : false)return; cats[t][m]=cats[t][m].filter(x=>x!==s); saveDB(); renderCatMgr(t); triggerAutoConfigBackup(); }
 
         function expData(t) {
             let url = '';
@@ -972,13 +979,21 @@
                     if (serverData.length > 0) {
                         serverData.forEach(sRec => {
                             let idx = db.findIndex(localRec => localRec.id === sRec.id);
-                            if (idx > -1) db[idx] = sRec; else db.push(sRec);
+                            if (sRec.type === 'deleted') {
+                                if (idx > -1) db.splice(idx, 1); // 接收到伺服器的刪除指示，徹底在本地清除
+                            } else {
+                                if (idx > -1) db[idx] = sRec; else db.push(sRec);
+                            }
                         });
-                        if(showUI) toast(`✅ 下載了 ${serverData.length} 筆資料`);
+                        if(showUI) toast(`✅ 同步了 ${serverData.length} 筆資料`);
                     } else {
                         if(showUI ? p.length === 0 : false) toast('✅ 已是最新狀態');
                         else if (showUI) toast(`✅ 上傳了 ${p.length} 筆資料`);
                     }
+                    
+                    // 清理本地已經成功上傳至伺服器的「待刪除」紀錄
+                    db = db.filter(x => !(x.type === 'deleted' && x.syncStatus === 'synced'));
+                    
                     lastSyncTime = r.serverTime; localStorage.setItem('cloud_exp_lastSyncTime', lastSyncTime);
                     saveDB(); renderHome(); 
                 } else throw new Error();
@@ -992,7 +1007,7 @@
             e.preventDefault(); 
             defPrompt = e; 
             // 只有在觸發安裝提示時才顯示按鈕
-            if($('install-btn'))$('install-btn').style.display = 'block'; 
+            if($('install-btn')) $('install-btn').style.display = 'block'; 
         });
 
         function setupPWA() {
@@ -1044,7 +1059,8 @@
 
         // 偵測是否已經是 Standalone 模式 (已安裝)
         window.matchMedia('(display-mode: standalone)').addEventListener('change', (evt) => {
-            if (evt.matches && $('install-btn')) {$('install-btn').style.display = 'none';
+            if (evt.matches && $('install-btn')) {
+                $('install-btn').style.display = 'none';
             }
         });
     </script>
