@@ -82,17 +82,16 @@
 
         .list-header { font-size: 20px; font-weight: 900; color: #2F3640; margin: 25px 5px 15px; display: flex; justify-content: space-between; align-items: center; }
         
-        /* 明細卡片：採用 Flexbox 上下分層排版 */
-        .record-item { background: #fff; border-radius: 18px; padding: 16px 18px; margin-bottom: 14px; box-shadow: 0 4px 10px rgba(0,0,0,.05); border-left: 8px solid transparent; display: flex; flex-direction: column; }
+        /* 明細卡片：採用 Flexbox 上下分層排版，並改為整塊可點擊 */
+        .record-item { background: #fff; border-radius: 18px; padding: 16px 18px; margin-bottom: 14px; box-shadow: 0 4px 10px rgba(0,0,0,.05); border-left: 8px solid transparent; display: flex; flex-direction: column; cursor: pointer; transition: transform 0.1s, background 0.1s; }
+        .record-item:active { transform: scale(0.98); background: #fdfefe; }
         .record-item.exp { border-left-color: var(--expense); }
         .record-item.inc { border-left-color: var(--primary); }
         .record-item.tra { border-left-color: var(--transfer); }
         
-        /* 頂部區域：日期與刪除按鈕 */
+        /* 頂部區域：日期 */
         .r-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
         .r-date { font-size: 14px; color: #95a5a6; font-weight: 900; }
-        .del-btn { background: #ffefef; color: var(--expense); border: none; border-radius: 10px; padding: 6px 14px; font-size: 14px; font-weight: 900; cursor: pointer; }
-        .del-btn:active { background: #ffdada; }
         
         /* 內容區域：分類、備註、金額 */
         .r-cat { font-size: 19px; font-weight: 900; color: #2F3640; line-height: 1.4; word-break: break-word; }
@@ -123,8 +122,12 @@
         .amt-val { font-size: 52px; font-weight: 900; font-family: monospace; letter-spacing: 1px; color: var(--text-color); }
         .bal-hint { font-size: 16px; margin-top: 10px; text-align: right; font-weight: 900; }
 
-        .btn-save { background: var(--primary); color: #fff; width: calc(100% - 40px); margin: 20px; padding: 20px; border-radius: 22px; font-size: 24px; font-weight: 900; border: none; box-shadow: 0 6px 0 var(--primary-dark), 0 8px 20px rgba(0,168,255,.3); cursor: pointer; }
+        /* 修改儲存按鈕容器，支援刪除與儲存並排 */
+        .r-actions-row { display: flex; gap: 15px; margin: 20px; }
+        .btn-save { background: var(--primary); color: #fff; padding: 20px; border-radius: 22px; font-size: 22px; font-weight: 900; border: none; box-shadow: 0 6px 0 var(--primary-dark), 0 8px 20px rgba(0,168,255,.3); cursor: pointer; flex: 2; transition: all 0.1s; }
         .btn-save:active { transform: translateY(6px); box-shadow: 0 0 0 var(--primary-dark); }
+        .btn-delete-modal { background: #FF4757; color: #fff; padding: 20px; border-radius: 22px; font-size: 20px; font-weight: 900; border: none; box-shadow: 0 6px 0 #c0392b, 0 8px 20px rgba(255,71,87,.3); cursor: pointer; flex: 1; text-align: center; transition: all 0.1s; }
+        .btn-delete-modal:active { transform: translateY(6px); box-shadow: 0 0 0 #c0392b; }
 
         .autocomplete-list { display: none; position: absolute; top: calc(100% + 5px); left: 20px; right: 20px; background: #fff; border: 2px solid var(--primary); border-radius: 14px; z-index: 100; max-height: 200px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,.15); }
         .ac-item { padding: 14px 18px; border-bottom: 1px solid #f1f2f6; font-size: 18px; font-weight: 900; color: #2F3640; cursor: pointer; }
@@ -232,9 +235,9 @@
 
     <button class="btn-float" onclick="openSettings()">⚙️</button>
 
-    <!-- ===== 記帳 Modal ===== -->
+    <!-- ===== 記帳/編輯 Modal ===== -->
     <div id="m-record" class="modal">
-        <div class="m-header"><span>新增紀錄</span><button class="m-close" onclick="closeModal()">✖</button></div>
+        <div class="m-header"><span id="m-record-title">新增紀錄</span><button class="m-close" onclick="closeModal()">✖</button></div>
         
         <div class="tabs" id="r-tabs">
             <div class="tab active exp" data-t="expense">支出</div>
@@ -269,7 +272,12 @@
             <input type="text" id="r-note" placeholder="寫點什麼..." oninput="handleNoteInput(this.value)">
             <div id="note-sugg" class="autocomplete-list"></div>
         </div>
-        <button class="btn-save" onclick="saveRec()">💾 儲存紀錄</button>
+
+        <!-- 修改後的儲存與刪除按鈕區域 -->
+        <div class="r-actions-row">
+            <button class="btn-delete-modal" id="btn-modal-del" onclick="delRecFromModal()" style="display:none;">🗑️ 刪除</button>
+            <button class="btn-save" onclick="saveRec()" id="btn-modal-save">💾 儲存紀錄</button>
+        </div>
     </div>
 
     <!-- ===== 列表與搜尋 Modal ===== -->
@@ -413,7 +421,8 @@
 
         let cDate = new Date(), weekSwipeOffset = 0, rTyp = 'expense', kpStr = '0', chartObj = null, cTyp = 'expense', lStart = '', lEnd = '', calPickDate = new Date(), mgrCatTyp = 'expense';
         let currentInlineDate = "";
-        let currentAccFilter = ""; // 帳戶明細過濾狀態
+        let currentAccFilter = "";
+        let editingRecordId = null; // 記錄目前正在編輯的 ID
 
         history.replaceState({ s: 1, t: 'main' }, ''); let curS = 1;
         window.addEventListener('popstate', e => { 
@@ -423,12 +432,13 @@
                 else if(e.state.t === 'modal') { $('v-keypad').style.display='none'; $('r-amt-box').classList.remove('active'); $('note-sugg').style.display='none'; } 
             } 
         });
-        let highestZ = 1000; // 新增：用來記錄當前最高的視窗圖層
+        
+        let highestZ = 1000;
 
         function pushM(id) { 
             curS++; 
             history.pushState({ s: curS, t: 'modal', id }, ''); 
-            if (id && $(id)) $(id).style.zIndex = ++highestZ; // 自動將新打開的視窗提至最上層
+            if (id && $(id)) $(id).style.zIndex = ++highestZ;
         }
         
         function pushK() { if(history.state.t !== 'keypad') { curS++; history.pushState({ s: curS, t: 'keypad' }, ''); } }
@@ -438,7 +448,6 @@
         function closeModal() {
             const visibleModals = [...document.querySelectorAll('.modal')].filter(m => getComputedStyle(m).display !== 'none');
             if (visibleModals.length) {
-                // 找出目前 z-index 最高的視窗進行關閉，而非依照原始代碼順序
                 visibleModals.sort((a, b) => (parseInt(a.style.zIndex) || 1000) - (parseInt(b.style.zIndex) || 1000));
                 visibleModals[visibleModals.length - 1].style.display = 'none';
             }
@@ -584,7 +593,6 @@
 
             $('d-inc').innerText = dmI.toLocaleString();$('d-exp').innerText = dmE.toLocaleString();
             
-            // 獨立預算邏輯
             let bal = (Number(sets.b) || 5000) - dmE;
             $('d-bal').innerText = bal.toLocaleString();$('d-bal').style.color = bal >= 0 ? 'var(--primary)' : 'var(--expense)';
 
@@ -606,6 +614,7 @@
             tl.innerHTML = tr.length ? tr.map(r => rHtml(r)).join('') : '<div style="text-align:center;padding:40px;color:#95a5a6;font-weight:900;font-size:20px;">該日尚無紀錄</div>';
         }
 
+        // 修改：整張明細卡片都是點擊編輯，不再顯示右側的獨立按鈕
         function rHtml(r) {
             let i = r.type==='expense', t = r.type==='transfer';
             let cls = i?'exp':(t?'tra':'inc');
@@ -616,10 +625,9 @@
             let mStr = t ? `轉至：${r.toAccount}` : `${r.mainCat} - ${emoji} ${r.subCat}`;
             
             return `
-            <div class="record-item ${cls}">
+            <div class="record-item ${cls}" onclick="editRec('${r.id}')">
                 <div class="r-header">
                     <div class="r-date">${r.date} · ${r.account} ${r.syncStatus==='pending'?'⏳':''}</div>
-                    <button class="del-btn" onclick="delRec('${r.id}')">刪除</button>
                 </div>
                 <div class="r-cat">${mStr}</div>
                 ${r.note ? `<div class="r-sub">${r.note}</div>` : ''}
@@ -634,12 +642,48 @@
         }
 
         function openRecord() {
+            editingRecordId = null; 
+            $('m-record-title').innerText = '新增紀錄';
+            $('btn-modal-del').style.display = 'none'; // 隱藏刪除按鈕
             rTyp = 'expense'; kpStr = '0'; $('r-amt').innerText='0';
             $('r-date').value=dStr(new Date());$('r-note').value='';
             const opts = sets.a.map(a=>`<option value="${a}">${a}</option>`).join('');
             $('r-acc').innerHTML = opts; $('r-acc-out').innerHTML = opts; $('r-acc-in').innerHTML = opts;
             $('note-sugg').style.display = 'none';
             updRT(); loadMainCat(); updBal(); $('m-record').style.display='block'; pushM('m-record');
+        }
+
+        // 載入舊資料進入編輯模式
+        function editRec(id) {
+            let rec = db.find(r => r.id === id);
+            if (!rec) return;
+
+            editingRecordId = id;
+            rTyp = rec.type;
+            kpStr = rec.amount.toString();
+            $('r-amt').innerText = Number(kpStr).toLocaleString();$('r-date').value = rec.date;
+            $('r-note').value = rec.note || '';
+
+            const opts = sets.a.map(a=>`<option value="${a}">${a}</option>`).join('');
+            $('r-acc').innerHTML = opts; $('r-acc-out').innerHTML = opts; $('r-acc-in').innerHTML = opts;
+
+            updRT();
+
+            if (rTyp === 'transfer') {
+                $('r-acc-out').value = rec.account;
+                $('r-acc-in').value = rec.toAccount;
+            } else {
+                $('r-acc').value = rec.account;
+                loadMainCat();
+                $('r-mcat').value = rec.mainCat;
+                loadSubCat();
+                $('r-scat').value = rec.subCat;
+            }
+
+            updBal();
+            $('note-sugg').style.display = 'none';$('m-record-title').innerText = '編輯紀錄'; 
+            $('btn-modal-del').style.display = 'block'; // 顯示刪除按鈕
+            $('m-record').style.display='block'; pushM('m-record');
         }
 
         $('r-tabs').addEventListener('click', e => { 
@@ -726,17 +770,68 @@
 
         function saveRec() {
             let a = Number(kpStr); if(a<=0) return toast('金額需大於0');
-            let rec = { id:'c_'+Date.now(), type:rTyp, date:$('r-date').value, amount:a, note:$('r-note').value.trim(), syncStatus:'pending' };
-            if(rTyp==='transfer') { rec.account = $('r-acc-out').value; rec.toAccount =$('r-acc-in').value; if(rec.account===rec.toAccount) return toast('轉出與轉入不可相同'); }
-            else { rec.mainCat=$('r-mcat').value; rec.subCat=$('r-scat').value; rec.account=$('r-acc').value; }
-            db.push(rec); saveDB(); toast('✅ 已儲存'); closeKeypad(); closeModal(); renderHome();
+            
+            let isTransfer = (rTyp === 'transfer');
+            let accOut = isTransfer ? $('r-acc-out').value :$('r-acc').value;
+            let accIn = isTransfer ? $('r-acc-in').value : '';
+            if(isTransfer && accOut === accIn) return toast('轉出與轉入不可相同');
+
+            if (editingRecordId) {
+                // 更新模式
+                let idx = db.findIndex(r => r.id === editingRecordId);
+                if (idx > -1) {
+                    db[idx].type = rTyp;
+                    db[idx].date = $('r-date').value;
+                    db[idx].amount = a;
+                    db[idx].note = $('r-note').value.trim();
+                    db[idx].syncStatus = 'pending';
+                    
+                    if (isTransfer) {
+                        db[idx].account = accOut;
+                        db[idx].toAccount = accIn;
+                        delete db[idx].mainCat;
+                        delete db[idx].subCat;
+                    } else {
+                        db[idx].mainCat = $('r-mcat').value;
+                        db[idx].subCat = $('r-scat').value;
+                        db[idx].account = accOut;
+                        delete db[idx].toAccount;
+                    }
+                }
+                editingRecordId = null;
+                toast('✅ 已更新');
+            } else {
+                // 新增模式
+                let rec = { id:'c_'+Date.now(), type:rTyp, date:$('r-date').value, amount:a, note:$('r-note').value.trim(), syncStatus:'pending' };
+                if(isTransfer) { rec.account = accOut; rec.toAccount = accIn; }
+                else { rec.mainCat=$('r-mcat').value; rec.subCat=$('r-scat').value; rec.account=accOut; }
+                db.push(rec);
+                toast('✅ 已儲存');
+            }
+            
+            saveDB(); closeKeypad(); closeModal(); renderHome();
+            if($('m-list').style.display === 'block') renderListModal(); // 同步刷新列表
         }
         
+        // 從編輯視窗刪除紀錄
+        function delRecFromModal() {
+            if(!editingRecordId) return;
+            if(confirm('確定刪除這筆紀錄嗎？')) { 
+                db = db.filter(r => r.id !== editingRecordId); 
+                saveDB(); 
+                renderHome(); 
+                if($('m-list').style.display === 'block') renderListModal(); 
+                closeModal();
+                toast('✅ 已刪除');
+            }
+        }
+
+        // 從列表直接刪除的舊函數保留備用，但目前畫面上已隱藏
         function delRec(id) { if(confirm('確定刪除？')) { db = db.filter(r=>r.id!==id); saveDB(); renderHome(); if($('m-list').style.display==='block') renderListModal(); } }
 
         function openGlobalSearch() {
             lStart = '1970-01-01'; lEnd = '2099-12-31';
-            currentAccFilter = ''; // 重置帳戶過濾
+            currentAccFilter = ''; 
             $('l-title').innerText = '🔍 萬用搜尋';
             $('l-search').value = '';
             renderListModal();
