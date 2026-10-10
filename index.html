@@ -971,38 +971,38 @@
 
         async function syncToGAS(showUI = false) {
             if(!navigator.onLine) return showUI ? toast('無網路連線') : null;
+            
+            // 抓出有變動的資料 (新增、修改、刪除) 準備送給雲端
             let p = db.filter(r=>r.syncStatus==='pending'); 
+            
             let b = $('btn-sync'), ot = b.innerHTML; 
             b.innerHTML='🔄 同步中'; b.style.pointerEvents='none';
             try {
-                const reqBody = { action: 'sync', data: p, lastSyncTime: lastSyncTime };
+                // 發送請求，不再需要 lastSyncTime
+                const reqBody = { action: 'sync', data: p };
                 const res = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(reqBody) });
                 const r = await res.json();
                 
                 if(r.status === 'success' ? true : r.status === 'ok') { 
-                    db.forEach(x => { if(x.syncStatus==='pending') x.syncStatus='synced'; });
-                    const serverData = r.data ? r.data : [];
-                    if (serverData.length > 0) {
-                        serverData.forEach(sRec => {
-                            let idx = db.findIndex(localRec => localRec.id === sRec.id);
-                            if (sRec.type === 'deleted') {
-                                if (idx > -1) db.splice(idx, 1); 
-                            } else {
-                                if (idx > -1) db[idx] = sRec; else db.push(sRec);
-                            }
-                        });
-                        if(showUI) toast(`✅ 同步了 ${serverData.length} 筆資料`);
-                    } else {
-                        if(showUI ? p.length === 0 : false) toast('✅ 已是最新狀態');
-                        else if (showUI) toast(`✅ 上傳了 ${p.length} 筆資料`);
+                    // 【核心改變：雲端是老大】
+                    // 無條件把雲端回傳的完整資料陣列，直接覆蓋掉手機目前的資料
+                    if (r.data) {
+                        db = r.data;
                     }
                     
-                    db = db.filter(x => !(x.type === 'deleted' && x.syncStatus === 'synced'));
+                    saveDB(); 
+                    renderHome(); 
                     
-                    lastSyncTime = r.serverTime; localStorage.setItem('cloud_exp_lastSyncTime', lastSyncTime);
-                    saveDB(); renderHome(); 
+                    if(showUI) {
+                        if (p.length === 0) toast('✅ 已與雲端同步');
+                        else toast('✅ 資料已上傳並同步');
+                    }
                 } else throw new Error();
-            } catch(e) { if(showUI) toast('⚠️ 同步失敗'); } finally { b.innerHTML=ot; b.style.pointerEvents='auto'; }
+            } catch(e) { 
+                if(showUI) toast('⚠️ 同步失敗'); 
+            } finally { 
+                b.innerHTML=ot; b.style.pointerEvents='auto'; 
+            }
         }
 
         function saveDB() { localStorage.setItem('cloud_exp_db',JSON.stringify(db)); localStorage.setItem('cloud_exp_cats',JSON.stringify(cats)); localStorage.setItem('cloud_exp_sets',JSON.stringify(sets)); }
