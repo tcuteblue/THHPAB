@@ -474,7 +474,7 @@
         }
 
         const toast = m => { const t=$('toast'); t.innerText=m; t.style.opacity=1; setTimeout(()=>t.style.opacity=0,2500); };
-        const dStr = d => `d.getFullYear()-{String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+        const dStr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
         window.onload = () => { 
             setupPWA(); autoPocket(); 
@@ -521,7 +521,7 @@
         function triggerAutoConfigBackup() {
             try {
                 const n = new Date();
-                const ds = `n.getFullYear(){String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}`;
+                const ds = `${n.getFullYear()}${String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}`;
                 const c = JSON.stringify({ cats, sets });
                 const f = `個人雲帳本_設定備份_${ds}.json`;
                 const blob = new Blob([new Uint8Array([0xEF,0xBB,0xBF]), c], {type:'application/json'});
@@ -538,13 +538,13 @@
         function autoPocket() {
             if (!sets.pEn ? true : !sets.pAmt) return;
             const now = new Date();
-            const mStr = `now.getFullYear()-{String(now.getMonth()+1).padStart(2,'0')}`;
+            const mStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
             if (sets.l !== mStr) {
                 const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
                 const targetDay = Math.min(sets.pDay, daysInMonth);
                 
                 if (now.getDate() >= targetDay) {
-                    const recordDate = `mStr-{String(targetDay).padStart(2,'0')}`;
+                    const recordDate = `${mStr}-${String(targetDay).padStart(2,'0')}`;
                     db.push({ 
                         id: 'c_' + Date.now(), type: 'income', mainCat: '💰 個人收入', subCat: '每月零用', 
                         date: recordDate, account: sets.a[0], amount: Number(sets.pAmt), note: '系統自動入帳', syncStatus: 'pending' 
@@ -555,7 +555,7 @@
         }
 
         function renderHome() {
-            ('txt-month').innerText=`{cDate.getFullYear()} / ${String(cDate.getMonth()+1).padStart(2,'0')}`;
+            $('txt-month').innerText = `${cDate.getFullYear()} / ${String(cDate.getMonth()+1).padStart(2,'0')}`;
             
             const cal = $('ui-calendar'); cal.innerHTML = '';
             let d = new Date(cDate); 
@@ -575,11 +575,11 @@
 
             for(let i=0;i<7;i++) {
                 let ds = dStr(d), has = db.some(r=>r.date===ds);
-                cal.innerHTML += `<div class="day-col has?'has-record':''"onclick="loadInlineList('{ds}')"><span>wk[i]</span><divclass="day-date">{d.getDate()}</div><div class="day-has-record"></div></div>`;
+                cal.innerHTML += `<div class="day-col ${has?'has-record':''}" onclick="loadInlineList('${ds}')"><span>${wk[i]}</span><div class="day-date">${d.getDate()}</div><div class="day-has-record"></div></div>`;
                 d.setDate(d.getDate()+1);
             }
 
-            const mStr = `cDate.getFullYear()-{String(cDate.getMonth()+1).padStart(2,'0')}`, yStr = `${cDate.getFullYear()}`;
+            const mStr = `${cDate.getFullYear()}-${String(cDate.getMonth()+1).padStart(2,'0')}`, yStr = `${cDate.getFullYear()}`;
             let wStart = new Date(); wStart.setDate(wStart.getDate() - wStart.getDay());
             let wEnd = new Date(wStart); wEnd.setDate(wStart.getDate() + 6);
             
@@ -604,9 +604,7 @@
             
             if (bgt > 0) {
                 $('budget-container').style.display = 'block';
-                $('bg-txt-left').innerText = `已用
-dmE.toLocaleString()/預算
-{bgt.toLocaleString()}`;
+                $('bg-txt-left').innerText = `已用 $${dmE.toLocaleString()} / 預算 $${bgt.toLocaleString()}`;
                 
                 let rem = bgt - dmE;
                 let pcts = Math.min((dmE / bgt) * 100, 100);
@@ -631,8 +629,8 @@ dmE.toLocaleString()/預算
                 $('budget-container').style.display = 'none';
             }
 
-            $('s-d-today').innerText = tStr; $('s-i-today').innerText=dtI.toLocaleString(); ('s-e-today').innerText=dtE.toLocaleString();('s-d-week').innerText = `String(wStart.getMonth()+1).padStart(2,'0')/{String(wStart.getDate()).padStart(2,'0')}-String(wEnd.getMonth()+1).padStart(2,'0')/{String(wEnd.getDate()).padStart(2,'0')}`; ('s-i-week').innerText=dwI.toLocaleString();('s-e-week').innerText=dwE.toLocaleString();
-            $('s-d-month').innerText = mStr; $('s-i-month').innerText=dmI.toLocaleString(); ('s-e-month').innerText=dmE.toLocaleString();('s-d-year').innerText = yStr; ('s-i-year').innerText=dyI.toLocaleString();('s-e-year').innerText=dyE.toLocaleString();
+            $('s-d-today').innerText = tStr; $('s-i-today').innerText=dtI.toLocaleString(); $('s-e-today').innerText=dtE.toLocaleString();$('s-d-week').innerText = `${String(wStart.getMonth()+1).padStart(2,'0')}/${String(wStart.getDate()).padStart(2,'0')}-${String(wEnd.getMonth()+1).padStart(2,'0')}/${String(wEnd.getDate()).padStart(2,'0')}`; $('s-i-week').innerText=dwI.toLocaleString();$('s-e-week').innerText=dwE.toLocaleString();
+            $('s-d-month').innerText = mStr; $('s-i-month').innerText=dmI.toLocaleString(); $('s-e-month').innerText=dmE.toLocaleString();$('s-d-year').innerText = yStr; $('s-i-year').innerText=dyI.toLocaleString();$('s-e-year').innerText=dyE.toLocaleString();
 
             loadInlineList(currentInlineDate);
         }
@@ -656,16 +654,16 @@ dmE.toLocaleString()/預算
             let pre = i ? '-' : (t ? '' : '+');
             
             let emoji = getEmoji(r.mainCat);
-            let mStr = t ? `轉至：r.toAccount`:`{r.mainCat} - ${emoji} ${r.subCat}`;
+            let mStr = t ? `轉至：${r.toAccount}` : `${r.mainCat} - ${emoji} ${r.subCat}`;
             
             return `
-            <div class="record-item cls"onclick="editRec('{r.id}')">
+            <div class="record-item ${cls}" onclick="editRec('${r.id}')">
                 <div class="r-header">
                     <div class="r-date">${r.date} · ${r.account} ${r.syncStatus==='pending'?'⏳':''}</div>
                 </div>
                 <div class="r-cat">${mStr}</div>
                 ${r.note ? `<div class="r-sub">${r.note}</div>` : ''}
-                <div class="r-amt" style="color:col">{pre}$${r.amount.toLocaleString()}</div>
+                <div class="r-amt" style="color:${col}">${pre}$${r.amount.toLocaleString()}</div>
             </div>`;
         }
 
@@ -676,8 +674,8 @@ dmE.toLocaleString()/預算
             $('m-record-title').innerText = '新增紀錄';
             $('btn-modal-del').style.display = 'none';
             rTyp = 'expense'; kpStr = '0'; $('r-amt').innerText='0';
-            ('r-date').value=dStr(newDate());('r-note').value='';
-            const opts = sets.a.map(a=>`<option value="a">{a}</option>`).join('');
+            $('r-date').value=dStr(new Date());$('r-note').value='';
+            const opts = sets.a.map(a=>`<option value="${a}">${a}</option>`).join('');
             $('r-acc').innerHTML = opts; $('r-acc-out').innerHTML = opts; $('r-acc-in').innerHTML = opts;
             $('note-sugg').style.display = 'none';
             updRT(); loadMainCat(); updBal(); $('m-record').style.display='block'; pushM('m-record');
@@ -687,21 +685,21 @@ dmE.toLocaleString()/預算
             let rec = db.find(r => r.id === id);
             if (!rec) return;
             editingRecordId = id; rTyp = rec.type; kpStr = rec.amount.toString();
-            ('r-amt').innerText=Number(kpStr).toLocaleString();('r-date').value = rec.date; 
+            $('r-amt').innerText = Number(kpStr).toLocaleString();$('r-date').value = rec.date; 
             $('r-note').value = rec.note ? rec.note : '';
 
-            const opts = sets.a.map(a=>`<option value="a">{a}</option>`).join('');
+            const opts = sets.a.map(a=>`<option value="${a}">${a}</option>`).join('');
             $('r-acc').innerHTML = opts; $('r-acc-out').innerHTML = opts; $('r-acc-in').innerHTML = opts;
 
             updRT();
             if (rTyp === 'transfer') {
                 $('r-acc-out').value = rec.account; $('r-acc-in').value = rec.toAccount;
             } else {
-                $('r-acc').value = rec.account; loadMainCat(); ('r-mcat').value=rec.mainCat;loadSubCat();('r-scat').value = rec.subCat;
+                $('r-acc').value = rec.account; loadMainCat(); $('r-mcat').value = rec.mainCat; loadSubCat();$('r-scat').value = rec.subCat;
             }
 
-            updBal(); ('note-sugg').style.display='none';('m-record-title').innerText = '編輯紀錄'; 
-            ('btn-modal-del').style.display='block';('m-record').style.display='block'; pushM('m-record');
+            updBal(); $('note-sugg').style.display = 'none';$('m-record-title').innerText = '編輯紀錄'; 
+            $('btn-modal-del').style.display = 'block';$('m-record').style.display='block'; pushM('m-record');
         }
 
         $('r-tabs').addEventListener('click', e => { if(e.target.dataset.t) { rTyp = e.target.dataset.t; updRT(); loadMainCat(); } });
@@ -709,8 +707,8 @@ dmE.toLocaleString()/預算
         function updRT() {
             document.querySelectorAll('#r-tabs .tab').forEach(t => t.classList.remove('active'));
             document.querySelector(`#r-tabs .tab[data-t="${rTyp}"]`).classList.add('active');
-            if(rTyp === 'transfer') { $('r-area-cat').style.display='none'; ('r-area-tra').style.display='flex';('r-acc-container').style.display='none'; } 
-            else { $('r-area-cat').style.display='flex'; ('r-area-tra').style.display='none';('r-acc-container').style.display='block'; }
+            if(rTyp === 'transfer') { $('r-area-cat').style.display='none'; $('r-area-tra').style.display='flex';$('r-acc-container').style.display='none'; } 
+            else { $('r-area-cat').style.display='flex'; $('r-area-tra').style.display='none';$('r-acc-container').style.display='block'; }
         }
 
         function handleNoteInput(val) {
@@ -718,14 +716,14 @@ dmE.toLocaleString()/預算
             if(!q) { box.style.display = 'none'; return; }
             let historyNotes = [...new Set(db.map(r => r.note).filter(n => n))];
             let matched = historyNotes.filter(n => n.includes(q) ? n !== q : false);
-            if(matched.length > 0) { box.innerHTML = matched.map(m => `<div class="ac-item" onclick="setNote('m')">{m}</div>`).join(''); box.style.display = 'block'; } 
+            if(matched.length > 0) { box.innerHTML = matched.map(m => `<div class="ac-item" onclick="setNote('${m}')">${m}</div>`).join(''); box.style.display = 'block'; } 
             else { box.style.display = 'none'; }
         }
         function setNote(val) { $('r-note').value = val; $('note-sugg').style.display = 'none'; }
 
         function loadMainCat() {
             if(rTyp==='transfer') return;
-            let opts = Object.keys(cats[rTyp]).map(c=>`<option value="c">{c}</option>`);
+            let opts = Object.keys(cats[rTyp]).map(c=>`<option value="${c}">${c}</option>`);
             opts.push('<option value="_ADD_">➕ 新增分類...</option>');
             $('r-mcat').innerHTML = opts.join(''); loadSubCat();
         }
@@ -734,7 +732,7 @@ dmE.toLocaleString()/預算
             if(m === '_ADD_') { checkNewCat($('r-mcat'), true); return; }
             if(m ? cats[rTyp][m] : false) {
                 let emoji = getEmoji(m);
-                ('r-scat').innerHTML=cats[rTyp][m].map(c=>`<optionvalue="{c}">${emoji} ${c}</option>`).join('') + '<option value="_ADD_">➕ 新增分類...</option>';
+                $('r-scat').innerHTML = cats[rTyp][m].map(c=>`<option value="${c}">${emoji} ${c}</option>`).join('') + '<option value="_ADD_">➕ 新增分類...</option>';
             }
         }
         
@@ -758,7 +756,7 @@ dmE.toLocaleString()/預算
             $('r-bal').innerText = `餘額: $${b.toLocaleString()}`; $('r-bal').style.color = b >= 0 ? 'var(--primary)' : 'var(--expense)';
         }
 
-        function openKeypad() { ('v-keypad').style.display='grid';('r-amt-box').classList.add('active'); pushK(); }
+        function openKeypad() { $('v-keypad').style.display='grid';$('r-amt-box').classList.add('active'); pushK(); }
         function kp(v) {
             if(v==='clear') kpStr='0'; else if(v==='del') kpStr=kpStr.length>1?kpStr.slice(0,-1):'0';
             else { if(kpStr==='0'?v!=='.':false) kpStr=v; else kpStr+=v; if(kpStr.length>10) kpStr=kpStr.slice(0,10); }
@@ -768,21 +766,21 @@ dmE.toLocaleString()/預算
         function saveRec() {
             let a = Number(kpStr); if(a<=0) return toast('金額需大於0');
             let isTransfer = (rTyp === 'transfer');
-            let accOut = isTransfer ? ('r-acc-out').value:('r-acc').value;
+            let accOut = isTransfer ? $('r-acc-out').value :$('r-acc').value;
             let accIn = isTransfer ? $('r-acc-in').value : '';
             if(isTransfer ? accOut === accIn : false) return toast('轉出與轉入不可相同');
 
             if (editingRecordId) {
                 let idx = db.findIndex(r => r.id === editingRecordId);
                 if (idx > -1) {
-                    db[idx].type = rTyp; db[idx].date = ('r-date').value;db[idx].amount=a;db[idx].note=('r-note').value.trim(); db[idx].syncStatus = 'pending';
+                    db[idx].type = rTyp; db[idx].date = $('r-date').value; db[idx].amount = a; db[idx].note =$('r-note').value.trim(); db[idx].syncStatus = 'pending';
                     if (isTransfer) { db[idx].account = accOut; db[idx].toAccount = accIn; delete db[idx].mainCat; delete db[idx].subCat; } 
-                    else { db[idx].mainCat = ('r-mcat').value;db[idx].subCat=('r-scat').value; db[idx].account = accOut; delete db[idx].toAccount; }
+                    else { db[idx].mainCat = $('r-mcat').value; db[idx].subCat =$('r-scat').value; db[idx].account = accOut; delete db[idx].toAccount; }
                 }
                 editingRecordId = null; toast('✅ 已更新 (待同步)');
             } else {
-                let rec = { id:'c_'+Date.now(), type:rTyp, date:('r-date').value,amount:a,note:('r-note').value.trim(), syncStatus:'pending' };
-                if(isTransfer) { rec.account = accOut; rec.toAccount = accIn; } else { rec.mainCat=('r-mcat').value;rec.subCat=('r-scat').value; rec.account=accOut; }
+                let rec = { id:'c_'+Date.now(), type:rTyp, date:$('r-date').value, amount:a, note:$('r-note').value.trim(), syncStatus:'pending' };
+                if(isTransfer) { rec.account = accOut; rec.toAccount = accIn; } else { rec.mainCat=$('r-mcat').value; rec.subCat=$('r-scat').value; rec.account=accOut; }
                 db.push(rec); toast('✅ 已儲存 (待同步)');
             }
             saveDB(); closeKeypad(); closeModal(); renderHome();
@@ -800,16 +798,16 @@ dmE.toLocaleString()/預算
 
         function openGlobalSearch() {
             lStart = '1970-01-01'; lEnd = '2099-12-31'; currentAccFilter = ''; $('l-title').innerText = '🔍 萬用搜尋'; $('l-search').value = '';
-            renderListModal(); ('m-list').style.display='block';pushM('m-list');setTimeout(()=>('l-search').focus(), 100);
+            renderListModal(); $('m-list').style.display = 'block'; pushM('m-list'); setTimeout(() =>$('l-search').focus(), 100);
         }
 
         function openList(mode, p1) {
             $('l-search').value = ''; currentAccFilter = ''; let n = new Date(), t = dStr(n);
-            if(mode==='date') { lStart = p1; lEnd = p1; ('l-title').innerText=`明細({p1})`; }
+            if(mode==='date') { lStart = p1; lEnd = p1; $('l-title').innerText=`明細 (${p1})`; }
             else if(mode==='today') { lStart = t; lEnd = t; $('l-title').innerText='本日明細'; }
             else if(mode==='week') { let s=new Date(n); s.setDate(s.getDate()-s.getDay()); let e=new Date(s); e.setDate(e.getDate()+6); lStart=dStr(s); lEnd=dStr(e); $('l-title').innerText='本週明細'; }
-            else if(mode==='month') { lStart=`n.getFullYear()-{String(n.getMonth()+1).padStart(2,'0')}-01`; lEnd=`n.getFullYear()-{String(n.getMonth()+1).padStart(2,'0')}-31`; $('l-title').innerText='本月明細'; }
-            else if(mode==='year') { lStart=`n.getFullYear()-01-01`;lEnd=`{n.getFullYear()}-12-31`; $('l-title').innerText='本年明細'; }
+            else if(mode==='month') { lStart=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-01`; lEnd=`${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-31`; $('l-title').innerText='本月明細'; }
+            else if(mode==='year') { lStart=`${n.getFullYear()}-01-01`; lEnd=`${n.getFullYear()}-12-31`; $('l-title').innerText='本年明細'; }
             else if(mode==='account') { lStart = '1970-01-01'; lEnd = '2099-12-31'; $('l-title').innerText = `💳 ${p1} 明細`; currentAccFilter = p1; }
             renderListModal(); $('m-list').style.display='block'; pushM('m-list');
         }
@@ -831,22 +829,22 @@ dmE.toLocaleString()/預算
         function openCalPicker() { calPickDate = new Date(cDate); renderCalPicker(); $('m-cal').style.display='block'; pushM('m-cal'); }
         function chgCalPicker(d) { calPickDate.setMonth(calPickDate.getMonth()+d); renderCalPicker(); }
         function renderCalPicker() {
-            ('txt-cal-month').innerText=`{calPickDate.getFullYear()} / ${String(calPickDate.getMonth()+1).padStart(2,'0')}`;
+            $('txt-cal-month').innerText = `${calPickDate.getFullYear()} / ${String(calPickDate.getMonth()+1).padStart(2,'0')}`;
             let y = calPickDate.getFullYear(), m = calPickDate.getMonth();
             let firstDay = new Date(y, m, 1).getDay(), daysInM = new Date(y, m+1, 0).getDate();
             let html = '<div class="cal-head">日</div><div class="cal-head">一</div><div class="cal-head">二</div><div class="cal-head">三</div><div class="cal-head">四</div><div class="cal-head">五</div><div class="cal-head">六</div>';
             for(let i=0; i<firstDay; i++) html += '<div></div>'; let tStr = dStr(new Date());
             for(let i=1; i<=daysInM; i++) {
-                let ds = `y-{String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
+                let ds = `${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
                 let has = db.some(r=>r.date===ds), isT = (ds===tStr);
-                html += `<div class="cal-cell ${has?'has-rec':''} isT?'today':''"onclick="closeModal();weekSwipeOffset=0;cDate=newDate('{ds}'.replace(/-/g, '/')); renderHome(); loadInlineList('ds')">{i}</div>`;
+                html += `<div class="cal-cell ${has?'has-rec':''} ${isT?'today':''}" onclick="closeModal(); weekSwipeOffset=0; cDate = new Date('${ds}'.replace(/-/g, '/')); renderHome(); loadInlineList('${ds}')">${i}</div>`;
             }
             $('ui-cal-grid').innerHTML = html;
         }
 
         function openChart(type) { 
             try {
-                ('c-month').value=`{cDate.getFullYear()}-${String(cDate.getMonth()+1).padStart(2,'0')}`; 
+                $('c-month').value = `${cDate.getFullYear()}-${String(cDate.getMonth()+1).padStart(2,'0')}`; 
                 cTyp = type ? type : 'income'; 
                 $('m-chart').style.display='block'; pushM('m-chart'); 
                 renderChart(); 
@@ -931,7 +929,7 @@ dmE.toLocaleString()/預算
             $('acc-mgr-container').innerHTML = sets.a.map(a => {
                 let bal = accBals[a] ? accBals[a] : 0; let balColor = bal >= 0 ? 'var(--primary)' : 'var(--expense)';
                 return `<div class="mgr-card" onclick="openList('account', '${a}')" style="cursor:pointer; transition: transform 0.1s;">
-                    <div class="mgr-title"><span>💳 a<spanstyle="color:{balColor}; font-size:18px; margin-left:8px;">($bal.toLocaleString())</span></span><spanclass="mgr-del"onclick="event.stopPropagation();delAcc('{a}')">刪除</span></div></div>`;
+                    <div class="mgr-title"><span>💳 ${a} <span style="color:${balColor}; font-size:18px; margin-left:8px;">($${bal.toLocaleString()})</span></span><span class="mgr-del" onclick="event.stopPropagation(); delAcc('${a}')">刪除</span></div></div>`;
             }).join('');
         }
         function addAcc() { let n = prompt('輸入新帳戶名稱：'); if(n ? (n.trim() ? !sets.a.includes(n.trim()) : false) : false){ sets.a.push(n.trim()); saveDB(); renderAccMgr(); renderHome(); triggerAutoConfigBackup(); } }
@@ -947,8 +945,8 @@ dmE.toLocaleString()/預算
             document.querySelector(`#cat-tabs .tab.${typ==='expense'?'exp':'inc'}`).classList.add('active');
             let html = '';
             for(let m in cats[typ]) {
-                let emoji = getEmoji(m); let subs = cats[typ][m].map(s=>`<div class="mgr-chip">${emoji} s<spanclass="mgr-del"onclick="delSubCat('{typ}','m','{s}')">✖</span></div>`).join('');
-                html += `<div class="mgr-card"><div class="mgr-title"><span>m</span><div><spanclass="mgr-del"style="color:var(--primary);"onclick="addSubCat('{typ}','m')">➕</span><spanclass="mgr-del"onclick="delMainCat('{typ}','m')">🗑️</span></div></div><div>{subs}</div></div>`;
+                let emoji = getEmoji(m); let subs = cats[typ][m].map(s=>`<div class="mgr-chip">${emoji} ${s} <span class="mgr-del" onclick="delSubCat('${typ}','${m}','${s}')">✖</span></div>`).join('');
+                html += `<div class="mgr-card"><div class="mgr-title"><span>${m}</span><div><span class="mgr-del" style="color:var(--primary);" onclick="addSubCat('${typ}','${m}')">➕</span> <span class="mgr-del" onclick="delMainCat('${typ}','${m}')">🗑️</span></div></div><div>${subs}</div></div>`;
             }
             $('cat-mgr-container').innerHTML = html;
         }
@@ -960,7 +958,7 @@ dmE.toLocaleString()/預算
         function expData(t) {
             let url = '';
             try {
-                const n=new Date(), ds=`n.getFullYear(){String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}`;
+                const n=new Date(), ds=`${n.getFullYear()}${String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}`;
                 const c=JSON.stringify({cats,sets}); const f=`個人雲帳本_設定備份_${ds}.json`; const m='application/json'; 
                 const blob = new Blob([new Uint8Array([0xEF,0xBB,0xBF]), c], {type:m});
                 url = URL.createObjectURL(blob);
