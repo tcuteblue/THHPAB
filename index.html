@@ -26,61 +26,61 @@
         }
 
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        body { margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-color); overflow-x: hidden; user-select: none; -webkit-user-select: none; font-size: 20px; }
-        input, textarea, select { user-select: auto; -webkit-user-select: auto; font-size: 20px !important; }
+        body { margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-color); overflow-x: hidden; user-select: none; -webkit-user-select: none; font-size: 24px; }
+        input, textarea, select { user-select: auto; -webkit-user-select: auto; font-size: 24px !important; }
 
         @media all and (display-mode: standalone) { #install-btn { display: none !important; } }
 
-        header { background: var(--header-bg); color: #fff; padding: 22px 20px; font-size: 24px; font-weight: 900; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(230,126,34,.3); position: sticky; top: 0; z-index: 101; border-radius: 0 0 24px 24px; letter-spacing: 1px; text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
+        header { background: var(--header-bg); color: #fff; padding: 22px 20px; font-size: 28px; font-weight: 900; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(230,126,34,.3); position: sticky; top: 0; z-index: 101; border-radius: 0 0 24px 24px; letter-spacing: 1px; text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
         .header-actions { display: flex; gap: 10px; }
-        .btn-action { background: rgba(255,255,255,0.25); border: none; color: #fff; padding: 10px 16px; border-radius: 14px; font-size: 16px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: background 0.2s; text-shadow: none; }
+        .btn-action { background: rgba(255,255,255,0.25); border: none; color: #fff; padding: 10px 16px; border-radius: 14px; font-size: 20px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 5px; transition: background 0.2s; text-shadow: none; }
         .btn-action:active { background: rgba(255,255,255,0.4); }
         
         .container { padding: 12px; padding-bottom: 50px; }
         
         .card-panel { background: #fff; border-radius: 24px; padding: 15px; margin-bottom: 15px; box-shadow: 0 8px 20px rgba(0,0,0,.06); }
-        .month-header { font-size: 26px; font-weight: 900; text-align: center; color: var(--text-color); display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 10px; }
+        .month-header { font-size: 30px; font-weight: 900; text-align: center; color: var(--text-color); display: flex; justify-content: center; align-items: center; gap: 20px; margin-bottom: 10px; }
         .month-header span { cursor: pointer; padding: 5px 15px; border-radius: 12px; transition: background 0.2s; }
         .month-header span:active { background: #f1f2f6; }
         
         .week-calendar { display: flex; justify-content: space-between; border-top: 1px solid #f1f2f6; padding-top: 12px; margin-top: 8px; touch-action: pan-y; }
-        .day-col { flex: 1; display: flex; flex-direction: column; align-items: center; font-size: 15px; color: #7f8fa6; font-weight: bold; cursor: pointer; position: relative; }
-        .day-date { width: 42px; height: 42px; display: flex; justify-content: center; align-items: center; border-radius: 50%; font-size: 19px; margin-top: 6px; color: var(--text-color); transition: all 0.2s; }
+        .day-col { flex: 1; display: flex; flex-direction: column; align-items: center; font-size: 19px; color: #7f8fa6; font-weight: bold; cursor: pointer; position: relative; }
+        .day-date { width: 46px; height: 46px; display: flex; justify-content: center; align-items: center; border-radius: 50%; font-size: 23px; margin-top: 6px; color: var(--text-color); transition: all 0.2s; }
         .day-today .day-date { background: var(--primary); color: #fff; box-shadow: 0 4px 10px rgba(0,168,255,.4); }
-        .day-has-record { width: 8px; height: 8px; border-radius: 50%; background: var(--expense); position: absolute; bottom: -12px; display: none; }
+        .day-has-record { width: 10px; height: 10px; border-radius: 50%; background: var(--expense); position: absolute; bottom: -12px; display: none; }
         .day-col.has-record .day-has-record { display: block; }
         .day-col:active .day-date { background: #eef7fc; }
 
         .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; margin-top: 15px; }
         .dash-item { cursor: pointer; padding: 12px 4px; border-radius: 14px; transition: all 0.15s; background: #fdfefe; box-shadow: 0 2px 6px rgba(0,0,0,.04); border: 1px solid #f1f2f6; }
         .dash-item:active { background: #f1f2f6; transform: scale(0.96); border-color: var(--primary); }
-        .dash-label { font-size: 14px; color: #7f8fa6; font-weight: 900; margin-bottom: 6px; display: block; }
-        .dash-value { font-size: 22px; font-weight: 900; }
+        .dash-label { font-size: 18px; color: #7f8fa6; font-weight: 900; margin-bottom: 6px; display: block; }
+        .dash-value { font-size: 26px; font-weight: 900; }
         
         .t-exp { color: var(--expense); } 
         .t-inc { color: var(--primary); } 
         .t-bal { color: var(--income); }
 
         .action-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 8px; margin-bottom: 20px; }
-        .btn-main { padding: 14px 4px; border-radius: 18px; font-size: 18px; font-weight: 900; border: none; color: #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 6px; transition: all .1s; letter-spacing: 1px; }
+        .btn-main { padding: 14px 4px; border-radius: 18px; font-size: 22px; font-weight: 900; border: none; color: #fff; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 6px; transition: all .1s; letter-spacing: 1px; }
         
         .btn-record { grid-column: span 1; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); box-shadow: 0 6px 0 #0073B0, 0 8px 20px rgba(0,168,255,.3); }
         .btn-record:active { transform: translateY(6px); box-shadow: 0 0 0 #0073B0; }
         
-        .btn-acc { grid-column: span 1; font-size: 16px; gap: 4px; background: linear-gradient(135deg, #1DD1A1, #10AC84); box-shadow: 0 6px 0 #0D8C6B, 0 8px 20px rgba(29,209,161,.3); }
+        .btn-acc { grid-column: span 1; font-size: 20px; gap: 4px; background: linear-gradient(135deg, #1DD1A1, #10AC84); box-shadow: 0 6px 0 #0D8C6B, 0 8px 20px rgba(29,209,161,.3); }
         .btn-acc:active { transform: translateY(6px); box-shadow: 0 0 0 #0D8C6B; }
         
-        .btn-set { grid-column: span 1; font-size: 16px; gap: 4px; background: linear-gradient(135deg, #a4b0be, #747d8c); box-shadow: 0 6px 0 #57606f, 0 8px 20px rgba(116,125,140,.3); }
+        .btn-set { grid-column: span 1; font-size: 20px; gap: 4px; background: linear-gradient(135deg, #a4b0be, #747d8c); box-shadow: 0 6px 0 #57606f, 0 8px 20px rgba(116,125,140,.3); }
         .btn-set:active { transform: translateY(6px); box-shadow: 0 0 0 #57606f; }
 
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
         .stat-box { background: #fff; border-radius: 16px; padding: 12px; box-shadow: 0 4px 10px rgba(0,0,0,.04); cursor: pointer; transition: all 0.1s; border: 2px solid transparent; }
         .stat-box:active { transform: scale(0.97); border-color: var(--primary); background: #fdfefe; }
-        .stat-title { font-size: 15px; font-weight: 900; color: #34495e; border-bottom: 1px solid #f1f2f6; padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-end; }
-        .stat-date { font-size: 12px; color: #95a5a6; font-weight: bold; }
-        .stat-row { display: flex; justify-content: space-between; font-size: 14px; font-weight: 900; margin-bottom: 4px; }
+        .stat-title { font-size: 19px; font-weight: 900; color: #34495e; border-bottom: 1px solid #f1f2f6; padding-bottom: 6px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: flex-end; }
+        .stat-date { font-size: 16px; color: #95a5a6; font-weight: bold; }
+        .stat-row { display: flex; justify-content: space-between; font-size: 18px; font-weight: 900; margin-bottom: 4px; }
 
-        .list-header { font-size: 20px; font-weight: 900; color: #2F3640; margin: 15px 5px 10px; display: flex; justify-content: space-between; align-items: center; }
+        .list-header { font-size: 24px; font-weight: 900; color: #2F3640; margin: 15px 5px 10px; display: flex; justify-content: space-between; align-items: center; }
         
         .record-item { background: #fff; border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,.04); border-left: 8px solid transparent; display: flex; flex-direction: column; cursor: pointer; transition: transform 0.1s, background 0.1s; }
         .record-item:active { transform: scale(0.98); background: #fdfefe; }
@@ -89,25 +89,25 @@
         .record-item.tra { border-left-color: var(--transfer); }
         
         .r-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
-        .r-date { font-size: 13px; color: #95a5a6; font-weight: 900; }
-        .r-cat { font-size: 18px; font-weight: 900; color: #2F3640; line-height: 1.4; word-break: break-word; }
-        .r-sub { font-size: 14px; color: #7f8fa6; margin-top: 4px; font-weight: bold; line-height: 1.4; word-break: break-word; }
-        .r-amt { font-size: 22px; font-weight: 900; font-family: monospace; letter-spacing: 1px; margin-top: 8px; }
+        .r-date { font-size: 17px; color: #95a5a6; font-weight: 900; }
+        .r-cat { font-size: 22px; font-weight: 900; color: #2F3640; line-height: 1.4; word-break: break-word; }
+        .r-sub { font-size: 18px; color: #7f8fa6; margin-top: 4px; font-weight: bold; line-height: 1.4; word-break: break-word; }
+        .r-amt { font-size: 26px; font-weight: 900; font-family: monospace; letter-spacing: 1px; margin-top: 8px; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 1000; overflow-y: auto; animation: fadeIn .25s cubic-bezier(0.1, 0.9, 0.2, 1); padding-bottom: 120px; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
         
-        .m-header { padding: 22px; background: var(--header-bg); color: #fff; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; box-shadow: 0 4px 15px rgba(230,126,34,.3); border-radius: 0 0 24px 24px; margin-bottom: 25px; font-weight: 900; font-size: 22px; text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
-        .m-close { background: rgba(255,255,255,0.25); color: #fff; border: none; border-radius: 50%; width: 40px; height: 40px; font-size: 20px; cursor: pointer; font-weight: bold; display: flex; justify-content: center; align-items: center; text-shadow: none; }
+        .m-header { padding: 22px; background: var(--header-bg); color: #fff; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; box-shadow: 0 4px 15px rgba(230,126,34,.3); border-radius: 0 0 24px 24px; margin-bottom: 25px; font-weight: 900; font-size: 26px; text-shadow: 0 1px 2px rgba(0,0,0,0.15); }
+        .m-close { background: rgba(255,255,255,0.25); color: #fff; border: none; border-radius: 50%; width: 44px; height: 44px; font-size: 24px; cursor: pointer; font-weight: bold; display: flex; justify-content: center; align-items: center; text-shadow: none; }
 
         .form-group { padding: 0 20px; margin-bottom: 22px; }
-        .form-group label { display: block; font-size: 18px; font-weight: 900; color: #34495e; margin-bottom: 10px; }
+        .form-group label { display: block; font-size: 22px; font-weight: 900; color: #34495e; margin-bottom: 10px; }
         .form-row { display: flex; gap: 14px; }
-        select, input[type="text"], input[type="date"], input[type="number"], input[type="month"] { width: 100%; padding: 16px 18px; border: 2px solid var(--border); border-radius: 16px; font-size: 20px; background: #fff; font-weight: 800; color: var(--text-color); appearance: none; transition: all .2s; }
+        select, input[type="text"], input[type="date"], input[type="number"], input[type="month"] { width: 100%; padding: 16px 18px; border: 2px solid var(--border); border-radius: 16px; font-size: 24px; background: #fff; font-weight: 800; color: var(--text-color); appearance: none; transition: all .2s; }
         select:focus, input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px rgba(0,168,255,.15); }
         
         .tabs { display: flex; background: #fff; border-radius: 18px; padding: 8px; margin: 0 20px 25px; box-shadow: 0 4px 12px rgba(0,0,0,.06); gap: 6px; }
-        .tab { flex: 1; text-align: center; padding: 14px; font-size: 18px; font-weight: 900; color: #7f8fa6; border-radius: 14px; cursor: pointer; transition: all 0.2s; background: #F8F9FA; }
+        .tab { flex: 1; text-align: center; padding: 14px; font-size: 22px; font-weight: 900; color: #7f8fa6; border-radius: 14px; cursor: pointer; transition: all 0.2s; background: #F8F9FA; }
         .tab.active.exp { background: var(--expense); color: #fff; box-shadow: 0 4px 12px rgba(255,71,87,.4); }
         .tab.active.inc { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(0,168,255,.4); } 
         .tab.active.tra { background: var(--transfer); color: #fff; box-shadow: 0 4px 12px rgba(165,94,234,.4); }
@@ -115,44 +115,44 @@
 
         .amt-box { background: #fff; margin: 0 20px 25px; padding: 25px; border-radius: 22px; text-align: right; box-shadow: 0 5px 15px rgba(0,0,0,.08); border: 2px solid transparent; transition: all .2s; }
         .amt-box.active { border-color: var(--primary); background: #fdfefe; box-shadow: 0 0 0 5px rgba(0,168,255,.2); }
-        .amt-val { font-size: 52px; font-weight: 900; font-family: monospace; letter-spacing: 1px; color: var(--text-color); }
-        .bal-hint { font-size: 16px; margin-top: 10px; text-align: right; font-weight: 900; }
+        .amt-val { font-size: 56px; font-weight: 900; font-family: monospace; letter-spacing: 1px; color: var(--text-color); }
+        .bal-hint { font-size: 20px; margin-top: 10px; text-align: right; font-weight: 900; }
 
         .r-actions-row { display: flex; gap: 15px; margin: 20px; }
-        .btn-save { background: var(--primary); color: #fff; padding: 20px; border-radius: 22px; font-size: 22px; font-weight: 900; border: none; box-shadow: 0 6px 0 var(--primary-dark), 0 8px 20px rgba(0,168,255,.3); cursor: pointer; flex: 2; transition: all 0.1s; }
+        .btn-save { background: var(--primary); color: #fff; padding: 20px; border-radius: 22px; font-size: 26px; font-weight: 900; border: none; box-shadow: 0 6px 0 var(--primary-dark), 0 8px 20px rgba(0,168,255,.3); cursor: pointer; flex: 2; transition: all 0.1s; }
         .btn-save:active { transform: translateY(6px); box-shadow: 0 0 0 var(--primary-dark); }
-        .btn-delete-modal { background: #FF4757; color: #fff; padding: 20px; border-radius: 22px; font-size: 20px; font-weight: 900; border: none; box-shadow: 0 6px 0 #c0392b, 0 8px 20px rgba(255,71,87,.3); cursor: pointer; flex: 1; text-align: center; transition: all 0.1s; }
+        .btn-delete-modal { background: #FF4757; color: #fff; padding: 20px; border-radius: 22px; font-size: 24px; font-weight: 900; border: none; box-shadow: 0 6px 0 #c0392b, 0 8px 20px rgba(255,71,87,.3); cursor: pointer; flex: 1; text-align: center; transition: all 0.1s; }
         .btn-delete-modal:active { transform: translateY(6px); box-shadow: 0 0 0 #c0392b; }
 
         .autocomplete-list { display: none; position: absolute; top: calc(100% + 5px); left: 20px; right: 20px; background: #fff; border: 2px solid var(--primary); border-radius: 14px; z-index: 100; max-height: 200px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,.15); }
-        .ac-item { padding: 14px 18px; border-bottom: 1px solid #f1f2f6; font-size: 18px; font-weight: 900; color: #2F3640; cursor: pointer; }
+        .ac-item { padding: 14px 18px; border-bottom: 1px solid #f1f2f6; font-size: 22px; font-weight: 900; color: #2F3640; cursor: pointer; }
         .ac-item:active { background: #eef7fc; }
         .ac-item:last-child { border-bottom: none; }
 
         #v-keypad { position: fixed; bottom: 0; left: 0; width: 100%; background: #DFE4EA; padding: 15px 15px 40px 15px; display: none; grid-template-columns: repeat(4, 1fr); gap: 12px; z-index: 1500; box-shadow: 0 -10px 40px rgba(0,0,0,.2); border-radius: 30px 30px 0 0; }
-        .key { background: #fff; border: none; padding: 22px 0; font-size: 28px; font-weight: 900; color: #2F3640; border-radius: 18px; box-shadow: 0 5px 0 #CED6E0; cursor: pointer; }
+        .key { background: #fff; border: none; padding: 22px 0; font-size: 32px; font-weight: 900; color: #2F3640; border-radius: 18px; box-shadow: 0 5px 0 #CED6E0; cursor: pointer; }
         .key:active { box-shadow: 0 0 0 #CED6E0; transform: translateY(5px); background: #f1f2f6; }
-        .key-op { background: #CED6E0; color: #2F3640; font-size: 24px; box-shadow: 0 5px 0 #A4B0BE; }
-        .key-act { background: var(--primary); color: #fff; box-shadow: 0 5px 0 var(--primary-dark); font-size: 24px; grid-row: span 2; display: flex; align-items: center; justify-content: center; }
+        .key-op { background: #CED6E0; color: #2F3640; font-size: 28px; box-shadow: 0 5px 0 #A4B0BE; }
+        .key-act { background: var(--primary); color: #fff; box-shadow: 0 5px 0 var(--primary-dark); font-size: 28px; grid-row: span 2; display: flex; align-items: center; justify-content: center; }
 
-        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(47,54,64,.95); color: #fff; padding: 16px 30px; border-radius: 30px; font-size: 18px; font-weight: 900; opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 9999; box-shadow: 0 6px 20px rgba(0,0,0,.25); white-space: nowrap; }
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(47,54,64,.95); color: #fff; padding: 16px 30px; border-radius: 30px; font-size: 22px; font-weight: 900; opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 9999; box-shadow: 0 6px 20px rgba(0,0,0,.25); white-space: nowrap; }
         
         .search-bar { background: #fff; padding: 14px 20px; position: sticky; top: 75px; z-index: 9; border-bottom: 1px solid #f1f2f6; box-shadow: 0 4px 10px rgba(0,0,0,.03); }
         .search-bar input { padding-left: 45px; background: #f8f9fa url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="%2395a5a6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>') no-repeat 14px center; border-radius: 18px; }
 
         .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; padding: 15px 20px; text-align: center; font-weight: 900; }
-        .cal-head { color: #7f8fa6; font-size: 16px; padding-bottom: 12px; }
-        .cal-cell { padding: 14px 0; border-radius: 14px; cursor: pointer; transition: background 0.2s; font-size: 20px; position: relative; }
+        .cal-head { color: #7f8fa6; font-size: 20px; padding-bottom: 12px; }
+        .cal-cell { padding: 14px 0; border-radius: 14px; cursor: pointer; transition: background 0.2s; font-size: 24px; position: relative; }
         .cal-cell:active { background: #f1f2f6; }
         .cal-cell.has-rec::after { content: ''; display: block; width: 8px; height: 8px; background: var(--expense); border-radius: 50%; position: absolute; bottom: 6px; left: 50%; transform: translateX(-50%); }
         .cal-cell.today { background: var(--primary); color: #fff; }
 
         .mgr-card { background: #fff; border-radius: 18px; padding: 18px; margin: 0 20px 18px; box-shadow: 0 3px 10px rgba(0,0,0,.05); border: 2px solid #f1f2f6; }
-        .mgr-title { font-size: 20px; font-weight: 900; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; color: #2c3e50; }
-        .mgr-chip { display: inline-flex; align-items: center; background: #f8f9fa; padding: 10px 14px; border-radius: 12px; font-size: 16px; font-weight: bold; margin: 0 10px 10px 0; border: 1px solid #eee; }
-        .mgr-del { margin-left: 10px; color: var(--expense); cursor: pointer; font-weight: 900; font-size: 18px; }
+        .mgr-title { font-size: 24px; font-weight: 900; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; color: #2c3e50; }
+        .mgr-chip { display: inline-flex; align-items: center; background: #f8f9fa; padding: 10px 14px; border-radius: 12px; font-size: 20px; font-weight: bold; margin: 0 10px 10px 0; border: 1px solid #eee; }
+        .mgr-del { margin-left: 10px; color: var(--expense); cursor: pointer; font-weight: 900; font-size: 22px; }
         
-        .btn-big-action { width: calc(100% - 40px); margin: 0 20px 18px; padding: 18px; border-radius: 18px; font-size: 20px; font-weight: 900; border: none; cursor: pointer; text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px; }
+        .btn-big-action { width: calc(100% - 40px); margin: 0 20px 18px; padding: 18px; border-radius: 18px; font-size: 24px; font-weight: 900; border: none; cursor: pointer; text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px; }
     </style>
 </head>
 
@@ -175,7 +175,7 @@
                 <span onclick="chgMth(1)">▶</span>
             </div>
             
-            <div style="font-size:13px; color:#95a5a6; text-align:center; font-weight:bold; margin-bottom: 3px;">左右滑動切換週次</div>
+            <div style="font-size:17px; color:#95a5a6; text-align:center; font-weight:bold; margin-bottom: 3px;">左右滑動切換週次</div>
             <div class="week-calendar" id="ui-calendar"></div>
 
             <div class="dashboard">
@@ -186,7 +186,7 @@
 
             <!-- 預算進度條區塊 (動態顯示/隱藏) -->
             <div id="budget-container" style="display:none; margin-top:15px; padding:0 5px;">
-                <div style="display:flex; justify-content:space-between; font-size:13px; font-weight:bold; margin-bottom:6px;">
+                <div style="display:flex; justify-content:space-between; font-size:17px; font-weight:bold; margin-bottom:6px;">
                     <span id="bg-txt-left" style="color:#7f8fa6;">已用 $0 / 預算 $0</span>
                     <span id="bg-txt-right" style="color:var(--primary);">剩餘 $0</span>
                 </div>
@@ -230,7 +230,7 @@
         </div>
         <div id="ui-today-list"></div>
         
-        <button class="btn-main btn-record" id="install-btn" style="background:var(--income); box-shadow:0 6px 0 #189855; margin-top:25px; font-size:18px; width:100%;" onclick="handleInstall()">📱 將帳本加到手機主畫面</button>
+        <button class="btn-main btn-record" id="install-btn" style="background:var(--income); box-shadow:0 6px 0 #189855; margin-top:25px; font-size:22px; width:100%;" onclick="handleInstall()">📱 將帳本加到手機主畫面</button>
     </div>
 
     <div id="m-record" class="modal">
@@ -243,7 +243,7 @@
         </div>
 
         <div class="amt-box" id="r-amt-box" onclick="openKeypad()">
-            <div style="font-size:16px; color:#95a5a6; font-weight:900; margin-bottom:8px;">點擊輸入金額</div>
+            <div style="font-size:20px; color:#95a5a6; font-weight:900; margin-bottom:8px;">點擊輸入金額</div>
             <div class="amt-val" id="r-amt">0</div>
         </div>
 
@@ -294,7 +294,7 @@
 
     <div id="m-chart" class="modal">
         <div class="m-header"><span>收支分析</span><button class="m-close" onclick="closeModal()">✖</button></div>
-        <div class="form-group" style="text-align:center;"><input type="month" id="c-month" onchange="renderChart()" style="width:70%; font-size:22px; text-align:center; padding:12px;"></div>
+        <div class="form-group" style="text-align:center;"><input type="month" id="c-month" onchange="renderChart()" style="width:70%; font-size:26px; text-align:center; padding:12px;"></div>
         
         <div class="tabs" id="c-tabs" style="margin-top:0;">
             <div class="tab inc" data-t="income" onclick="switchChart('income')">收入</div>
@@ -311,30 +311,30 @@
         
         <div class="form-group">
             <label>每月預算 (設定首頁的預算進度條)</label>
-            <input type="number" id="s-budget" onchange="saveSet(true)" placeholder="設為 0 則隱藏進度條" style="font-family:monospace; font-size:28px; font-weight:900; color:var(--income);">
+            <input type="number" id="s-budget" onchange="saveSet(true)" placeholder="設為 0 則隱藏進度條" style="font-family:monospace; font-size:32px; font-weight:900; color:var(--income);">
         </div>
         
         <div class="form-group" style="background:#f8f9fa; padding:18px; border-radius:18px; border:2px solid #DFE4EA;">
-            <label style="display:flex; align-items:center; gap:10px; font-size:18px; font-weight:900; color:#2c3e50; margin-bottom:15px; cursor:pointer;">
-                <input type="checkbox" id="s-p-en" onchange="saveSet(true)" style="width:24px; height:24px; accent-color:var(--primary);"> 啟用自動記帳 (每月零用錢)
+            <label style="display:flex; align-items:center; gap:10px; font-size:22px; font-weight:900; color:#2c3e50; margin-bottom:15px; cursor:pointer;">
+                <input type="checkbox" id="s-p-en" onchange="saveSet(true)" style="width:28px; height:28px; accent-color:var(--primary);"> 啟用自動記帳 (每月零用錢)
             </label>
             <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
-                <span style="font-size:16px; font-weight:bold; color:#7f8fa6;">每月</span>
-                <input type="number" id="s-p-day" min="1" max="31" onchange="saveSet(true)" style="width:80px; padding:10px; font-size:18px; text-align:center;">
-                <span style="font-size:16px; font-weight:bold; color:#7f8fa6;">號 自動入帳</span>
+                <span style="font-size:20px; font-weight:bold; color:#7f8fa6;">每月</span>
+                <input type="number" id="s-p-day" min="1" max="31" onchange="saveSet(true)" style="width:85px; padding:10px; font-size:22px; text-align:center;">
+                <span style="font-size:20px; font-weight:bold; color:#7f8fa6;">號 自動入帳</span>
             </div>
             <div style="display:flex; align-items:center; gap:10px;">
-                <span style="font-size:16px; font-weight:bold; color:#7f8fa6;">金額</span>
-                <input type="number" id="s-p-amt" onchange="saveSet(true)" style="flex:1; padding:10px; font-size:20px; font-family:monospace; color:var(--primary);">
+                <span style="font-size:20px; font-weight:bold; color:#7f8fa6;">金額</span>
+                <input type="number" id="s-p-amt" onchange="saveSet(true)" style="flex:1; padding:10px; font-size:24px; font-family:monospace; color:var(--primary);">
             </div>
-            <p style="font-size: 14px; color: #95a5a6; margin-top: 10px; font-weight: bold;">開啟後，將於指定日期自動新增一筆個人收入。</p>
+            <p style="font-size: 18px; color: #95a5a6; margin-top: 10px; font-weight: bold;">開啟後，將於指定日期自動新增一筆個人收入。</p>
         </div>
 
         <button class="btn-big-action" style="background:#fff; color:var(--text-color); border:2px solid #DFE4EA; box-shadow:0 4px 0 #DFE4EA;" onclick="openCatMgr()">🏷️ 分類管理</button>
         <button class="btn-big-action" style="background:#fff; color:var(--text-color); border:2px solid #DFE4EA; box-shadow:0 4px 0 #DFE4EA;" onclick="openAccMgr()">💳 帳戶管理</button>
         
         <div style="margin: 40px 20px 20px; padding-top: 30px; border-top: 2px dashed #DFE4EA;">
-            <label style="display:block; font-size:18px; font-weight:900; margin-bottom:15px; text-align:center; color:#7f8fa6;">備份與還原 (設定檔)</label>
+            <label style="display:block; font-size:22px; font-weight:900; margin-bottom:15px; text-align:center; color:#7f8fa6;">備份與還原 (設定檔)</label>
             <button class="btn-big-action" style="background:var(--primary); color:#fff; box-shadow:0 5px 0 var(--primary-dark);" onclick="expData('json')">📤 手動匯出 JSON</button>
             <input type="file" id="file-input" accept=".json" style="display:none;" onchange="impData(event)">
             <button class="btn-big-action" style="background:#fff; color:var(--primary-dark); border:2px solid var(--primary-dark); box-shadow:0 5px 0 var(--primary-dark);" onclick="document.getElementById('file-input').click()">📥 還原設定資料</button>
@@ -345,13 +345,13 @@
         <div class="m-header"><span>分類管理</span><button class="m-close" onclick="closeModal()">✖</button></div>
         <div class="tabs" id="cat-tabs"><div class="tab active exp" onclick="renderCatMgr('expense')">支出分類</div><div class="tab inc" onclick="renderCatMgr('income')">收入分類</div></div>
         <div id="cat-mgr-container"></div>
-        <button class="btn-main btn-record" style="width:calc(100% - 40px); margin:20px; padding:18px; border-radius:18px; font-size:18px;" onclick="addMainCat()">➕ 新增主分類</button>
+        <button class="btn-main btn-record" style="width:calc(100% - 40px); margin:20px; padding:18px; border-radius:18px; font-size:22px;" onclick="addMainCat()">➕ 新增主分類</button>
     </div>
 
     <div id="m-acc-mgr" class="modal">
         <div class="m-header"><span>帳戶管理</span><button class="m-close" onclick="closeModal()">✖</button></div>
         <div id="acc-mgr-container"></div>
-        <button class="btn-main btn-record" style="width:calc(100% - 40px); margin:20px; padding:18px; border-radius:18px; font-size:18px;" onclick="addAcc()">➕ 新增帳戶</button>
+        <button class="btn-main btn-record" style="width:calc(100% - 40px); margin:20px; padding:18px; border-radius:18px; font-size:22px;" onclick="addAcc()">➕ 新增帳戶</button>
     </div>
 
     <div id="v-keypad">
@@ -644,7 +644,7 @@
             $('ui-inline-title').innerText = `📝 ${dateStr.replace(/-/g, '/')} 明細`;
             const tl = $('ui-today-list');
             const tr = db.filter(r=>r.date===dateStr).reverse();
-            tl.innerHTML = tr.length ? tr.map(r => rHtml(r)).join('') : '<div style="text-align:center;padding:40px;color:#95a5a6;font-weight:900;font-size:18px;">該日尚無紀錄</div>';
+            tl.innerHTML = tr.length ? tr.map(r => rHtml(r)).join('') : '<div style="text-align:center;padding:40px;color:#95a5a6;font-weight:900;font-size:22px;">該日尚無紀錄</div>';
         }
 
         function rHtml(r) {
@@ -823,7 +823,7 @@
                 } 
                 return true;
             }).reverse();
-            $('l-container').innerHTML = arr.length ? arr.map(r=>rHtml(r)).join('') : '<div style="text-align:center;padding:50px;color:#95a5a6;font-weight:900;font-size:20px;">查無資料</div>';
+            $('l-container').innerHTML = arr.length ? arr.map(r=>rHtml(r)).join('') : '<div style="text-align:center;padding:50px;color:#95a5a6;font-weight:900;font-size:24px;">查無資料</div>';
         }
 
         function openCalPicker() { calPickDate = new Date(cDate); renderCalPicker(); $('m-cal').style.display='block'; pushM('m-cal'); }
@@ -874,7 +874,7 @@
             }
 
             if(chartObj) chartObj.destroy();
-            const ctx = $('c-canvas').getContext('2d'); Chart.defaults.font.size = 18;
+            const ctx = $('c-canvas').getContext('2d'); Chart.defaults.font.size = 22;
             let expColors = ['#FF4757', '#FF6B81', '#FF9F43', '#EE5A24', '#EA2027', '#B33939', '#CD6133'];
             let incColors = ['#00A8FF', '#48DBFB', '#0984E3', '#74B9FF', '#1E90FF', '#3742FA', '#5352ED'];
 
@@ -929,7 +929,7 @@
             $('acc-mgr-container').innerHTML = sets.a.map(a => {
                 let bal = accBals[a] ? accBals[a] : 0; let balColor = bal >= 0 ? 'var(--primary)' : 'var(--expense)';
                 return `<div class="mgr-card" onclick="openList('account', '${a}')" style="cursor:pointer; transition: transform 0.1s;">
-                    <div class="mgr-title"><span>💳 ${a} <span style="color:${balColor}; font-size:18px; margin-left:8px;">($${bal.toLocaleString()})</span></span><span class="mgr-del" onclick="event.stopPropagation(); delAcc('${a}')">刪除</span></div></div>`;
+                    <div class="mgr-title"><span>💳 ${a} <span style="color:${balColor}; font-size:20px; margin-left:8px;">($${bal.toLocaleString()})</span></span><span class="mgr-del" onclick="event.stopPropagation(); delAcc('${a}')">刪除</span></div></div>`;
             }).join('');
         }
         function addAcc() { let n = prompt('輸入新帳戶名稱：'); if(n ? (n.trim() ? !sets.a.includes(n.trim()) : false) : false){ sets.a.push(n.trim()); saveDB(); renderAccMgr(); renderHome(); triggerAutoConfigBackup(); } }
