@@ -118,7 +118,8 @@
         .tab.active.inc { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(0,168,255,.4); } 
         .tab.active.tra { background: var(--transfer); color: #fff; box-shadow: 0 4px 12px rgba(165,94,234,.4); }
         .tab.active.tot { background: var(--income); color: #fff; box-shadow: 0 4px 12px rgba(32,191,107,.4); } 
-
+        #c-time-tabs .tab.active { background: #34495e; color: #fff; box-shadow: 0 4px 10px rgba(52,73,94,.3); }
+   
         .amt-box { background: #fff; margin: 0 20px 25px; padding: 25px; border-radius: 22px; text-align: right; box-shadow: 0 5px 15px rgba(0,0,0,.08); border: 2px solid transparent; transition: all .2s; }
         .amt-box.active { border-color: var(--primary); background: #fdfefe; box-shadow: 0 0 0 5px rgba(0,168,255,.2); }
         .amt-val { font-size: 52px; font-weight: 900; font-family: monospace; letter-spacing: 1px; color: var(--text-color); }
@@ -298,18 +299,21 @@
         <div class="cal-grid" id="ui-cal-grid"></div>
     </div>
 
-    <div id="m-chart" class="modal">
+    <<div id="m-chart" class="modal">
         <div class="m-header"><span>收支分析</span><button class="m-close" onclick="closeModal()">✖</button></div>
         
+        <!-- 修正：重新命名與排序 -->
         <div class="tabs" id="c-time-tabs" style="margin: 0 20px 15px; box-shadow: none; border: 2px solid var(--border);">
             <div class="tab active" data-time="month" onclick="switchTime('month')" style="padding: 10px;">單月</div>
-            <div class="tab" data-time="year" onclick="switchTime('year')" style="padding: 10px;">年度</div>
-            <div class="tab" data-time="trend" onclick="switchTime('trend')" style="padding: 10px;">半年趨勢</div>
+            <div class="tab" data-time="trend" onclick="switchTime('trend')" style="padding: 10px;">半年</div>
+            <div class="tab" data-time="year" onclick="switchTime('year')" style="padding: 10px;">整年</div>
         </div>
 
         <div class="form-group" style="text-align:center;">
             <p style="font-size:14px; color:#95a5a6; margin-bottom:5px; font-weight:bold;" id="c-hint">請選擇基準月份</p>
+            <!-- 智慧切換：平時顯示月份，看整年時顯示年份選單 -->
             <input type="month" id="c-month" onchange="renderChart()" style="width:70%; font-size:22px; text-align:center; padding:12px;">
+            <select id="c-year" onchange="renderChart()" style="display:none; width:70%; font-size:22px; text-align:center; padding:12px; margin:0 auto;"></select>
         </div>
         
         <div class="tabs" id="c-tabs" style="margin-top:0;">
@@ -897,21 +901,39 @@
         }
 
         // --- 📊 三維度圖表分析邏輯 ---
+        // --- 📊 三維度圖表分析邏輯 ---
         function switchTime(t) {
             cTime = t;
             document.querySelectorAll('#c-time-tabs .tab').forEach(el => el.classList.remove('active'));
             document.querySelector(`#c-time-tabs .tab[data-time="${t}"]`).classList.add('active');
             
-            if (t === 'month') $('c-hint').innerText = '分析該單月數據';
-            if (t === 'year') $('c-hint').innerText = '分析該年份全年數據 (僅看年份)';
-            if (t === 'trend') $('c-hint').innerText = '從該月往回推半年的趨勢';
+            // 智慧切換提示文字與選擇器
+            if (t === 'month') {
+                $('c-hint').innerText = '請選擇要分析的單一月份';
+                $('c-month').style.display = 'inline-block';$('c-year').style.display = 'none';
+            } else if (t === 'trend') {
+                $('c-hint').innerText = '請選擇基準月份 (往回推半年)';
+                $('c-month').style.display = 'inline-block';$('c-year').style.display = 'none';
+            } else if (t === 'year') {
+                $('c-hint').innerText = '請選擇要分析的年份';
+                $('c-month').style.display = 'none';$('c-year').style.display = 'inline-block';
+            }
             
             renderChart();
         }
 
         function openChart(type) { 
             try {
-                $('c-month').value = `${cDate.getFullYear()}-${String(cDate.getMonth()+1).padStart(2,'0')}`; 
+                let y = cDate.getFullYear();
+                $('c-month').value = `${y}-${String(cDate.getMonth()+1).padStart(2,'0')}`; 
+                
+                // 動態產生年份選單 (前後5年)
+                let yHtml = '';
+                for(let i = y - 5; i <= y + 1; i++) {
+                    yHtml += `<option value="${i}" ${i === y ? 'selected' : ''}>${i} 年</option>`;
+                }
+                $('c-year').innerHTML = yHtml;
+
                 cTyp = type ? type : 'expense'; 
                 $('m-chart').style.display='block'; pushM('m-chart'); 
                 
@@ -926,6 +948,7 @@
             document.querySelector(`#c-tabs .tab[data-t="${cTyp}"]`).classList.add('active');
             
             let baseMonth = $('c-month').value; 
+            let selectedYear = $('c-year').value;
             if(!baseMonth) return;
 
             let baseY = baseMonth.split('-')[0];
@@ -942,7 +965,8 @@
 
             if (cTime === 'month' || cTime === 'year') {
                 let dt = {}, ti = 0, te = 0;
-                let filterPrefix = (cTime === 'year') ? baseY : baseMonth; 
+                // 關鍵：如果看「整年」，就抓取年份選擇器的值來過濾
+                let filterPrefix = (cTime === 'year') ? selectedYear : baseMonth; 
 
                 db.forEach(r => {
                     if (r.type === 'deleted') return;
