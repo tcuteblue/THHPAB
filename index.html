@@ -191,10 +191,12 @@
                 <span onclick="chgMth(1)">▶</span>
             </div>
             
-            <div style="position: relative; display: flex; justify-content: center; align-items: center; padding: 0 8px; margin-bottom: 5px;">
+            <!-- 調整了 min-height 和 margin-bottom，讓小日曆不撞線 -->
+            <div style="position: relative; display: flex; justify-content: center; align-items: center; padding: 0 8px; margin-bottom: 12px; min-height: 32px;">
                 <div style="font-size:13px; color:#95a5a6; font-weight:bold;">左右滑動切換週次</div>
                 
-                <div onclick="jumpToToday()" style="position: absolute; right: 10px; width: 32px; height: 32px; background: #fff; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; cursor: pointer; box-shadow: 0 3px 8px rgba(230,126,34,0.3); border: 1.5px solid #f1f2f6; transition: transform 0.1s;" onmousedown="this.style.transform='scale(0.9)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'" title="回到今日">
+                <!-- 加上了 bottom: 4px，讓圖示往上提 -->
+                <div onclick="jumpToToday()" style="position: absolute; right: 10px; bottom: 4px; width: 32px; height: 32px; background: #fff; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; cursor: pointer; box-shadow: 0 3px 8px rgba(230,126,34,0.3); border: 1.5px solid #f1f2f6; transition: transform 0.1s;" onmousedown="this.style.transform='scale(0.9)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'" title="回到今日">
                     <div style="background: var(--today-color); height: 9px; width: 100%; display: flex; justify-content: space-evenly; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
                         <div style="width:4px; height:4px; background:#fff; border-radius:50%; opacity:0.9;"></div>
                         <div style="width:4px; height:4px; background:#fff; border-radius:50%; opacity:0.9;"></div>
@@ -525,10 +527,44 @@
         function getDefaultDateStr() { return sets.tz === 'tw' ? dStr(getTwDateObj()) : dStr(new Date()); }
         
         function jumpToToday() {
+            if (weekSwipeOffset === 0 && currentInlineDate === getDefaultDateStr()) return; // 已經在今天就不用動
+            
+            const wCal = $('ui-calendar');
+            wCal.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.25s ease';
+            
+            if (weekSwipeOffset > 0) {
+                // 從未來 (右邊) 回來：往右飛出
+                wCal.style.transform = 'translateX(0%)';
+                wCal.style.opacity = '0';
+                setTimeout(executeJump.bind(null, -66.666), 300); // 準備從左邊滑入
+            } else if (weekSwipeOffset < 0) {
+                // 從過去 (左邊) 回來：往左飛出
+                wCal.style.transform = 'translateX(-66.666%)';
+                wCal.style.opacity = '0';
+                setTimeout(executeJump.bind(null, 0), 300); // 準備從右邊滑入
+            } else {
+                // 只是點錯日期 (在同一週)，原地刷淡
+                wCal.style.opacity = '0';
+                setTimeout(executeJump.bind(null, -33.333), 200);
+            }
+        }
+
+        function executeJump(startPos) {
+            const wCal = $('ui-calendar');
             cDate = sets.tz === 'tw' ? getTwDateObj() : new Date();
             weekSwipeOffset = 0;
             currentInlineDate = getDefaultDateStr();
-            renderHome();
+            
+            wCal.style.transition = 'none'; // 拔掉動畫
+            wCal.style.transform = `translateX(${startPos}%)`; // 把隱形的日曆放到預備位置
+            renderHome(); // 重新渲染當週積木
+            
+            // 下一幀立刻啟動平滑滑入動畫
+            setTimeout(() => {
+                wCal.style.transition = 'all 0.4s cubic-bezier(0.1, 0.9, 0.2, 1)';
+                wCal.style.transform = 'translateX(-33.333%)'; // 滑回正中央
+                wCal.style.opacity = '1';
+            }, 30);
         }
 
         let defPrompt = null;
