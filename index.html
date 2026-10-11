@@ -24,7 +24,7 @@
             --transfer: #A55EEA;      
             --border: #DFE4EA;
             --header-bg: linear-gradient(135deg, #F39C12, #E67E22); 
-            --today-color: #E67E22; /* 真實今日的專屬橘色 */
+            --today-color: #E67E22; 
         }
 
         * { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
@@ -40,7 +40,6 @@
         
         .container { padding: 10px; padding-bottom: 40px; }
         
-        /* 隱藏 X 軸溢出，為滑動日曆做準備 */
         .card-panel { background: #fff; border-radius: 20px; padding: 12px; margin-bottom: 12px; box-shadow: 0 8px 20px rgba(0,0,0,.06); overflow: hidden; }
         .month-header { font-size: 26px; font-weight: 900; text-align: center; color: var(--text-color); display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 8px; }
         .month-header span { cursor: pointer; padding: 5px 15px; border-radius: 12px; transition: background 0.2s; }
@@ -51,18 +50,14 @@
         .day-col { flex: 1; display: flex; flex-direction: column; align-items: center; font-size: 15px; color: #7f8fa6; font-weight: bold; cursor: pointer; position: relative; }
         .day-date { width: 42px; height: 42px; display: flex; justify-content: center; align-items: center; border-radius: 50%; font-size: 19px; margin-top: 4px; color: var(--text-color); transition: all 0.2s; box-sizing: border-box; border: 2px solid transparent; }
         
-        /* 選中的日子 (藍底) */
         .day-today .day-date { background: var(--primary); color: #fff; box-shadow: 0 4px 10px rgba(0,168,255,.4); border-color: var(--primary); }
-        /* 真實的今天 (橘框) */
         .day-true-today .day-date { border-color: var(--today-color); }
-        /* 若同時是今天+選中，藍底但維持橘框 */
         .day-today.day-true-today .day-date { background: var(--primary); border-color: var(--today-color); }
 
         .day-has-record { width: 8px; height: 8px; border-radius: 50%; background: var(--expense); position: absolute; bottom: -12px; display: none; }
         .day-col.has-record .day-has-record { display: block; }
         .day-col:active .day-date { background: #eef7fc; }
 
-        /* 3D 立體按鈕 UI */
         .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; margin-top: 15px; }
         .dash-item { cursor: pointer; padding: 12px 4px; border-radius: 16px; transition: all 0.1s; background: #fff; box-shadow: 0 4px 0 #DFE4EA, 0 6px 12px rgba(0,0,0,.05); border: 1px solid #f1f2f6; }
         .dash-item:active { background: #f8f9fa; transform: translateY(4px); box-shadow: 0 0 0 #DFE4EA; border-color: var(--primary); }
@@ -90,7 +85,6 @@
         .btn-set { grid-column: span 1; font-size: 16px; gap: 4px; background: linear-gradient(135deg, #a4b0be, #747d8c); box-shadow: 0 6px 0 #57606f, 0 8px 20px rgba(116,125,140,.3); }
         .btn-set:active { transform: translateY(6px); box-shadow: 0 0 0 #57606f; }
 
-        /* 3D 立體統計框 */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
         .stat-box { background: #fff; border-radius: 16px; padding: 12px; box-shadow: 0 4px 0 #DFE4EA, 0 6px 12px rgba(0,0,0,.04); cursor: pointer; transition: all 0.1s; border: 2px solid transparent; }
         .stat-box:active { transform: translateY(4px); box-shadow: 0 0 0 #DFE4EA; border-color: var(--primary); background: #fdfefe; }
@@ -130,7 +124,6 @@
         .tab.active.inc { background: var(--primary); color: #fff; box-shadow: 0 4px 12px rgba(0,168,255,.4); } 
         .tab.active.tra { background: var(--transfer); color: #fff; box-shadow: 0 4px 12px rgba(165,94,234,.4); }
         .tab.active.tot { background: var(--income); color: #fff; box-shadow: 0 4px 12px rgba(32,191,107,.4); } 
-        /* 時間選擇器的色塊卡住效果 */
         #c-time-tabs .tab.active { background: #34495e; color: #fff; box-shadow: 0 4px 10px rgba(52,73,94,.3); }
 
         .amt-box { background: #fff; margin: 0 20px 25px; padding: 25px; border-radius: 22px; text-align: right; box-shadow: 0 5px 15px rgba(0,0,0,.08); border: 2px solid transparent; transition: all .2s; }
@@ -201,13 +194,17 @@
             <div style="position: relative; display: flex; justify-content: center; align-items: center; padding: 0 8px; margin-bottom: 5px;">
                 <div style="font-size:13px; color:#95a5a6; font-weight:bold;">左右滑動切換週次</div>
                 
-                <!-- 精緻的圓形「今」字按鈕 -->
-                <div onclick="jumpToToday()" style="position: absolute; right: 10px; display: flex; justify-content: center; align-items: center; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--today-color); color: var(--today-color); font-size: 14px; font-weight: 900; cursor: pointer; box-shadow: 0 2px 6px rgba(230,126,34,0.2); background: #fff;" title="回到今日">
-                    今
+                <div onclick="jumpToToday()" style="position: absolute; right: 10px; width: 32px; height: 32px; background: #fff; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; cursor: pointer; box-shadow: 0 3px 8px rgba(230,126,34,0.3); border: 1.5px solid #f1f2f6; transition: transform 0.1s;" onmousedown="this.style.transform='scale(0.9)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'" title="回到今日">
+                    <div style="background: var(--today-color); height: 9px; width: 100%; display: flex; justify-content: space-evenly; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
+                        <div style="width:4px; height:4px; background:#fff; border-radius:50%; opacity:0.9;"></div>
+                        <div style="width:4px; height:4px; background:#fff; border-radius:50%; opacity:0.9;"></div>
+                    </div>
+                    <div id="ui-btn-today-num" style="flex: 1; display: flex; justify-content: center; align-items: center; font-size: 16px; font-weight: 900; color: var(--today-color); padding-bottom: 1px;">
+                        --
+                    </div>
                 </div>
             </div>
 
-            <!-- 無縫日曆外框 -->
             <div class="week-calendar-wrap">
                 <div class="week-calendar" id="ui-calendar"></div>
             </div>
@@ -318,7 +315,6 @@
 
     <div id="m-cal" class="modal">
         <div class="m-header"><span>選擇日期</span><button class="m-close" onclick="closeModal()">✖</button></div>
-        <!-- 採用原生月份滾輪選擇器 -->
         <div class="month-header" style="margin-top:20px;">
             <span onclick="chgCalPicker(-1)">◀</span>
             <input type="month" id="m-cal-picker-input" onchange="chgCalPickerFromInput()" style="font-size:24px; text-align:center; padding:5px; border:none; outline:none; background:transparent; font-weight:900; color:var(--text-color); width: 170px;">
@@ -417,7 +413,7 @@
     <script>
         const $ = id => document.getElementById(id);
         
-        // ⚠️ 請記得替換成您的 Google Apps Script 網址
+        // ⚠️ 請替換成您的 Google Apps Script 網址
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz9Tohi--mDE6Pk5u6P20xBiHsQ-yMR1rDmfG5Q7LBmxaOeLxedtHp0iMwh4AuCyt4Ncw/exec";
         
         const defCats = {
@@ -525,14 +521,9 @@
         const toast = m => { const t=$('toast'); t.innerText=m; t.style.opacity=1; setTimeout(()=>t.style.opacity=0,2500); };
         const dStr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
-        // 自動校正時區函數
-        function getTwDateObj() {
-            return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' }));
-        }
-        function getDefaultDateStr() {
-            return sets.tz === 'tw' ? dStr(getTwDateObj()) : dStr(new Date());
-        }
-        // 跳回今日
+        function getTwDateObj() { return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' })); }
+        function getDefaultDateStr() { return sets.tz === 'tw' ? dStr(getTwDateObj()) : dStr(new Date()); }
+        
         function jumpToToday() {
             cDate = sets.tz === 'tw' ? getTwDateObj() : new Date();
             weekSwipeOffset = 0;
@@ -554,7 +545,6 @@
             if(defPrompt) $('install-btn').style.display = 'block';
         };
 
-        // 物理無縫滑動日曆 (21天)
         function initSwipeCalendar() {
             let startX = 0, currentX = 0, isDragging = false;
             const wCal = $('ui-calendar');
@@ -658,20 +648,21 @@
         }
 
         function renderHome() {
+            let trueTodayObj = sets.tz === 'tw' ? getTwDateObj() : new Date();
+            if($('ui-btn-today-num')) $('ui-btn-today-num').innerText = trueTodayObj.getDate();
+            
             let actualD = new Date(cDate);
             actualD.setDate(actualD.getDate() + (weekSwipeOffset * 7));
             $('txt-month').innerText = `${actualD.getFullYear()} / ${String(actualD.getMonth()+1).padStart(2,'0')}`;
             
             const cal = $('ui-calendar'); cal.innerHTML = '';
             
-            // 計算21天(前一週+本週+後一週)
             let baseD = new Date(cDate);
             baseD.setDate(baseD.getDate() - baseD.getDay() + (weekSwipeOffset * 7));
             let d = new Date(baseD);
-            d.setDate(d.getDate() - 7); // 退回前一週
+            d.setDate(d.getDate() - 7); 
             
             const wk = ['日','一','二','三','四','五','六'];
-            let tStr = getDefaultDateStr();
             let trueTodayStr = getDefaultDateStr();
 
             for(let i=0; i<21; i++) {
@@ -749,7 +740,6 @@
             const tr = db.filter(r=>r.date===dateStr && r.type !== 'deleted').reverse();
             tl.innerHTML = tr.length ? tr.map(r => rHtml(r)).join('') : '<div style="text-align:center;padding:25px;color:#95a5a6;font-weight:900;font-size:18px;">該日尚無紀錄</div>';
             
-            // 更新本日統計
             let dtI=0, dtE=0;
             tr.forEach(r => { if(r.type==='income') dtI+=r.amount; if(r.type==='expense') dtE+=r.amount; });
             $('s-d-today').innerText = dateStr; $('s-i-today').innerText=dtI.toLocaleString(); $('s-e-today').innerText=dtE.toLocaleString();
@@ -935,7 +925,6 @@
                 if(r.date < lStart ? true : r.date > lEnd) return false;
                 if(currentAccFilter ? (r.account !== currentAccFilter ? r.toAccount !== currentAccFilter : false) : false) return false;
                 if(kw) { 
-                    // 萬用搜尋加入日期
                     let txt = (r.date||'')+(r.mainCat||'')+(r.subCat||'')+(r.note||'')+(r.account||'')+(r.amount||''); 
                     return txt.toLowerCase().includes(kw); 
                 } 
@@ -944,7 +933,6 @@
             $('l-container').innerHTML = arr.length ? arr.map(r=>rHtml(r)).join('') : '<div style="text-align:center;padding:50px;color:#95a5a6;font-weight:900;font-size:20px;">查無資料</div>';
         }
 
-        // 大月曆選擇器
         function openCalPicker() { calPickDate = new Date(cDate.getFullYear(), cDate.getMonth(), 1); renderCalPicker(); $('m-cal').style.display='block'; pushM('m-cal'); }
         function chgCalPicker(d) { calPickDate.setMonth(calPickDate.getMonth()+d); renderCalPicker(); }
         function chgCalPickerFromInput() {
@@ -973,7 +961,6 @@
             $('ui-cal-grid').innerHTML = html;
         }
 
-        // --- 📊 三維度圖表分析邏輯 ---
         function switchTime(t) {
             cTime = t;
             document.querySelectorAll('#c-time-tabs .tab').forEach(el => el.classList.remove('active'));
@@ -1155,7 +1142,6 @@
             let tp = Number($('s-p-day').value); sets.pDay = Math.min(31, Math.max(1, tp ? tp : 1)); $('s-p-day').value = sets.pDay; 
             let ta = Number($('s-p-amt').value); sets.pAmt = ta ? ta : 0;
             
-            // 檢查是否變更時區設定並記錄
             let oldTz = sets.tz;
             sets.tz = $('s-tz').value;
             saveDB(); 
@@ -1164,7 +1150,6 @@
                 toast('設定已儲存'); 
                 renderHome(); 
                 autoPocket();
-                // 變更任一設定都會觸發備份
                 triggerAutoConfigBackup(); 
             } 
         }
