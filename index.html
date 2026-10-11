@@ -39,7 +39,7 @@
         
         .container { padding: 10px; padding-bottom: 40px; }
         
-        .card-panel { background: #fff; border-radius: 20px; padding: 12px; margin-bottom: 12px; box-shadow: 0 8px 20px rgba(0,0,0,.06); }
+        .card-panel { background: #fff; border-radius: 20px; padding: 12px; margin-bottom: 12px; box-shadow: 0 8px 20px rgba(0,0,0,.06); overflow: hidden; }
         .month-header { font-size: 26px; font-weight: 900; text-align: center; color: var(--text-color); display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 8px; }
         .month-header span { cursor: pointer; padding: 5px 15px; border-radius: 12px; transition: background 0.2s; }
         .month-header span:active { background: #f1f2f6; }
@@ -532,12 +532,77 @@
         };
 
         function initSwipeCalendar() {
-            let startX = 0; const wCal = $('ui-calendar');
-            wCal.addEventListener('touchstart', e => { startX = e.touches[0].clientX; });
+            let startX = 0, currentX = 0, isDragging = false;
+            const wCal = $('ui-calendar');
+
+            wCal.addEventListener('touchstart', e => { 
+                startX = e.touches[0].clientX; 
+                currentX = startX;
+                isDragging = true;
+                // 手指按住時，拔掉動畫，讓日曆 1:1 緊跟手指
+                wCal.style.transition = 'none'; 
+            });
+            
+            wCal.addEventListener('touchmove', e => {
+                if(!isDragging) return;
+                currentX = e.touches[0].clientX;
+                let diff = currentX - startX;
+                
+                // 防止上下捲動畫面時，誤觸左右滑動
+                if (Math.abs(diff) > 15) e.preventDefault(); 
+                
+                // 讓日曆跟著手指水平移動
+                wCal.style.transform = `translateX(${diff}px)`;
+            }, { passive: false });
+
             wCal.addEventListener('touchend', e => {
-                let endX = e.changedTouches[0].clientX;
-                if(startX - endX > 50) { weekSwipeOffset++; renderHome(); } 
-                else if(endX - startX > 50) { weekSwipeOffset--; renderHome(); } 
+                if(!isDragging) return;
+                isDragging = false;
+                let diff = currentX - startX;
+                
+                // 手指放開時，加上物理彈性動畫
+                wCal.style.transition = 'transform 0.35s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease'; 
+                
+                if(diff < -60) { 
+                    // 成功往左滑 (切換至下一週)
+                    wCal.style.transform = 'translateX(-50%)'; 
+                    wCal.style.opacity = '0';
+                    
+                    setTimeout(() => { 
+                        weekSwipeOffset++; 
+                        wCal.style.transition = 'none'; 
+                        wCal.style.transform = 'translateX(50%)'; // 瞬間移到右邊準備進場
+                        renderHome(); 
+                        
+                        setTimeout(() => {
+                            wCal.style.transition = 'all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1)';
+                            wCal.style.transform = 'translateX(0)';
+                            wCal.style.opacity = '1';
+                        }, 30);
+                    }, 300);
+
+                } else if(diff > 60) { 
+                    // 成功往右滑 (切換至上一週)
+                    wCal.style.transform = 'translateX(50%)';
+                    wCal.style.opacity = '0';
+                    
+                    setTimeout(() => { 
+                        weekSwipeOffset--; 
+                        wCal.style.transition = 'none'; 
+                        wCal.style.transform = 'translateX(-50%)'; // 瞬間移到左邊準備進場
+                        renderHome(); 
+                        
+                        setTimeout(() => {
+                            wCal.style.transition = 'all 0.35s cubic-bezier(0.25, 0.8, 0.25, 1)';
+                            wCal.style.transform = 'translateX(0)';
+                            wCal.style.opacity = '1';
+                        }, 30);
+                    }, 300);
+
+                } else { 
+                    // 滑動距離不夠（未超過 60px），自動彈回原位
+                    wCal.style.transform = 'translateX(0)'; 
+                } 
             });
         }
 
