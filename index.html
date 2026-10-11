@@ -52,9 +52,10 @@
         .day-col.has-record .day-has-record { display: block; }
         .day-col:active .day-date { background: #eef7fc; }
 
+        /* 升級版：讓首頁上方儀表板看起來像立體按鈕 */
         .dashboard { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; text-align: center; margin-top: 15px; }
-        .dash-item { cursor: pointer; padding: 10px 4px; border-radius: 14px; transition: all 0.15s; background: #fdfefe; box-shadow: 0 2px 6px rgba(0,0,0,.04); border: 1px solid #f1f2f6; }
-        .dash-item:active { background: #f1f2f6; transform: scale(0.96); border-color: var(--primary); }
+        .dash-item { cursor: pointer; padding: 12px 4px; border-radius: 16px; transition: all 0.1s; background: #fff; box-shadow: 0 4px 0 #DFE4EA, 0 6px 12px rgba(0,0,0,.05); border: 1px solid #f1f2f6; }
+        .dash-item:active { background: #f8f9fa; transform: translateY(4px); box-shadow: 0 0 0 #DFE4EA; border-color: var(--primary); }
         .dash-label { font-size: 14px; color: #7f8fa6; font-weight: 900; margin-bottom: 4px; display: block; }
         .dash-value { font-size: 22px; font-weight: 900; }
         
@@ -79,9 +80,10 @@
         .btn-set { grid-column: span 1; font-size: 16px; gap: 4px; background: linear-gradient(135deg, #a4b0be, #747d8c); box-shadow: 0 6px 0 #57606f, 0 8px 20px rgba(116,125,140,.3); }
         .btn-set:active { transform: translateY(6px); box-shadow: 0 0 0 #57606f; }
 
+        /* 升級版：讓下方的統計方塊也看起來像立體按鈕 */
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-        .stat-box { background: #fff; border-radius: 16px; padding: 10px 12px; box-shadow: 0 4px 10px rgba(0,0,0,.04); cursor: pointer; transition: all 0.1s; border: 2px solid transparent; }
-        .stat-box:active { transform: scale(0.97); border-color: var(--primary); background: #fdfefe; }
+        .stat-box { background: #fff; border-radius: 16px; padding: 12px; box-shadow: 0 4px 0 #DFE4EA, 0 6px 12px rgba(0,0,0,.04); cursor: pointer; transition: all 0.1s; border: 2px solid transparent; }
+        .stat-box:active { transform: translateY(4px); box-shadow: 0 0 0 #DFE4EA; border-color: var(--primary); background: #fdfefe; }
         .stat-title { font-size: 16px; font-weight: 900; color: #34495e; border-bottom: 1px solid #f1f2f6; padding-bottom: 6px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: flex-end; }
         .stat-date { font-size: 13px; color: #95a5a6; font-weight: bold; }
         .stat-row { display: flex; justify-content: space-between; font-size: 15px; font-weight: 900; margin-bottom: 2px; }
