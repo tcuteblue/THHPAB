@@ -300,11 +300,21 @@
 
     <div id="m-chart" class="modal">
         <div class="m-header"><span>收支分析</span><button class="m-close" onclick="closeModal()">✖</button></div>
-        <div class="form-group" style="text-align:center;"><input type="month" id="c-month" onchange="renderChart()" style="width:70%; font-size:22px; text-align:center; padding:12px;"></div>
+        
+        <div class="tabs" id="c-time-tabs" style="margin: 0 20px 15px; box-shadow: none; border: 2px solid var(--border);">
+            <div class="tab active" data-time="month" onclick="switchTime('month')" style="padding: 10px;">單月</div>
+            <div class="tab" data-time="year" onclick="switchTime('year')" style="padding: 10px;">年度</div>
+            <div class="tab" data-time="trend" onclick="switchTime('trend')" style="padding: 10px;">半年趨勢</div>
+        </div>
+
+        <div class="form-group" style="text-align:center;">
+            <p style="font-size:14px; color:#95a5a6; margin-bottom:5px; font-weight:bold;" id="c-hint">請選擇基準月份</p>
+            <input type="month" id="c-month" onchange="renderChart()" style="width:70%; font-size:22px; text-align:center; padding:12px;">
+        </div>
         
         <div class="tabs" id="c-tabs" style="margin-top:0;">
             <div class="tab inc" data-t="income" onclick="switchChart('income')">收入</div>
-            <div class="tab exp" data-t="expense" onclick="switchChart('expense')">支出</div>
+            <div class="tab active exp" data-t="expense" onclick="switchChart('expense')">支出</div>
             <div class="tab tot" data-t="total" onclick="switchChart('total')">結餘</div>
         </div>
         <div style="background:#fff; margin:0 20px; padding:20px; border-radius:24px; box-shadow:0 6px 16px rgba(0,0,0,.06);">
@@ -333,7 +343,14 @@
                 <span style="font-size:16px; font-weight:bold; color:#7f8fa6;">金額</span>
                 <input type="number" id="s-p-amt" onchange="saveSet(true)" style="flex:1; padding:10px; font-size:20px; font-family:monospace; color:var(--primary);">
             </div>
-            <p style="font-size: 14px; color: #95a5a6; margin-top: 10px; font-weight: bold;">開啟後，將於指定日期自動新增一筆個人收入。</p>
+        </div>
+
+        <div class="form-group" style="background:#f8f9fa; padding:18px; border-radius:18px; border:2px solid #DFE4EA; margin-top: 15px;">
+            <label style="font-size:18px; font-weight:900; color:#2c3e50; margin-bottom:10px;">記帳預設日期時區</label>
+            <select id="s-tz" onchange="saveSet(true)" style="width:100%; padding:12px; font-size:18px; border-radius:12px; font-weight:bold;">
+                <option value="tw">🇹🇼 固定台灣時間 (預設)</option>
+                <option value="local">📱 跟隨手機當地時間</option>
+            </select>
         </div>
 
         <button class="btn-big-action" style="background:#fff; color:var(--text-color); border:2px solid #DFE4EA; box-shadow:0 4px 0 #DFE4EA;" onclick="openCatMgr()">🏷️ 分類管理</button>
@@ -378,7 +395,6 @@
                 "🍔 食品餐飲": ["營養豆漿", "新鮮水果", "新鮮雞蛋", "早餐花費", "午餐花費", "晚餐花費", "飲料點心", "聚餐交際"],
                 "🍽️ 家用飲食": ["小孩早餐", "小孩午餐", "小孩晚餐", "小孩點心", "小孩消夜"],
                 "🏠 居家生活": ["日常用品", "水族用品", "汽機用品", "理髮美容", "網路購物", "文具用品", "園藝用品", "郵寄費用"],
-                "🛒 家用開銷": ["日常用品", "水族用品", "汽機用品", "理髮美容", "網路購物", "文具用品", "園藝用品", "郵寄費用"],
                 "🚗 行車交通": ["台鐵車資", "高鐵車資", "捷運車資", "公車車資", "計程車資", "機車加油", "汽車加油", "停車費用", "共享機車", "公共單車", "洗車費用"],
                 "🎮 休閒娛樂": ["幸運樂透", "遊戲投幣", "奢侈敗家", "小賭怡情", "街藝贊助", "電影展覽", "遊戲課金", "國內旅遊", "出國旅遊", "運動健身"],
                 "👗 服飾美容": ["衣服鞋包", "保養彩妝", "剪髮造型", "配件飾品"],
@@ -407,20 +423,17 @@
         let db = pDB ? pDB : [];
         
         let pSets = JSON.parse(localStorage.getItem('cloud_exp_sets'));
-        let sets = pSets ? pSets : { b: 0, a: ["💵 現金", "🏦 銀行"], l: "", pAmt: 5000, pDay: 1, pEn: true };
+        let sets = pSets ? pSets : { b: 0, a: ["💵 現金", "🏦 銀行"], l: "", pAmt: 5000, pDay: 1, pEn: true, tz: 'tw' };
         
         if (sets.pAmt === undefined) sets.pAmt = 5000;
         if (sets.pDay === undefined) sets.pDay = 1;
         if (sets.pEn === undefined) sets.pEn = true;
+        if (sets.tz === undefined) sets.tz = 'tw';
 
         let pCats = JSON.parse(localStorage.getItem('cloud_exp_cats'));
         let cats = pCats ? pCats : defCats;
         
-        let pSync = Number(localStorage.getItem('cloud_exp_lastSyncTime'));
-        let lastSyncTime = pSync ? pSync : 0; 
-        
         let needsUpdate = false;
-        
         if(['現金', '銀行', '信用卡'].some(x => sets.a.includes(x))) {
             sets.a = sets.a.filter(x => x !== '信用卡').map(x => x === '現金' ? '💵 現金' : (x === '銀行' ? '🏦 銀行' : x));
             db.forEach(r => {
@@ -438,9 +451,10 @@
         let currentInlineDate = "";
         let currentAccFilter = "";
         let editingRecordId = null; 
+        let cTime = 'month'; // 圖表分析預設時間維度
 
         let curS = 1;
-        try { history.replaceState({ s: 1, t: 'main' }, ''); } catch(e) { console.warn('Local file execution disabled history API.'); }
+        try { history.replaceState({ s: 1, t: 'main' }, ''); } catch(e) {}
         
         window.addEventListener('popstate', e => { 
             if(e.state) { 
@@ -481,18 +495,32 @@
         const toast = m => { const t=$('toast'); t.innerText=m; t.style.opacity=1; setTimeout(()=>t.style.opacity=0,2500); };
         const dStr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
+        // 取得預設時間字串 (根據設定判定是否強制轉台灣時區)
+        function getDefaultDateStr() {
+            if (sets.tz === 'tw') {
+                try {
+                    let options = { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit' };
+                    let formatter = new Intl.DateTimeFormat('en-CA', options); // 'en-CA' 輸出 YYYY-MM-DD
+                    let parts = formatter.formatToParts(new Date());
+                    let year = parts.find(p => p.type === 'year').value;
+                    let month = parts.find(p => p.type === 'month').value;
+                    let day = parts.find(p => p.type === 'day').value;
+                    return `${year}-${month}-${day}`;
+                } catch(e) { return dStr(new Date()); }
+            } else {
+                return dStr(new Date());
+            }
+        }
+
         let defPrompt = null;
 
         window.onload = () => { 
             setupPWA(); autoPocket(); 
-            currentInlineDate = dStr(new Date());
+            currentInlineDate = getDefaultDateStr();
             renderHome(); initSwipeCalendar();
             
-            if(navigator.onLine) {
-                let hasPending = db.some(r=>r.syncStatus==='pending');
-                if(hasPending ? true : lastSyncTime === 0) {
-                    syncToGAS(false); 
-                }
+            if(navigator.onLine && db.some(r=>r.syncStatus==='pending')) {
+                syncToGAS(false); 
             }
             if(defPrompt) $('install-btn').style.display = 'block';
         };
@@ -507,23 +535,18 @@
             });
         }
 
+        // 離開頁面時嘗試背景同步
         document.addEventListener('visibilitychange', () => {
             if (document.visibilityState === 'hidden' && navigator.onLine) {
                 const pending = db.filter(r => r.syncStatus === 'pending');
                 if (pending.length > 0) {
-                    // 移除 keepalive 以避免部分瀏覽器因為跨域擋下背景同步
                     fetch(GAS_URL, { 
                         method:'POST', 
                         headers:{'Content-Type':'text/plain;charset=utf-8'}, 
-                        body:JSON.stringify({ action: 'sync', data: pending, lastSyncTime: lastSyncTime })
+                        body:JSON.stringify({ action: 'sync', data: pending })
                     }).then(r => r.json()).then(r => {
-                        if (r.status === 'success' ? true : r.status === 'ok') {
-                            db.forEach(x => { if (x.syncStatus === 'pending') x.syncStatus = 'synced'; });
-                            // 若背景同步成功，也需要更新時間戳記，避免下次誤拉
-                            if (r.serverTime) {
-                                lastSyncTime = r.serverTime; 
-                                localStorage.setItem('cloud_exp_lastSyncTime', lastSyncTime);
-                            }
+                        if (r.status === 'success' && r.data) {
+                            db = r.data;
                             saveDB();
                         }
                     }).catch(() => {});
@@ -549,11 +572,25 @@
         function autoPocket() {
             if (!sets.pEn ? true : !sets.pAmt) return;
             const now = new Date();
-            const mStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+            let y, m, d;
+            
+            // 使用選擇的時區判斷發放日期
+            if (sets.tz === 'tw') {
+                try {
+                    let parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now);
+                    y = parts.find(p => p.type === 'year').value;
+                    m = parts.find(p => p.type === 'month').value;
+                    d = parts.find(p => p.type === 'day').value;
+                } catch(e) { y = now.getFullYear(); m = String(now.getMonth()+1).padStart(2,'0'); d = String(now.getDate()).padStart(2,'0'); }
+            } else {
+                y = now.getFullYear(); m = String(now.getMonth()+1).padStart(2,'0'); d = String(now.getDate()).padStart(2,'0');
+            }
+            
+            const mStr = `${y}-${m}`;
             if (sets.l !== mStr) {
-                const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+                const daysInMonth = new Date(y, parseInt(m), 0).getDate();
                 const targetDay = Math.min(sets.pDay, daysInMonth);
-                if (now.getDate() >= targetDay) {
+                if (parseInt(d) >= targetDay) {
                     const recordDate = `${mStr}-${String(targetDay).padStart(2,'0')}`;
                     db.push({ 
                         id: 'c_' + Date.now(), type: 'income', mainCat: '💰 個人收入', subCat: '每月零用', 
@@ -572,7 +609,7 @@
             d.setDate(d.getDate() - d.getDay() + (weekSwipeOffset * 7));
             const wk = ['日','一','二','三','四','五','六'];
             
-            let tStr = dStr(new Date());
+            let tStr = getDefaultDateStr();
             let isDiffMth = cDate.getMonth() !== new Date().getMonth() ? true : cDate.getFullYear() !== new Date().getFullYear();
             
             if (weekSwipeOffset === 0 && isDiffMth) {
@@ -680,7 +717,11 @@
             $('m-record-title').innerText = '新增紀錄';
             $('btn-modal-del').style.display = 'none';
             rTyp = 'expense'; kpStr = '0'; $('r-amt').innerText='0';
-            $('r-date').value=dStr(new Date());$('r-note').value='';
+            
+            // 取代原本的 new Date()，改用考慮設定時區的自訂函數
+            $('r-date').value = getDefaultDateStr();
+            
+            $('r-note').value='';
             const opts = sets.a.map(a=>`<option value="${a}">${a}</option>`).join('');
             $('r-acc').innerHTML = opts; $('r-acc-out').innerHTML = opts; $('r-acc-in').innerHTML = opts;
             $('note-sugg').style.display = 'none';
@@ -771,7 +812,7 @@
 
         function saveRec() {
             let a = Number(kpStr); 
-            if(isNaN(a) || a < 0) return toast('金額不可為負數'); // 修正：允許 0 元輸入
+            if(isNaN(a) || a < 0) return toast('金額不可為負數'); 
             
             let isTransfer = (rTyp === 'transfer');
             let accOut = isTransfer ? $('r-acc-out').value :$('r-acc').value;
@@ -814,7 +855,7 @@
         }
 
         function openList(mode, p1) {
-            $('l-search').value = ''; currentAccFilter = ''; let n = new Date(), t = dStr(n);
+            $('l-search').value = ''; currentAccFilter = ''; let n = new Date(), t = getDefaultDateStr();
             if(mode==='date') { lStart = p1; lEnd = p1; $('l-title').innerText=`明細 (${p1})`; }
             else if(mode==='today') { lStart = t; lEnd = t; $('l-title').innerText='本日明細'; }
             else if(mode==='week') { let s=new Date(n); s.setDate(s.getDate()-s.getDay()); let e=new Date(s); e.setDate(e.getDate()+6); lStart=dStr(s); lEnd=dStr(e); $('l-title').innerText='本週明細'; }
@@ -846,7 +887,7 @@
             let y = calPickDate.getFullYear(), m = calPickDate.getMonth();
             let firstDay = new Date(y, m, 1).getDay(), daysInM = new Date(y, m+1, 0).getDate();
             let html = '<div class="cal-head">日</div><div class="cal-head">一</div><div class="cal-head">二</div><div class="cal-head">三</div><div class="cal-head">四</div><div class="cal-head">五</div><div class="cal-head">六</div>';
-            for(let i=0; i<firstDay; i++) html += '<div></div>'; let tStr = dStr(new Date());
+            for(let i=0; i<firstDay; i++) html += '<div></div>'; let tStr = getDefaultDateStr();
             for(let i=1; i<=daysInM; i++) {
                 let ds = `${y}-${String(m+1).padStart(2,'0')}-${String(i).padStart(2,'0')}`;
                 let has = db.some(r=>r.date===ds && r.type!=='deleted'), isT = (ds===tStr);
@@ -855,12 +896,26 @@
             $('ui-cal-grid').innerHTML = html;
         }
 
+        // --- 📊 三維度圖表分析邏輯 ---
+        function switchTime(t) {
+            cTime = t;
+            document.querySelectorAll('#c-time-tabs .tab').forEach(el => el.classList.remove('active'));
+            document.querySelector(`#c-time-tabs .tab[data-time="${t}"]`).classList.add('active');
+            
+            if (t === 'month') $('c-hint').innerText = '分析該單月數據';
+            if (t === 'year') $('c-hint').innerText = '分析該年份全年數據 (僅看年份)';
+            if (t === 'trend') $('c-hint').innerText = '從該月往回推半年的趨勢';
+            
+            renderChart();
+        }
+
         function openChart(type) { 
             try {
                 $('c-month').value = `${cDate.getFullYear()}-${String(cDate.getMonth()+1).padStart(2,'0')}`; 
-                cTyp = type ? type : 'income'; 
+                cTyp = type ? type : 'expense'; 
                 $('m-chart').style.display='block'; pushM('m-chart'); 
-                renderChart(); 
+                
+                switchTime('month');
             } catch (e) { alert("開啟圖表失敗"); }
         }
         
@@ -869,29 +924,126 @@
         function renderChart() {
             document.querySelectorAll('#c-tabs .tab').forEach(t => t.classList.remove('active'));
             document.querySelector(`#c-tabs .tab[data-t="${cTyp}"]`).classList.add('active');
-            let mStr = $('c-month').value; if(!mStr) return;
             
-            let dt = {}, ti=0, te=0;
-            db.forEach(r=>{
-                if(r.type==='deleted') return;
-                if(r.date.startsWith(mStr)) {
-                    if(r.type==='income') ti+=r.amount; if(r.type==='expense') te+=r.amount;
-                    if(r.type===cTyp) dt[r.mainCat] = (dt[r.mainCat] ? dt[r.mainCat] : 0) + r.amount;
-                }
-            });
+            let baseMonth = $('c-month').value; 
+            if(!baseMonth) return;
+
+            let baseY = baseMonth.split('-')[0];
+            let baseM = baseMonth.split('-')[1];
 
             if (typeof Chart === 'undefined') return toast('圖表套件載入中');
 
             if(chartObj) chartObj.destroy();
-            const ctx = $('c-canvas').getContext('2d'); Chart.defaults.font.size = 18;
+            const ctx = $('c-canvas').getContext('2d'); 
+            Chart.defaults.font.size = 14; 
+
             let expColors = ['#FF4757', '#FF6B81', '#FF9F43', '#EE5A24', '#EA2027', '#B33939', '#CD6133'];
             let incColors = ['#00A8FF', '#48DBFB', '#0984E3', '#74B9FF', '#1E90FF', '#3742FA', '#5352ED'];
 
-            if(cTyp==='total') { chartObj = new Chart(ctx, { type:'bar', data: { labels:['收入', '支出', '結餘'], datasets:[{ data:[ti, te, ti-te], backgroundColor:['#00A8FF', '#FF4757', '#20BF6B'], borderRadius:16 }] }, options: { plugins:{legend:{display:false}} } }); } 
-            else {
-                let lbl = Object.keys(dt), val = Object.values(dt); let currentColors = (cTyp === 'expense') ? expColors : incColors;
-                if(!lbl.length) chartObj = new Chart(ctx, { type:'doughnut', data:{labels:['無資料'],datasets:[{data:[1],backgroundColor:['#DFE4EA']}]} });
-                else chartObj = new Chart(ctx, { type:'doughnut', data:{labels:lbl,datasets:[{data:val,backgroundColor:currentColors,borderWidth:0}]}, options:{cutout:'65%',plugins:{legend:{position:'bottom'}}} });
+            if (cTime === 'month' || cTime === 'year') {
+                let dt = {}, ti = 0, te = 0;
+                let filterPrefix = (cTime === 'year') ? baseY : baseMonth; 
+
+                db.forEach(r => {
+                    if (r.type === 'deleted') return;
+                    if (r.date.startsWith(filterPrefix)) {
+                        if (r.type === 'income') ti += r.amount;
+                        if (r.type === 'expense') te += r.amount;
+                        if (r.type === cTyp) dt[r.mainCat] = (dt[r.mainCat] ? dt[r.mainCat] : 0) + r.amount;
+                    }
+                });
+
+                if (cTyp === 'total') {
+                    chartObj = new Chart(ctx, { 
+                        type: 'bar', 
+                        data: { labels: ['總收入', '總支出', '總結餘'], datasets: [{ data: [ti, te, ti - te], backgroundColor: ['#00A8FF', '#FF4757', '#20BF6B'], borderRadius: 12 }] }, 
+                        options: { plugins: { legend: { display: false } } } 
+                    }); 
+                } else {
+                    let lbl = Object.keys(dt), val = Object.values(dt); 
+                    let currentColors = (cTyp === 'expense') ? expColors : incColors;
+                    if (!lbl.length) chartObj = new Chart(ctx, { type: 'doughnut', data: { labels: ['無資料'], datasets: [{ data: [1], backgroundColor: ['#DFE4EA'] }] } });
+                    else chartObj = new Chart(ctx, { type: 'doughnut', data: { labels: lbl, datasets: [{ data: val, backgroundColor: currentColors, borderWidth: 0 }] }, options: { cutout: '60%', plugins: { legend: { position: 'bottom' } } } });
+                }
+            } 
+            else if (cTime === 'trend') {
+                let months = []; 
+                let d = new Date(baseY, parseInt(baseM) - 1, 1);
+                for (let i = 5; i >= 0; i--) {
+                    let temp = new Date(d.getFullYear(), d.getMonth() - i, 1);
+                    months.push(`${temp.getFullYear()}-${String(temp.getMonth() + 1).padStart(2, '0')}`);
+                }
+
+                if (cTyp === 'total') {
+                    let netData = months.map(mStr => {
+                        let inc = 0, exp = 0;
+                        db.forEach(r => {
+                            if (r.type === 'deleted') return;
+                            if (r.date.startsWith(mStr)) {
+                                if (r.type === 'income') inc += r.amount;
+                                if (r.type === 'expense') exp += r.amount;
+                            }
+                        });
+                        return inc - exp;
+                    });
+                    let bgColors = netData.map(v => v >= 0 ? '#20BF6B' : '#FF4757');
+                    
+                    chartObj = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: months.map(m => m.substring(5)), 
+                            datasets: [{ label: '淨結餘', data: netData, backgroundColor: bgColors, borderRadius: 8 }]
+                        },
+                        options: { plugins: { legend: { display: false } } }
+                    });
+
+                } else {
+                    let catData = {}; 
+                    let catSet = new Set();
+
+                    db.forEach(r => {
+                        if (r.type === 'deleted' || r.type !== cTyp) return;
+                        if (months.some(m => r.date.startsWith(m))) catSet.add(r.mainCat);
+                    });
+
+                    catSet.forEach(cat => catData[cat] = [0, 0, 0, 0, 0, 0]);
+
+                    db.forEach(r => {
+                        if (r.type === 'deleted' || r.type !== cTyp) return;
+                        let mIdx = months.findIndex(m => r.date.startsWith(m));
+                        if (mIdx !== -1) catData[r.mainCat][mIdx] += r.amount;
+                    });
+
+                    let datasets = [];
+                    let colorIdx = 0;
+                    let currentColors = (cTyp === 'expense') ? expColors : incColors;
+
+                    for (let cat in catData) {
+                        datasets.push({
+                            label: cat,
+                            data: catData[cat],
+                            backgroundColor: currentColors[colorIdx % currentColors.length],
+                            stack: 'Stack 0' 
+                        });
+                        colorIdx++;
+                    }
+
+                    if (datasets.length === 0) {
+                        datasets = [{ label: '無資料', data: [0, 0, 0, 0, 0, 0], backgroundColor: '#DFE4EA' }];
+                    }
+
+                    chartObj = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: months.map(m => m.substring(5)), 
+                            datasets: datasets
+                        },
+                        options: {
+                            plugins: { legend: { position: 'bottom' } },
+                            scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
+                        }
+                    });
+                }
             }
         }
 
@@ -900,6 +1052,7 @@
             $('s-p-en').checked = sets.pEn;
             let tp = sets.pDay; $('s-p-day').value = tp ? tp : 1;
             let ta = sets.pAmt; $('s-p-amt').value = ta ? ta : 5000;
+            $('s-tz').value = sets.tz ? sets.tz : 'tw';
             $('m-set').style.display='block'; pushM('m-set'); 
         }
 
@@ -908,6 +1061,7 @@
             sets.pEn = $('s-p-en').checked;
             let tp = Number($('s-p-day').value); sets.pDay = Math.min(31, Math.max(1, tp ? tp : 1)); $('s-p-day').value = sets.pDay; 
             let ta = Number($('s-p-amt').value); sets.pAmt = ta ? ta : 0;
+            sets.tz = $('s-tz').value;
             saveDB(); 
             if(isManual) { toast('設定已儲存'); renderHome(); triggerAutoConfigBackup(); autoPocket(); } 
         }
@@ -969,23 +1123,21 @@
             }; r.readAsText(f);
         }
 
+        // --- ☁️ 單向雲端為主同步機制 ---
         async function syncToGAS(showUI = false) {
             if(!navigator.onLine) return showUI ? toast('無網路連線') : null;
             
-            // 抓出有變動的資料 (新增、修改、刪除) 準備送給雲端
             let p = db.filter(r=>r.syncStatus==='pending'); 
             
             let b = $('btn-sync'), ot = b.innerHTML; 
             b.innerHTML='🔄 同步中'; b.style.pointerEvents='none';
             try {
-                // 發送請求，不再需要 lastSyncTime
                 const reqBody = { action: 'sync', data: p };
                 const res = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(reqBody) });
                 const r = await res.json();
                 
                 if(r.status === 'success' ? true : r.status === 'ok') { 
-                    // 【核心改變：雲端是老大】
-                    // 無條件把雲端回傳的完整資料陣列，直接覆蓋掉手機目前的資料
+                    // 接收雲端乾淨資料直接覆蓋手機
                     if (r.data) {
                         db = r.data;
                     }
