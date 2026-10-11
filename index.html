@@ -198,10 +198,15 @@
                 <span onclick="chgMth(1)">▶</span>
             </div>
             
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 0 8px;">
+            <div style="position: relative; display: flex; justify-content: center; align-items: center; padding: 0 8px; margin-bottom: 5px;">
                 <div style="font-size:13px; color:#95a5a6; font-weight:bold;">左右滑動切換週次</div>
-                <div style="font-size:15px; color:var(--today-color); font-weight:900; cursor:pointer;" onclick="jumpToToday()">📅 回到今日</div>
+                
+                <!-- 精緻的圓形「今」字按鈕 -->
+                <div onclick="jumpToToday()" style="position: absolute; right: 10px; display: flex; justify-content: center; align-items: center; width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--today-color); color: var(--today-color); font-size: 14px; font-weight: 900; cursor: pointer; box-shadow: 0 2px 6px rgba(230,126,34,0.2); background: #fff;" title="回到今日">
+                    今
+                </div>
             </div>
+
             <!-- 無縫日曆外框 -->
             <div class="week-calendar-wrap">
                 <div class="week-calendar" id="ui-calendar"></div>
