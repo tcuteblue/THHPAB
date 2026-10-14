@@ -179,16 +179,14 @@
         .btn-big-action { width: calc(100% - 40px); margin: 0 20px 18px; padding: 18px; border-radius: 18px; font-size: 20px; font-weight: 900; border: none; cursor: pointer; text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px; box-shadow: 0 4px 0 #DFE4EA; }
         .btn-big-action:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
         
-        /* 雲端與本地按鈕樣式 */
-        .btn-cloud-backup { background: linear-gradient(135deg, #3498db, #2980b9); color: white; border: none; box-shadow: 0 4px 0 #1f618d; margin-bottom: 10px; }
-        .btn-cloud-backup:active { box-shadow: 0 0 0 transparent; }
-        
-        .btn-cloud-restore { background: linear-gradient(135deg, #16a085, #1abc9c); color: white; border: none; box-shadow: 0 4px 0 #12876f; margin-bottom: 25px; }
-        .btn-cloud-restore:active { box-shadow: 0 0 0 transparent; }
-        
-        /* 新增的淡淡薄荷綠本地還原按鈕 */
-        .btn-local-restore { background: linear-gradient(135deg, #6ee4c9, #a2d9ce); color: #0b5345; border: none; box-shadow: 0 4px 0 #48c9b0; margin-top: 15px; }
-        .btn-local-restore:active { box-shadow: 0 0 0 transparent; }
+        /* 雙重備份 2x2 對稱按鈕樣式 */
+        .backup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+        .btn-grid { padding: 16px 8px; border-radius: 16px; font-size: 16px; font-weight: 900; border: none; cursor: pointer; text-align: center; box-shadow: 0 4px 0 rgba(0,0,0,0.15); transition: all 0.1s; display: flex; justify-content: center; align-items: center; gap: 6px; }
+        .btn-grid:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
+        .btn-c-bak { background: linear-gradient(135deg, #3498db, #2980b9); color: white; }
+        .btn-c-res { background: linear-gradient(135deg, #16a085, #1abc9c); color: white; }
+        .btn-l-bak { background: linear-gradient(135deg, #607D8B, #455A64); color: white; }
+        .btn-l-res { background: linear-gradient(135deg, #a2d9ce, #73c6b6); color: #0b5345; }
     </style>
 </head>
 
@@ -395,24 +393,23 @@
         <div class="form-group" style="background:#f8f9fa; padding:18px; border-radius:18px; border:2px solid #DFE4EA; margin-top: 15px;">
             <label style="font-size:18px; font-weight:900; color:#2c3e50; margin-bottom:10px;">記帳預設日期時區</label>
             <select id="s-tz" onchange="saveSet(true)" style="width:100%; padding:12px; font-size:18px; border-radius:12px; font-weight:bold;">
-                <option value="tw">🇹🇼 固定台灣時間 (預設)</option>
-                <option value="local">📱 跟隨手機當地時間</option>
+                <option value="tw">🌍 台灣時間 (預設)</option>
+                <option value="local">📱 當地時間</option>
             </select>
         </div>
 
         <button class="btn-big-action" style="background:#fff; color:var(--text-color); border:2px solid #DFE4EA;" onclick="openCatMgr()">🏷️ 分類管理</button>
         <button class="btn-big-action" style="background:#fff; color:var(--text-color); border:2px solid #DFE4EA;" onclick="openAccMgr()">💳 帳戶管理</button>
         
-        <div style="margin: 40px 20px 20px; padding-top: 30px; border-top: 2px dashed #DFE4EA;">
-            <label style="display:block; font-size:18px; font-weight:900; margin-bottom:15px; text-align:center; color:#7f8fa6;">設定檔雙重備份</label>
-            <!-- 雲端備份與還原 -->
-            <button class="btn-big-action btn-cloud-backup" onclick="backupToCloud()" id="btn-cloud-backup">☁️ 備份到 Google Drive</button>
-            <button class="btn-big-action btn-cloud-restore" onclick="restoreFromCloud()" id="btn-cloud-restore">☁️ 從 Google Drive 還原</button>
-            
-            <button class="btn-big-action" style="background:var(--primary); color:#fff;" onclick="expData('json')">📤 下載設定檔備份</button>
+        <div style="margin: 40px 20px 20px; padding-top: 25px; border-top: 2px dashed #DFE4EA;">
+            <label style="display:block; font-size:18px; font-weight:900; text-align:center; color:#7f8fa6;">設定檔雙重備份</label>
+            <div class="backup-grid">
+                <button class="btn-grid btn-c-bak" onclick="backupToCloud()" id="btn-cloud-backup">☁️ 雲端備份</button>
+                <button class="btn-grid btn-c-res" onclick="restoreFromCloud()" id="btn-cloud-restore">☁️ 雲端還原</button>
+                <button class="btn-grid btn-l-bak" onclick="expData('json')">📥 本機備份</button>
+                <button class="btn-grid btn-l-res" onclick="document.getElementById('file-input').click()">📤 本機還原</button>
+            </div>
             <input type="file" id="file-input" accept=".json" style="display:none;" onchange="impData(event)">
-            <!-- 更新顏色的本地還原按鈕 -->
-            <button class="btn-big-action btn-local-restore" onclick="document.getElementById('file-input').click()">📥 載入本地設定檔</button>
         </div>
     </div>
 
@@ -429,7 +426,6 @@
         <button class="btn-main btn-record" style="width:calc(100% - 40px); margin:20px; padding:18px; border-radius:18px; font-size:18px;" onclick="addAcc()">➕ 新增帳戶</button>
     </div>
 
-    <!-- 升級版：計算機鍵盤 -->
     <div id="v-keypad">
         <button class="key key-op-del" onclick="kp('clear')">C</button>
         <button class="key key-op-math" onclick="kp('÷')">÷</button>
@@ -616,9 +612,8 @@
             currentInlineDate = getDefaultDateStr();
             renderHome(); initSwipeCalendar();
             
-            if(navigator.onLine && db.some(r=>r.syncStatus==='pending')) {
-                syncToGAS(false); 
-            }
+            // 載入即自動同步一次背景資料
+            syncToGAS(false); 
             if(defPrompt) $('install-btn').style.display = 'block';
         };
 
@@ -671,32 +666,23 @@
             });
         }
 
+        // 離開 App 重新回來時背景悄悄同步
         document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'hidden' && navigator.onLine) {
-                const pending = db.filter(r => r.syncStatus === 'pending');
-                if (pending.length > 0) {
-                    fetch(GAS_URL, { 
-                        method:'POST', 
-                        headers:{'Content-Type':'text/plain;charset=utf-8'}, 
-                        body:JSON.stringify({ action: 'sync', data: pending })
-                    }).then(r => r.json()).then(r => {
-                        if (r.status === 'success' && r.data) {
-                            db = r.data;
-                            saveDB();
-                        }
-                    }).catch(() => {});
-                }
+            if (document.visibilityState === 'visible' && navigator.onLine) {
+                syncToGAS(false);
             }
         });
 
+        // 網路恢復時背景悄悄同步
+        window.addEventListener('online', () => {
+            syncToGAS(false);
+        });
+
         function triggerAutoConfigBackup() {
-            try {
-                // 觸發雲端備份 (背景執行，不打擾用戶)
-                backupToCloud(true);
-            } catch (e) {}
+            try { backupToCloud(true); } catch (e) {}
         }
 
-        // 強化錯誤攔截的雲端備份功能
+        // 雲端備份設定檔 (單一檔案靜默覆寫)
         async function backupToCloud(isSilent = false) {
             if (!navigator.onLine) {
                 if (!isSilent) toast('無網路連線，無法備份到雲端');
@@ -710,12 +696,8 @@
             }
             
             try {
-                const n = new Date();
-                const ds = `${n.getFullYear()}${String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}`;
-                const fileName = `個人雲帳本_設定備份_${ds}.json`;
-                
                 const backupData = { cats, sets };
-                const reqBody = { action: 'backup', data: backupData, fileName: fileName };
+                const reqBody = { action: 'backup', data: backupData };
                 
                 const res = await fetch(GAS_URL, { 
                     method:'POST', 
@@ -724,11 +706,8 @@
                 });
                 
                 let r;
-                try {
-                    r = await res.json();
-                } catch (e) {
-                    throw new Error("伺服器無回應，請確認 GAS 是否有以「新版本」部署且同意權限。");
-                }
+                try { r = await res.json(); } 
+                catch (e) { throw new Error("伺服器無回應，請確認 GAS 部署是否正確。"); }
                 
                 if(r.status === 'success') { 
                     if (!isSilent) toast('✅ 設定檔已備份至 Google Drive');
@@ -740,13 +719,13 @@
                 if (!isSilent) toast('⚠️ 備份失敗: ' + (e.message || '未知錯誤')); 
             } finally { 
                 if (btn && !isSilent) {
-                    btn.innerHTML = '☁️ 備份到 Google Drive';
+                    btn.innerHTML = '☁️ 雲端備份';
                     btn.style.pointerEvents = 'auto';
                 }
             }
         }
 
-        // 強化錯誤攔截的雲端還原功能
+        // 雲端還原設定檔
         async function restoreFromCloud() {
             if (!navigator.onLine) return toast('無網路連線，無法進行還原');
             
@@ -766,11 +745,8 @@
                 });
                 
                 let r;
-                try {
-                    r = await res.json();
-                } catch (e) {
-                    throw new Error("伺服器無回應，請確認 GAS 是否有以「新版本」部署且同意權限。");
-                }
+                try { r = await res.json(); } 
+                catch (e) { throw new Error("伺服器無回應，請確認 GAS 部署是否正確。"); }
                 
                 if(r.status === 'success' && r.data) { 
                     if(r.data.cats) cats = r.data.cats;
@@ -786,7 +762,7 @@
                 toast('⚠️ 還原失敗: ' + (e.message || '發生錯誤')); 
             } finally { 
                 if (btn) {
-                    btn.innerHTML = '☁️ 從 Google Drive 還原';
+                    btn.innerHTML = '☁️ 雲端還原';
                     btn.style.pointerEvents = 'auto';
                 }
             }
@@ -807,7 +783,7 @@
                         id: 'c_' + Date.now(), type: 'income', mainCat: '💰 個人收入', subCat: '每月零用', 
                         date: recordDate, account: sets.a[0], amount: Number(sets.pAmt), note: '系統自動入帳', syncStatus: 'pending' 
                     });
-                    sets.l = mStr; saveDB(); toast(`已自動存入本月零用錢 $${sets.pAmt}`);
+                    sets.l = mStr; saveDB(); syncToGAS(false); toast(`已自動存入本月零用錢 $${sets.pAmt}`);
                 }
             }
         }
@@ -1151,14 +1127,15 @@
                     if (isTransfer) { db[idx].account = accOut; db[idx].toAccount = accIn; delete db[idx].mainCat; delete db[idx].subCat; } 
                     else { db[idx].mainCat = $('r-mcat').value; db[idx].subCat =$('r-scat').value; db[idx].account = accOut; delete db[idx].toAccount; }
                 }
-                editingRecordId = null; toast('✅ 已更新 (待同步)');
+                editingRecordId = null; toast('✅ 已更新 (背景同步中)');
             } else {
                 let rec = { id:'c_'+Date.now(), type:rTyp, date:$('r-date').value, amount:a, note:$('r-note').value.trim(), syncStatus:'pending' };
                 if(isTransfer) { rec.account = accOut; rec.toAccount = accIn; } else { rec.mainCat=$('r-mcat').value; rec.subCat=$('r-scat').value; rec.account=accOut; }
-                db.push(rec); toast('✅ 已儲存 (待同步)');
+                db.push(rec); toast('✅ 已儲存 (背景同步中)');
             }
             saveDB(); closeKeypad(); closeModal(); renderHome();
             if($('m-list').style.display === 'block') renderListModal(); 
+            syncToGAS(false); // 觸發靜默自動同步
         }
         
         function delRecFromModal() {
@@ -1170,7 +1147,8 @@
                     db[idx].syncStatus = 'pending';
                 }
                 saveDB(); renderHome(); if($('m-list').style.display === 'block') renderListModal(); 
-                closeModal(); toast('✅ 已刪除 (待同步)');
+                closeModal(); toast('✅ 已刪除 (背景同步中)');
+                syncToGAS(false); // 觸發靜默自動同步
             }
         }
 
@@ -1483,33 +1461,46 @@
             }; r.readAsText(f);
         }
 
+        // 靜默自動同步邏輯 (showUI = false 即可背景運作)
         async function syncToGAS(showUI = false) {
-            if(!navigator.onLine) return showUI ? toast('無網路連線') : null;
+            if(!navigator.onLine) {
+                if(showUI) toast('無網路連線');
+                return;
+            }
             
             let p = db.filter(r=>r.syncStatus==='pending'); 
+            let isForcePull = (db.length === 0);
             
-            let b = $('btn-sync'), ot = b.innerHTML; 
-            b.innerHTML='🔄 同步中'; b.style.pointerEvents='none';
+            let b = $('btn-sync'), ot = b ? b.innerHTML : '🔄 同步'; 
+            if(showUI && b) { b.innerHTML='🔄 同步中'; b.style.pointerEvents='none'; }
+            
             try {
-                const reqBody = { action: 'sync', data: p };
+                const reqBody = { action: 'sync', data: (p.length > 0 || isForcePull) ? p : [] };
                 const res = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(reqBody) });
                 const r = await res.json();
                 
-                if(r.status === 'success' ? true : r.status === 'ok') { 
-                    if (r.data) {
+                if(r.status === 'success' || r.status === 'ok') { 
+                    if (r.data && r.data.length > 0) {
                         db = r.data;
+                    } else if (p.length > 0) {
+                        db.forEach(record => {
+                            if (record.syncStatus === 'pending') record.syncStatus = 'synced';
+                        });
+                        db = db.filter(record => record.type !== 'deleted');
                     }
                     saveDB(); 
                     renderHome(); 
+                    
                     if(showUI) {
-                        if (p.length === 0) toast('✅ 已與雲端同步');
+                        if (isForcePull && r.data && r.data.length > 0) toast('✅ 已從雲端載入所有歷史明細');
+                        else if (p.length === 0) toast('✅ 已與雲端同步');
                         else toast('✅ 資料已上傳並同步');
                     }
                 } else throw new Error();
             } catch(e) { 
-                if(showUI) toast('⚠️ 同步失敗'); 
+                if(showUI) toast('⚠️ 同步失敗，請檢查網路'); 
             } finally { 
-                b.innerHTML=ot; b.style.pointerEvents='auto'; 
+                if(showUI && b) { b.innerHTML=ot; b.style.pointerEvents='auto'; }
             }
         }
 
@@ -1567,8 +1558,7 @@
         }
 
         window.matchMedia('(display-mode: standalone)').addEventListener('change', (evt) => {
-            if (evt.matches && $('install-btn')) {$('install-btn').style.display = 'none';
-            }
+            if (evt.matches && $('install-btn')) {$('install-btn').style.display = 'none';}
         });
     </script>
 </body>
