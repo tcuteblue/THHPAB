@@ -142,7 +142,6 @@
         .ac-item:active { background: #eef7fc; }
         .ac-item:last-child { border-bottom: none; }
 
-        /* 新版計算機鍵盤樣式 */
         #v-keypad { position: fixed; bottom: 0; left: 0; width: 100%; background: #DFE4EA; padding: 15px 15px 40px 15px; display: none; grid-template-columns: repeat(4, 1fr); gap: 10px; z-index: 1500; box-shadow: 0 -10px 40px rgba(0,0,0,.2); border-radius: 30px 30px 0 0; }
         .key { background: #fff; border: none; padding: 20px 0; font-size: 26px; font-weight: 900; color: #2F3640; border-radius: 16px; box-shadow: 0 4px 0 #CED6E0; cursor: pointer; transition: all 0.1s; display: flex; justify-content: center; align-items: center; }
         .key:active { box-shadow: 0 0 0 #CED6E0; transform: translateY(4px); background: #f1f2f6; }
@@ -158,8 +157,7 @@
         .key-act.is-calc { background: var(--income); box-shadow: 0 4px 0 #189855; }
         .key-act.is-calc:active { box-shadow: 0 0 0 #189855; background: #189855; }
 
-
-        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(47,54,64,.95); color: #fff; padding: 16px 30px; border-radius: 30px; font-size: 18px; font-weight: 900; opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 9999; box-shadow: 0 6px 20px rgba(0,0,0,.25); white-space: nowrap; }
+        #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(47,54,64,.95); color: #fff; padding: 16px 30px; border-radius: 30px; font-size: 18px; font-weight: 900; opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 9999; box-shadow: 0 6px 20px rgba(0,0,0,.25); white-space: nowrap; max-width: 90%; overflow: hidden; text-overflow: ellipsis; }
         
         .search-bar { background: #fff; padding: 14px 20px; position: sticky; top: 75px; z-index: 9; border-bottom: 1px solid #f1f2f6; box-shadow: 0 4px 10px rgba(0,0,0,.03); }
         .search-bar input { padding-left: 45px; background: #f8f9fa url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="%2395a5a6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>') no-repeat 14px center; border-radius: 18px; }
@@ -181,11 +179,16 @@
         .btn-big-action { width: calc(100% - 40px); margin: 0 20px 18px; padding: 18px; border-radius: 18px; font-size: 20px; font-weight: 900; border: none; cursor: pointer; text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px; box-shadow: 0 4px 0 #DFE4EA; }
         .btn-big-action:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
         
-        /* 雲端備份按鈕專屬樣式 */
+        /* 雲端與本地按鈕樣式 */
         .btn-cloud-backup { background: linear-gradient(135deg, #3498db, #2980b9); color: white; border: none; box-shadow: 0 4px 0 #1f618d; margin-bottom: 10px; }
         .btn-cloud-backup:active { box-shadow: 0 0 0 transparent; }
+        
         .btn-cloud-restore { background: linear-gradient(135deg, #16a085, #1abc9c); color: white; border: none; box-shadow: 0 4px 0 #12876f; margin-bottom: 25px; }
-        .btn-cloud-restore:active { box-shadow: 0 0 0 transparent; transform: translateY(4px); }
+        .btn-cloud-restore:active { box-shadow: 0 0 0 transparent; }
+        
+        /* 新增的淡淡薄荷綠本地還原按鈕 */
+        .btn-local-restore { background: linear-gradient(135deg, #6ee4c9, #a2d9ce); color: #0b5345; border: none; box-shadow: 0 4px 0 #48c9b0; margin-top: 15px; }
+        .btn-local-restore:active { box-shadow: 0 0 0 transparent; }
     </style>
 </head>
 
@@ -406,9 +409,10 @@
             <button class="btn-big-action btn-cloud-backup" onclick="backupToCloud()" id="btn-cloud-backup">☁️ 備份到 Google Drive</button>
             <button class="btn-big-action btn-cloud-restore" onclick="restoreFromCloud()" id="btn-cloud-restore">☁️ 從 Google Drive 還原</button>
             
-            <button class="btn-big-action" style="background:var(--primary); color:#fff;" onclick="expData('json')">📤 備份設定檔</button>
+            <button class="btn-big-action" style="background:var(--primary); color:#fff;" onclick="expData('json')">📤 下載設定檔備份</button>
             <input type="file" id="file-input" accept=".json" style="display:none;" onchange="impData(event)">
-            <button class="btn-big-action" style="background:#fff; color:var(--primary-dark); border:2px solid var(--primary-dark); margin-top:15px;" onclick="document.getElementById('file-input').click()">📥 還原設定檔</button>
+            <!-- 更新顏色的本地還原按鈕 -->
+            <button class="btn-big-action btn-local-restore" onclick="document.getElementById('file-input').click()">📥 載入本地設定檔</button>
         </div>
     </div>
 
@@ -455,7 +459,7 @@
     <script>
         const $ = id => document.getElementById(id);
         
-        // ⚠️ 請替換成您的 Google Apps Script 網址 (更新後的部署網址)
+        // ⚠️ 請替換成您的 Google Apps Script 網址
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz9Tohi--mDE6Pk5u6P20xBiHsQ-yMR1rDmfG5Q7LBmxaOeLxedtHp0iMwh4AuCyt4Ncw/exec";
         
         const defCats = {
@@ -561,7 +565,7 @@
             $('v-keypad').style.display='none'; $('r-amt-box').classList.remove('active'); 
         }
 
-        const toast = m => { const t=$('toast'); t.innerText=m; t.style.opacity=1; setTimeout(()=>t.style.opacity=0,2500); };
+        const toast = m => { const t=$('toast'); t.innerText=m; t.style.opacity=1; setTimeout(()=>t.style.opacity=0,3000); };
         const dStr = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
         function getTwDateObj() { return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Taipei' })); }
@@ -685,14 +689,14 @@
             }
         });
 
-        // 取消了本地下載檔案的邏輯，現在只負責背景備份至雲端
         function triggerAutoConfigBackup() {
             try {
                 // 觸發雲端備份 (背景執行，不打擾用戶)
                 backupToCloud(true);
-            } catch (e) { console.error('備份失敗'); }
+            } catch (e) {}
         }
 
+        // 強化錯誤攔截的雲端備份功能
         async function backupToCloud(isSilent = false) {
             if (!navigator.onLine) {
                 if (!isSilent) toast('無網路連線，無法備份到雲端');
@@ -719,16 +723,21 @@
                     body:JSON.stringify(reqBody) 
                 });
                 
-                const r = await res.json();
+                let r;
+                try {
+                    r = await res.json();
+                } catch (e) {
+                    throw new Error("伺服器無回應，請確認 GAS 是否有以「新版本」部署且同意權限。");
+                }
                 
                 if(r.status === 'success') { 
                     if (!isSilent) toast('✅ 設定檔已備份至 Google Drive');
                 } else {
-                    throw new Error(r.message || '雲端備份失敗');
+                    throw new Error(r.message || '雲端發生錯誤');
                 }
             } catch(e) { 
                 console.error(e);
-                if (!isSilent) toast('⚠️ 雲端備份失敗'); 
+                if (!isSilent) toast('⚠️ 備份失敗: ' + (e.message || '未知錯誤')); 
             } finally { 
                 if (btn && !isSilent) {
                     btn.innerHTML = '☁️ 備份到 Google Drive';
@@ -737,7 +746,7 @@
             }
         }
 
-        // 新增：從雲端還原設定檔邏輯
+        // 強化錯誤攔截的雲端還原功能
         async function restoreFromCloud() {
             if (!navigator.onLine) return toast('無網路連線，無法進行還原');
             
@@ -756,7 +765,12 @@
                     body:JSON.stringify({ action: 'restore' }) 
                 });
                 
-                const r = await res.json();
+                let r;
+                try {
+                    r = await res.json();
+                } catch (e) {
+                    throw new Error("伺服器無回應，請確認 GAS 是否有以「新版本」部署且同意權限。");
+                }
                 
                 if(r.status === 'success' && r.data) { 
                     if(r.data.cats) cats = r.data.cats;
@@ -769,7 +783,7 @@
                 }
             } catch(e) { 
                 console.error(e);
-                toast('⚠️ 雲端還原失敗：' + (e.message || '發生錯誤')); 
+                toast('⚠️ 還原失敗: ' + (e.message || '發生錯誤')); 
             } finally { 
                 if (btn) {
                     btn.innerHTML = '☁️ 從 Google Drive 還原';
@@ -1009,7 +1023,6 @@
             $('r-bal').innerText = `餘額: $${b.toLocaleString()}`; $('r-bal').style.color = b >= 0 ? 'var(--primary)' : 'var(--expense)';
         }
 
-        // --- 🚀 新版計算機邏輯 ---
         function openKeypad() { 
             $('v-keypad').style.display='grid';
             $('r-amt-box').classList.add('active'); 
@@ -1116,7 +1129,6 @@
                 closeKeypad();
             }
         }
-        // -----------------------------
 
         function saveRec() {
             if (isCalculating) {
