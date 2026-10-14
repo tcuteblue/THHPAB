@@ -682,7 +682,7 @@
             try { backupToCloud(true); } catch (e) {}
         }
 
-        // 雲端備份設定檔 (完全對齊家用雲帳本)
+        // 🚀 功能 1：執行雲端備份 (成功後跳出提示)
         function backupToCloud(isSilent = false) {
             if (!navigator.onLine) {
                 if (!isSilent) toast('無網路連線，無法備份到雲端');
@@ -694,26 +694,32 @@
                 btn.innerHTML = '🔄 上傳中...';
                 btn.style.pointerEvents = 'none';
             }
-            
+
             const payload = {
                 action: "auto_backup",
-                data: { cats: cats, sets: sets }
+                backupData: {
+                    dbData: localStorage.getItem('cloud_exp_db') || '[]',
+                    setsData: localStorage.getItem('cloud_exp_sets') || '{}',
+                    catsData: localStorage.getItem('cloud_exp_cats') || '{}',
+                    lastUpdate: new Date().toLocaleString()
+                }
             };
-            
-            fetch(GAS_URL, { 
-                method: "POST", 
-                body: JSON.stringify(payload) 
+
+            fetch(GAS_URL, {
+                method: "POST",
+                body: JSON.stringify(payload)
             })
             .then(res => res.json())
             .then(res => {
                 if (res.status === 'success') {
-                    if (!isSilent) toast('✅ 設定檔已備份至 Google Drive');
+                    // 這裡改為跳出 alert 訊息！
+                    if (!isSilent) alert("✅ 已成功備份至您的Google 雲端資料夾！");
                 } else {
                     if (!isSilent) alert("❌ 備份失敗：" + res.message);
                 }
             })
             .catch(err => {
-                if (!isSilent) alert("❌ 連線錯誤，雲端備份失敗！");
+                if (!isSilent) alert("❌ 網路連線異常，備份失敗！");
             })
             .finally(() => {
                 if (btn && !isSilent) {
@@ -722,7 +728,6 @@
                 }
             });
         }
-
         // 雲端還原設定檔 (完全對齊家用雲帳本)
         function restoreFromCloud() {
             if (!navigator.onLine) return toast('無網路連線，無法進行還原');
