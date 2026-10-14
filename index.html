@@ -682,8 +682,8 @@
             try { backupToCloud(true); } catch (e) {}
         }
 
-        // 雲端備份設定檔 (單一檔案靜默覆寫)
-        async function backupToCloud(isSilent = false) {
+        // 雲端備份設定檔 (完全對齊家用雲帳本)
+        function backupToCloud(isSilent = false) {
             if (!navigator.onLine) {
                 if (!isSilent) toast('無網路連線，無法備份到雲端');
                 return;
@@ -695,38 +695,36 @@
                 btn.style.pointerEvents = 'none';
             }
             
-            try {
-                const backupData = { cats, sets };
-                const reqBody = { action: 'backup', data: backupData };
-                
-                const res = await fetch(GAS_URL, { 
-                    method:'POST', 
-                    headers:{'Content-Type':'text/plain;charset=utf-8'}, 
-                    body:JSON.stringify(reqBody) 
-                });
-                
-                let r;
-                try { r = await res.json(); } 
-                catch (e) { throw new Error("伺服器無回應，請確認 GAS 部署是否正確。"); }
-                
-                if(r.status === 'success') { 
+            const payload = {
+                action: "auto_backup",
+                data: { cats: cats, sets: sets }
+            };
+            
+            fetch(GAS_URL, { 
+                method: "POST", 
+                body: JSON.stringify(payload) 
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.status === 'success') {
                     if (!isSilent) toast('✅ 設定檔已備份至 Google Drive');
                 } else {
-                    throw new Error(r.message || '雲端發生錯誤');
+                    if (!isSilent) alert("❌ 備份失敗：" + res.message);
                 }
-            } catch(e) { 
-                console.error(e);
-                if (!isSilent) toast('⚠️ 備份失敗: ' + (e.message || '未知錯誤')); 
-            } finally { 
+            })
+            .catch(err => {
+                if (!isSilent) alert("❌ 連線錯誤，雲端備份失敗！");
+            })
+            .finally(() => {
                 if (btn && !isSilent) {
                     btn.innerHTML = '☁️ 雲端備份';
                     btn.style.pointerEvents = 'auto';
                 }
-            }
+            });
         }
 
-        // 雲端還原設定檔
-        async function restoreFromCloud() {
+        // 雲端還原設定檔 (完全對齊家用雲帳本)
+        function restoreFromCloud() {
             if (!navigator.onLine) return toast('無網路連線，無法進行還原');
             
             if (!confirm('從雲端還原將會覆蓋您目前的分類與系統設定，確定要繼續嗎？')) return;
@@ -737,37 +735,38 @@
                 btn.style.pointerEvents = 'none';
             }
             
-            try {
-                const res = await fetch(GAS_URL, { 
-                    method:'POST', 
-                    headers:{'Content-Type':'text/plain;charset=utf-8'}, 
-                    body:JSON.stringify({ action: 'restore' }) 
-                });
-                
-                let r;
-                try { r = await res.json(); } 
-                catch (e) { throw new Error("伺服器無回應，請確認 GAS 部署是否正確。"); }
-                
-                if(r.status === 'success' && r.data) { 
-                    if(r.data.cats) cats = r.data.cats;
-                    if(r.data.sets) sets = r.data.sets;
-                    saveDB();
-                    alert('✅ 雲端設定還原成功！系統將重新載入。');
-                    window.location.reload();
+            fetch(GAS_URL, { 
+                method: "POST", 
+                body: JSON.stringify({ action: "restore_from_cloud" }) 
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.status === 'success') {
+                    try {
+                        // 家用雲帳本後端回傳的 res.data 是字串，需要 parse
+                        const d = JSON.parse(res.data);
+                        if (d.cats) cats = d.cats;
+                        if (d.sets) sets = d.sets;
+                        saveDB();
+                        alert('✅ 雲端設定還原成功！系統將重新載入。');
+                        window.location.reload();
+                    } catch (e) {
+                        alert('❌ 解析雲端資料失敗。');
+                    }
                 } else {
-                    throw new Error(r.message || '找不到可用的雲端備份檔');
+                    alert("❌ 雲端還原失敗：" + res.message);
                 }
-            } catch(e) { 
-                console.error(e);
-                toast('⚠️ 還原失敗: ' + (e.message || '發生錯誤')); 
-            } finally { 
+            })
+            .catch(err => {
+                alert("❌ 連線錯誤，無法從雲端還原！");
+            })
+            .finally(() => {
                 if (btn) {
                     btn.innerHTML = '☁️ 雲端還原';
                     btn.style.pointerEvents = 'auto';
                 }
-            }
+            });
         }
-
         function autoPocket() {
             if (!sets.pEn ? true : !sets.pAmt) return;
             let now = sets.tz === 'tw' ? getTwDateObj() : new Date();
