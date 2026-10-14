@@ -128,7 +128,7 @@
 
         .amt-box { background: #fff; margin: 0 20px 25px; padding: 25px; border-radius: 22px; text-align: right; box-shadow: 0 5px 15px rgba(0,0,0,.08); border: 2px solid transparent; transition: all .2s; }
         .amt-box.active { border-color: var(--primary); background: #fdfefe; box-shadow: 0 0 0 5px rgba(0,168,255,.2); }
-        .amt-val { font-size: 52px; font-weight: 900; font-family: monospace; letter-spacing: 1px; color: var(--text-color); }
+        .amt-val { font-size: 46px; font-weight: 900; font-family: monospace; letter-spacing: 1px; color: var(--text-color); overflow-x: auto; white-space: nowrap; }
         .bal-hint { font-size: 16px; margin-top: 10px; text-align: right; font-weight: 900; }
 
         .r-actions-row { display: flex; gap: 15px; margin: 20px; }
@@ -142,11 +142,22 @@
         .ac-item:active { background: #eef7fc; }
         .ac-item:last-child { border-bottom: none; }
 
-        #v-keypad { position: fixed; bottom: 0; left: 0; width: 100%; background: #DFE4EA; padding: 15px 15px 40px 15px; display: none; grid-template-columns: repeat(4, 1fr); gap: 12px; z-index: 1500; box-shadow: 0 -10px 40px rgba(0,0,0,.2); border-radius: 30px 30px 0 0; }
-        .key { background: #fff; border: none; padding: 22px 0; font-size: 28px; font-weight: 900; color: #2F3640; border-radius: 18px; box-shadow: 0 5px 0 #CED6E0; cursor: pointer; }
-        .key:active { box-shadow: 0 0 0 #CED6E0; transform: translateY(5px); background: #f1f2f6; }
-        .key-op { background: #CED6E0; color: #2F3640; font-size: 24px; box-shadow: 0 5px 0 #A4B0BE; }
-        .key-act { background: var(--primary); color: #fff; box-shadow: 0 5px 0 var(--primary-dark); font-size: 24px; grid-row: span 2; display: flex; align-items: center; justify-content: center; }
+        /* 新版計算機鍵盤樣式 */
+        #v-keypad { position: fixed; bottom: 0; left: 0; width: 100%; background: #DFE4EA; padding: 15px 15px 40px 15px; display: none; grid-template-columns: repeat(4, 1fr); gap: 10px; z-index: 1500; box-shadow: 0 -10px 40px rgba(0,0,0,.2); border-radius: 30px 30px 0 0; }
+        .key { background: #fff; border: none; padding: 20px 0; font-size: 26px; font-weight: 900; color: #2F3640; border-radius: 16px; box-shadow: 0 4px 0 #CED6E0; cursor: pointer; transition: all 0.1s; display: flex; justify-content: center; align-items: center; }
+        .key:active { box-shadow: 0 0 0 #CED6E0; transform: translateY(4px); background: #f1f2f6; }
+        
+        .key-op-math { background: #f8e5cc; color: #d35400; font-size: 24px; box-shadow: 0 4px 0 #e67e22; }
+        .key-op-math:active { box-shadow: 0 0 0 #e67e22; background: #fbd6a6; }
+        
+        .key-op-del { background: #ffcccc; color: #c0392b; box-shadow: 0 4px 0 #e74c3c; }
+        .key-op-del:active { box-shadow: 0 0 0 #e74c3c; background: #ffb3b3; }
+        
+        .key-act { background: var(--primary); color: #fff; box-shadow: 0 4px 0 var(--primary-dark); font-size: 22px; grid-row: span 2; }
+        .key-act:active { box-shadow: 0 0 0 var(--primary-dark); background: var(--primary-dark); }
+        .key-act.is-calc { background: var(--income); box-shadow: 0 4px 0 #189855; }
+        .key-act.is-calc:active { box-shadow: 0 0 0 #189855; background: #189855; }
+
 
         #toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: rgba(47,54,64,.95); color: #fff; padding: 16px 30px; border-radius: 30px; font-size: 18px; font-weight: 900; opacity: 0; pointer-events: none; transition: opacity .3s; z-index: 9999; box-shadow: 0 6px 20px rgba(0,0,0,.25); white-space: nowrap; }
         
@@ -169,6 +180,10 @@
         
         .btn-big-action { width: calc(100% - 40px); margin: 0 20px 18px; padding: 18px; border-radius: 18px; font-size: 20px; font-weight: 900; border: none; cursor: pointer; text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px; box-shadow: 0 4px 0 #DFE4EA; }
         .btn-big-action:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
+        
+        /* 雲端備份按鈕專屬樣式 */
+        .btn-cloud-backup { background: linear-gradient(135deg, #3498db, #2980b9); color: white; border: none; box-shadow: 0 4px 0 #1f618d; margin-bottom: 8px; }
+        .btn-cloud-backup:active { box-shadow: 0 0 0 transparent; }
     </style>
 </head>
 
@@ -191,11 +206,9 @@
                 <span onclick="chgMth(1)">▶</span>
             </div>
             
-            <!-- 調整了 min-height 和 margin-bottom，讓小日曆不撞線 -->
             <div style="position: relative; display: flex; justify-content: center; align-items: center; padding: 0 8px; margin-bottom: 12px; min-height: 32px;">
                 <div style="font-size:13px; color:#95a5a6; font-weight:bold;">左右滑動切換週次</div>
                 
-                <!-- 加上了 bottom: 4px，讓圖示往上提 -->
                 <div onclick="jumpToToday()" style="position: absolute; right: 10px; bottom: 4px; width: 32px; height: 32px; background: #fff; border-radius: 8px; display: flex; flex-direction: column; overflow: hidden; cursor: pointer; box-shadow: 0 3px 8px rgba(230,126,34,0.3); border: 1.5px solid #f1f2f6; transition: transform 0.1s;" onmousedown="this.style.transform='scale(0.9)'" onmouseup="this.style.transform='scale(1)'" onmouseleave="this.style.transform='scale(1)'" title="回到今日">
                     <div style="background: var(--today-color); height: 9px; width: 100%; display: flex; justify-content: space-evenly; align-items: center; box-shadow: 0 1px 2px rgba(0,0,0,0.1);">
                         <div style="width:4px; height:4px; background:#fff; border-radius:50%; opacity:0.9;"></div>
@@ -277,6 +290,7 @@
 
         <div class="amt-box" id="r-amt-box" onclick="openKeypad()">
             <div style="font-size:16px; color:#95a5a6; font-weight:900; margin-bottom:8px;">點擊輸入金額</div>
+            <!-- 確保可以橫向捲動長數字/算式 -->
             <div class="amt-val" id="r-amt">0</div>
         </div>
 
@@ -385,10 +399,12 @@
         <button class="btn-big-action" style="background:#fff; color:var(--text-color); border:2px solid #DFE4EA;" onclick="openAccMgr()">💳 帳戶管理</button>
         
         <div style="margin: 40px 20px 20px; padding-top: 30px; border-top: 2px dashed #DFE4EA;">
-            <label style="display:block; font-size:18px; font-weight:900; margin-bottom:15px; text-align:center; color:#7f8fa6;">備份與還原 (設定檔)</label>
-            <button class="btn-big-action" style="background:var(--primary); color:#fff;" onclick="expData('json')">📤 手動匯出 JSON</button>
+            <label style="display:block; font-size:18px; font-weight:900; margin-bottom:15px; text-align:center; color:#7f8fa6;">設定檔雙重備份</label>
+            <!-- 新增：雲端備份按鈕 -->
+            <button class="btn-big-action btn-cloud-backup" onclick="backupToCloud()" id="btn-cloud-backup">☁️ 備份到 Google Drive</button>
+            <button class="btn-big-action" style="background:var(--primary); color:#fff;" onclick="expData('json')">📤 手動下載備份</button>
             <input type="file" id="file-input" accept=".json" style="display:none;" onchange="impData(event)">
-            <button class="btn-big-action" style="background:#fff; color:var(--primary-dark); border:2px solid var(--primary-dark);" onclick="document.getElementById('file-input').click()">📥 還原設定資料</button>
+            <button class="btn-big-action" style="background:#fff; color:var(--primary-dark); border:2px solid var(--primary-dark); margin-top:15px;" onclick="document.getElementById('file-input').click()">📥 還原設定資料</button>
         </div>
     </div>
 
@@ -405,17 +421,37 @@
         <button class="btn-main btn-record" style="width:calc(100% - 40px); margin:20px; padding:18px; border-radius:18px; font-size:18px;" onclick="addAcc()">➕ 新增帳戶</button>
     </div>
 
+    <!-- 升級版：計算機鍵盤 -->
     <div id="v-keypad">
-        <button class="key" onclick="kp('7')">7</button><button class="key" onclick="kp('8')">8</button><button class="key" onclick="kp('9')">9</button><button class="key key-op" onclick="kp('del')">刪</button>
-        <button class="key" onclick="kp('4')">4</button><button class="key" onclick="kp('5')">5</button><button class="key" onclick="kp('6')">6</button><button class="key key-op" onclick="kp('clear')">C</button>
-        <button class="key" onclick="kp('1')">1</button><button class="key" onclick="kp('2')">2</button><button class="key" onclick="kp('3')">3</button><button class="key key-act" onclick="closeKeypad()">完成</button>
-        <button class="key" onclick="kp('00')">00</button><button class="key" onclick="kp('0')">0</button><button class="key" onclick="kp('.')">.</button>
+        <button class="key key-op-del" onclick="kp('clear')">C</button>
+        <button class="key key-op-math" onclick="kp('÷')">÷</button>
+        <button class="key key-op-math" onclick="kp('×')">×</button>
+        <button class="key key-op-del" onclick="kp('del')">⌫</button>
+        
+        <button class="key" onclick="kp('7')">7</button>
+        <button class="key" onclick="kp('8')">8</button>
+        <button class="key" onclick="kp('9')">9</button>
+        <button class="key key-op-math" onclick="kp('-')">-</button>
+        
+        <button class="key" onclick="kp('4')">4</button>
+        <button class="key" onclick="kp('5')">5</button>
+        <button class="key" onclick="kp('6')">6</button>
+        <button class="key key-op-math" onclick="kp('+')">+</button>
+        
+        <button class="key" onclick="kp('1')">1</button>
+        <button class="key" onclick="kp('2')">2</button>
+        <button class="key" onclick="kp('3')">3</button>
+        <button class="key key-act" id="kp-btn-done" onclick="handleKeypadDone()">完成</button>
+        
+        <button class="key" onclick="kp('00')">00</button>
+        <button class="key" onclick="kp('0')">0</button>
+        <button class="key" onclick="kp('.')">.</button>
     </div>
 
     <script>
         const $ = id => document.getElementById(id);
         
-        // ⚠️ 請替換成您的 Google Apps Script 網址
+        // ⚠️ 請替換成您的 Google Apps Script 網址 (更新後的部署網址)
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz9Tohi--mDE6Pk5u6P20xBiHsQ-yMR1rDmfG5Q7LBmxaOeLxedtHp0iMwh4AuCyt4Ncw/exec";
         
         const defCats = {
@@ -480,6 +516,7 @@
         let currentAccFilter = "";
         let editingRecordId = null; 
         let cTime = 'month'; 
+        let isCalculating = false; // 標記目前是否在進行算式輸入
 
         let curS = 1;
         try { history.replaceState({ s: 1, t: 'main' }, ''); } catch(e) {}
@@ -527,23 +564,20 @@
         function getDefaultDateStr() { return sets.tz === 'tw' ? dStr(getTwDateObj()) : dStr(new Date()); }
         
         function jumpToToday() {
-            if (weekSwipeOffset === 0 && currentInlineDate === getDefaultDateStr()) return; // 已經在今天就不用動
+            if (weekSwipeOffset === 0 && currentInlineDate === getDefaultDateStr()) return; 
             
             const wCal = $('ui-calendar');
             wCal.style.transition = 'transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.25s ease';
             
             if (weekSwipeOffset > 0) {
-                // 從未來 (右邊) 回來：往右飛出
                 wCal.style.transform = 'translateX(0%)';
                 wCal.style.opacity = '0';
-                setTimeout(executeJump.bind(null, -66.666), 300); // 準備從左邊滑入
+                setTimeout(executeJump.bind(null, -66.666), 300); 
             } else if (weekSwipeOffset < 0) {
-                // 從過去 (左邊) 回來：往左飛出
                 wCal.style.transform = 'translateX(-66.666%)';
                 wCal.style.opacity = '0';
-                setTimeout(executeJump.bind(null, 0), 300); // 準備從右邊滑入
+                setTimeout(executeJump.bind(null, 0), 300); 
             } else {
-                // 只是點錯日期 (在同一週)，原地刷淡
                 wCal.style.opacity = '0';
                 setTimeout(executeJump.bind(null, -33.333), 200);
             }
@@ -555,14 +589,13 @@
             weekSwipeOffset = 0;
             currentInlineDate = getDefaultDateStr();
             
-            wCal.style.transition = 'none'; // 拔掉動畫
-            wCal.style.transform = `translateX(${startPos}%)`; // 把隱形的日曆放到預備位置
-            renderHome(); // 重新渲染當週積木
+            wCal.style.transition = 'none'; 
+            wCal.style.transform = `translateX(${startPos}%)`; 
+            renderHome(); 
             
-            // 下一幀立刻啟動平滑滑入動畫
             setTimeout(() => {
                 wCal.style.transition = 'all 0.4s cubic-bezier(0.1, 0.9, 0.2, 1)';
-                wCal.style.transform = 'translateX(-33.333%)'; // 滑回正中央
+                wCal.style.transform = 'translateX(-33.333%)'; 
                 wCal.style.opacity = '1';
             }, 30);
         }
@@ -650,6 +683,7 @@
 
         function triggerAutoConfigBackup() {
             try {
+                // 原本下載到本機的功能
                 const n = new Date();
                 const ds = `${n.getFullYear()}${String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}`;
                 const c = JSON.stringify({ cats, sets });
@@ -659,8 +693,55 @@
                 const a = document.createElement('a'); a.href = url; a.download = f; a.style.display = 'none';
                 document.body.appendChild(a); a.click(); a.remove();
                 setTimeout(() => URL.revokeObjectURL(url), 1500);
-                toast('⚙️ 設定已變更，已自動下載備份檔');
+                
+                // 觸發雲端備份 (背景執行，不打擾用戶)
+                backupToCloud(true);
             } catch (e) { console.error('備份失敗'); }
+        }
+
+        // 新增：雲端備份功能
+        async function backupToCloud(isSilent = false) {
+            if (!navigator.onLine) {
+                if (!isSilent) toast('無網路連線，無法備份到雲端');
+                return;
+            }
+            
+            let btn = $('btn-cloud-backup');
+            if (btn && !isSilent) {
+                btn.innerHTML = '🔄 上傳中...';
+                btn.style.pointerEvents = 'none';
+            }
+            
+            try {
+                const n = new Date();
+                const ds = `${n.getFullYear()}${String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}`;
+                const fileName = `個人雲帳本_設定備份_${ds}.json`;
+                
+                const backupData = { cats, sets };
+                const reqBody = { action: 'backup', data: backupData, fileName: fileName };
+                
+                const res = await fetch(GAS_URL, { 
+                    method:'POST', 
+                    headers:{'Content-Type':'text/plain;charset=utf-8'}, 
+                    body:JSON.stringify(reqBody) 
+                });
+                
+                const r = await res.json();
+                
+                if(r.status === 'success') { 
+                    if (!isSilent) toast('✅ 設定檔已備份至 Google Drive');
+                } else {
+                    throw new Error(r.message || '雲端備份失敗');
+                }
+            } catch(e) { 
+                console.error(e);
+                if (!isSilent) toast('⚠️ 雲端備份失敗'); 
+            } finally { 
+                if (btn && !isSilent) {
+                    btn.innerHTML = '☁️ 備份到 Google Drive';
+                    btn.style.pointerEvents = 'auto';
+                }
+            }
         }
 
         function autoPocket() {
@@ -806,7 +887,8 @@
             editingRecordId = null; 
             $('m-record-title').innerText = '新增紀錄';
             $('btn-modal-del').style.display = 'none';
-            rTyp = 'expense'; kpStr = '0'; $('r-amt').innerText='0';
+            rTyp = 'expense'; kpStr = '0'; isCalculating = false;
+            updateAmtUI();
             
             $('r-date').value = getDefaultDateStr();
             
@@ -820,8 +902,9 @@
         function editRec(id) {
             let rec = db.find(r => r.id === id);
             if (!rec) return;
-            editingRecordId = id; rTyp = rec.type; kpStr = rec.amount.toString();
-            $('r-amt').innerText = Number(kpStr).toLocaleString();$('r-date').value = rec.date; 
+            editingRecordId = id; rTyp = rec.type; kpStr = rec.amount.toString(); isCalculating = false;
+            updateAmtUI();
+            $('r-date').value = rec.date; 
             $('r-note').value = rec.note ? rec.note : '';
 
             const opts = sets.a.map(a=>`<option value="${a}">${a}</option>`).join('');
@@ -892,16 +975,138 @@
             $('r-bal').innerText = `餘額: $${b.toLocaleString()}`; $('r-bal').style.color = b >= 0 ? 'var(--primary)' : 'var(--expense)';
         }
 
-        function openKeypad() { $('v-keypad').style.display='grid';$('r-amt-box').classList.add('active'); pushK(); }
-        function kp(v) {
-            if(v==='clear') kpStr='0'; else if(v==='del') kpStr=kpStr.length>1?kpStr.slice(0,-1):'0';
-            else { if(kpStr==='0'?v!=='.':false) kpStr=v; else kpStr+=v; if(kpStr.length>10) kpStr=kpStr.slice(0,10); }
-            $('r-amt').innerText = Number(kpStr).toLocaleString();
+        // --- 🚀 新版計算機邏輯 ---
+        function openKeypad() { 
+            $('v-keypad').style.display='grid';
+            $('r-amt-box').classList.add('active'); 
+            pushK(); 
+            checkCalcStatus();
+        }
+        
+        function formatCalcDisplay(str) {
+            // 在運算符號前後加上空白，提升閱讀性
+            return str.replace(/\+/g, ' + ').replace(/-/g, ' - ').replace(/×/g, ' × ').replace(/÷/g, ' ÷ ');
         }
 
+        function checkCalcStatus() {
+            const btnDone = $('kp-btn-done');
+            if (/[\+\-×÷]/.test(kpStr)) {
+                isCalculating = true;
+                btnDone.innerHTML = '=';
+                btnDone.classList.add('is-calc');
+            } else {
+                isCalculating = false;
+                btnDone.innerHTML = '完成';
+                btnDone.classList.remove('is-calc');
+            }
+        }
+
+        function updateAmtUI() {
+            let displayStr = formatCalcDisplay(kpStr);
+            // 如果只有單純數字，加上千分位
+            if (!isCalculating && !kpStr.includes('.')) {
+                $('r-amt').innerText = Number(kpStr).toLocaleString();
+            } else {
+                $('r-amt').innerText = displayStr;
+            }
+            // 自動捲動到最右邊
+            let amtBox = $('r-amt');
+            amtBox.scrollLeft = amtBox.scrollWidth;
+        }
+
+        function kp(v) {
+            if(v === 'clear') {
+                kpStr = '0';
+            } 
+            else if(v === 'del') {
+                kpStr = kpStr.length > 1 ? kpStr.slice(0, -1) : '0';
+            }
+            else if (['+', '-', '×', '÷'].includes(v)) {
+                // 防止重複輸入運算符號
+                const lastChar = kpStr.slice(-1);
+                if (['+', '-', '×', '÷'].includes(lastChar)) {
+                    kpStr = kpStr.slice(0, -1) + v;
+                } else if (lastChar !== '.') {
+                    kpStr += v;
+                }
+            }
+            else { 
+                // 處理數字與小數點輸入
+                if(kpStr === '0' && v !== '.') {
+                    kpStr = v;
+                } else {
+                    // 防止在同一個數字區塊內輸入多個小數點
+                    if (v === '.') {
+                        const parts = kpStr.split(/[\+\-×÷]/);
+                        const currentPart = parts[parts.length - 1];
+                        if (!currentPart.includes('.')) {
+                            kpStr += v;
+                        }
+                    } else {
+                        // 限制總長度，避免過長算式破版
+                        if(kpStr.length < 25) kpStr += v; 
+                    }
+                }
+            }
+            
+            checkCalcStatus();
+            updateAmtUI();
+        }
+
+        function doCalculate() {
+            try {
+                // 將顯示用的運算符號替換為 JS 可執行的符號
+                let evalStr = kpStr.replace(/×/g, '*').replace(/÷/g, '/');
+                
+                // 去除尾部多餘的運算符號
+                const lastChar = evalStr.slice(-1);
+                if (['+', '-', '*', '/'].includes(lastChar)) {
+                    evalStr = evalStr.slice(0, -1);
+                }
+                
+                // 計算結果
+                let result = eval(evalStr);
+                
+                // 處理無限大或非數值情況
+                if (!isFinite(result) || isNaN(result)) {
+                    toast('計算錯誤');
+                    return false;
+                }
+                
+                // 處理浮點數誤差 (取到小數第2位)
+                result = Math.round(result * 100) / 100;
+                
+                // 不能是負數
+                if (result < 0) result = 0;
+                
+                kpStr = result.toString();
+                checkCalcStatus();
+                updateAmtUI();
+                return true;
+            } catch (e) {
+                toast('計算公式格式錯誤');
+                return false;
+            }
+        }
+
+        function handleKeypadDone() {
+            if (isCalculating) {
+                doCalculate();
+            } else {
+                closeKeypad();
+            }
+        }
+        // -----------------------------
+
         function saveRec() {
+            // 如果還在算式狀態，先強制結算
+            if (isCalculating) {
+                if (!doCalculate()) return; 
+            }
+            
             let a = Number(kpStr); 
-            if(isNaN(a) || a < 0) return toast('金額不可為負數'); 
+            if(isNaN(a) || a < 0) return toast('請輸入有效金額'); 
+            if(a === 0) return toast('金額不能為 0');
             
             let isTransfer = (rTyp === 'transfer');
             let accOut = isTransfer ? $('r-acc-out').value :$('r-acc').value;
