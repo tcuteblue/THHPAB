@@ -182,8 +182,10 @@
         .btn-big-action:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
         
         /* 雲端備份按鈕專屬樣式 */
-        .btn-cloud-backup { background: linear-gradient(135deg, #3498db, #2980b9); color: white; border: none; box-shadow: 0 4px 0 #1f618d; margin-bottom: 8px; }
+        .btn-cloud-backup { background: linear-gradient(135deg, #3498db, #2980b9); color: white; border: none; box-shadow: 0 4px 0 #1f618d; margin-bottom: 10px; }
         .btn-cloud-backup:active { box-shadow: 0 0 0 transparent; }
+        .btn-cloud-restore { background: linear-gradient(135deg, #16a085, #1abc9c); color: white; border: none; box-shadow: 0 4px 0 #12876f; margin-bottom: 25px; }
+        .btn-cloud-restore:active { box-shadow: 0 0 0 transparent; transform: translateY(4px); }
     </style>
 </head>
 
@@ -400,11 +402,13 @@
         
         <div style="margin: 40px 20px 20px; padding-top: 30px; border-top: 2px dashed #DFE4EA;">
             <label style="display:block; font-size:18px; font-weight:900; margin-bottom:15px; text-align:center; color:#7f8fa6;">設定檔雙重備份</label>
-            <!-- 新增：雲端備份按鈕 -->
+            <!-- 雲端備份與還原 -->
             <button class="btn-big-action btn-cloud-backup" onclick="backupToCloud()" id="btn-cloud-backup">☁️ 備份到 Google Drive</button>
-            <button class="btn-big-action" style="background:var(--primary); color:#fff;" onclick="expData('json')">📤 手動下載備份</button>
+            <button class="btn-big-action btn-cloud-restore" onclick="restoreFromCloud()" id="btn-cloud-restore">☁️ 從 Google Drive 還原</button>
+            
+            <button class="btn-big-action" style="background:var(--primary); color:#fff;" onclick="expData('json')">📤 備份設定檔</button>
             <input type="file" id="file-input" accept=".json" style="display:none;" onchange="impData(event)">
-            <button class="btn-big-action" style="background:#fff; color:var(--primary-dark); border:2px solid var(--primary-dark); margin-top:15px;" onclick="document.getElementById('file-input').click()">📥 還原設定資料</button>
+            <button class="btn-big-action" style="background:#fff; color:var(--primary-dark); border:2px solid var(--primary-dark); margin-top:15px;" onclick="document.getElementById('file-input').click()">📥 還原設定檔</button>
         </div>
     </div>
 
@@ -516,7 +520,7 @@
         let currentAccFilter = "";
         let editingRecordId = null; 
         let cTime = 'month'; 
-        let isCalculating = false; // 標記目前是否在進行算式輸入
+        let isCalculating = false;
 
         let curS = 1;
         try { history.replaceState({ s: 1, t: 'main' }, ''); } catch(e) {}
@@ -681,25 +685,14 @@
             }
         });
 
+        // 取消了本地下載檔案的邏輯，現在只負責背景備份至雲端
         function triggerAutoConfigBackup() {
             try {
-                // 原本下載到本機的功能
-                const n = new Date();
-                const ds = `${n.getFullYear()}${String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}`;
-                const c = JSON.stringify({ cats, sets });
-                const f = `個人雲帳本_設定備份_${ds}.json`;
-                const blob = new Blob([new Uint8Array([0xEF,0xBB,0xBF]), c], {type:'application/json'});
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a'); a.href = url; a.download = f; a.style.display = 'none';
-                document.body.appendChild(a); a.click(); a.remove();
-                setTimeout(() => URL.revokeObjectURL(url), 1500);
-                
                 // 觸發雲端備份 (背景執行，不打擾用戶)
                 backupToCloud(true);
             } catch (e) { console.error('備份失敗'); }
         }
 
-        // 新增：雲端備份功能
         async function backupToCloud(isSilent = false) {
             if (!navigator.onLine) {
                 if (!isSilent) toast('無網路連線，無法備份到雲端');
@@ -739,6 +732,47 @@
             } finally { 
                 if (btn && !isSilent) {
                     btn.innerHTML = '☁️ 備份到 Google Drive';
+                    btn.style.pointerEvents = 'auto';
+                }
+            }
+        }
+
+        // 新增：從雲端還原設定檔邏輯
+        async function restoreFromCloud() {
+            if (!navigator.onLine) return toast('無網路連線，無法進行還原');
+            
+            if (!confirm('從雲端還原將會覆蓋您目前的分類與系統設定，確定要繼續嗎？')) return;
+            
+            let btn = $('btn-cloud-restore');
+            if (btn) {
+                btn.innerHTML = '🔄 還原中...';
+                btn.style.pointerEvents = 'none';
+            }
+            
+            try {
+                const res = await fetch(GAS_URL, { 
+                    method:'POST', 
+                    headers:{'Content-Type':'text/plain;charset=utf-8'}, 
+                    body:JSON.stringify({ action: 'restore' }) 
+                });
+                
+                const r = await res.json();
+                
+                if(r.status === 'success' && r.data) { 
+                    if(r.data.cats) cats = r.data.cats;
+                    if(r.data.sets) sets = r.data.sets;
+                    saveDB();
+                    alert('✅ 雲端設定還原成功！系統將重新載入。');
+                    window.location.reload();
+                } else {
+                    throw new Error(r.message || '找不到可用的雲端備份檔');
+                }
+            } catch(e) { 
+                console.error(e);
+                toast('⚠️ 雲端還原失敗：' + (e.message || '發生錯誤')); 
+            } finally { 
+                if (btn) {
+                    btn.innerHTML = '☁️ 從 Google Drive 還原';
                     btn.style.pointerEvents = 'auto';
                 }
             }
@@ -984,7 +1018,6 @@
         }
         
         function formatCalcDisplay(str) {
-            // 在運算符號前後加上空白，提升閱讀性
             return str.replace(/\+/g, ' + ').replace(/-/g, ' - ').replace(/×/g, ' × ').replace(/÷/g, ' ÷ ');
         }
 
@@ -1003,13 +1036,11 @@
 
         function updateAmtUI() {
             let displayStr = formatCalcDisplay(kpStr);
-            // 如果只有單純數字，加上千分位
             if (!isCalculating && !kpStr.includes('.')) {
                 $('r-amt').innerText = Number(kpStr).toLocaleString();
             } else {
                 $('r-amt').innerText = displayStr;
             }
-            // 自動捲動到最右邊
             let amtBox = $('r-amt');
             amtBox.scrollLeft = amtBox.scrollWidth;
         }
@@ -1022,7 +1053,6 @@
                 kpStr = kpStr.length > 1 ? kpStr.slice(0, -1) : '0';
             }
             else if (['+', '-', '×', '÷'].includes(v)) {
-                // 防止重複輸入運算符號
                 const lastChar = kpStr.slice(-1);
                 if (['+', '-', '×', '÷'].includes(lastChar)) {
                     kpStr = kpStr.slice(0, -1) + v;
@@ -1031,11 +1061,9 @@
                 }
             }
             else { 
-                // 處理數字與小數點輸入
                 if(kpStr === '0' && v !== '.') {
                     kpStr = v;
                 } else {
-                    // 防止在同一個數字區塊內輸入多個小數點
                     if (v === '.') {
                         const parts = kpStr.split(/[\+\-×÷]/);
                         const currentPart = parts[parts.length - 1];
@@ -1043,7 +1071,6 @@
                             kpStr += v;
                         }
                     } else {
-                        // 限制總長度，避免過長算式破版
                         if(kpStr.length < 25) kpStr += v; 
                     }
                 }
@@ -1055,28 +1082,21 @@
 
         function doCalculate() {
             try {
-                // 將顯示用的運算符號替換為 JS 可執行的符號
                 let evalStr = kpStr.replace(/×/g, '*').replace(/÷/g, '/');
-                
-                // 去除尾部多餘的運算符號
                 const lastChar = evalStr.slice(-1);
                 if (['+', '-', '*', '/'].includes(lastChar)) {
                     evalStr = evalStr.slice(0, -1);
                 }
                 
-                // 計算結果
                 let result = eval(evalStr);
                 
-                // 處理無限大或非數值情況
                 if (!isFinite(result) || isNaN(result)) {
                     toast('計算錯誤');
                     return false;
                 }
                 
-                // 處理浮點數誤差 (取到小數第2位)
                 result = Math.round(result * 100) / 100;
                 
-                // 不能是負數
                 if (result < 0) result = 0;
                 
                 kpStr = result.toString();
@@ -1099,7 +1119,6 @@
         // -----------------------------
 
         function saveRec() {
-            // 如果還在算式狀態，先強制結算
             if (isCalculating) {
                 if (!doCalculate()) return; 
             }
@@ -1437,7 +1456,7 @@
                 url = URL.createObjectURL(blob);
                 const a=document.createElement('a'); a.href=url; a.download=f; a.style.display='none';
                 document.body.appendChild(a); a.click(); a.remove(); closeModal();
-                toast('✅ 已匯出設定'); setTimeout(() => URL.revokeObjectURL(url), 1500);
+                toast('✅ 已匯出設定檔'); setTimeout(() => URL.revokeObjectURL(url), 1500);
             } catch (err) { closeModal(); toast('⚠️ 匯出失敗'); }
         }
         
@@ -1447,7 +1466,7 @@
                 try{ 
                     let d=JSON.parse(ev.target.result); 
                     if(d.cats) cats=d.cats; if(d.sets) sets=d.sets; 
-                    saveDB(); alert('設定還原成功！'); window.location.reload(); 
+                    saveDB(); alert('設定檔還原成功！'); window.location.reload(); 
                 }catch(err){alert('格式錯誤');} 
             }; r.readAsText(f);
         }
