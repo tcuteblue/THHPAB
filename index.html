@@ -667,7 +667,7 @@
         }
 
         // 離開 App 重新回來時背景悄悄同步
-        document.addEventListener('visibilitychange', () => {
+        document.addEventListener('visibilitychange', () => {`
             if (document.visibilityState === 'visible' && navigator.onLine) {
                 syncToGAS(false);
             }
@@ -682,7 +682,7 @@
             try { backupToCloud(true); } catch (e) {}
         }
 
-        // 雲端備份設定檔 (完全對齊家用雲帳本)
+        // 🚀 功能 1：執行雲端備份 (套用新版公版邏輯)
         function backupToCloud(isSilent = false) {
             if (!navigator.onLine) {
                 if (!isSilent) toast('無網路連線，無法備份到雲端');
@@ -694,26 +694,33 @@
                 btn.innerHTML = '🔄 上傳中...';
                 btn.style.pointerEvents = 'none';
             }
-            
+
+            // 1. 從 localStorage 收集個人雲帳本的所有資料
             const payload = {
                 action: "auto_backup",
-                data: { cats: cats, sets: sets }
+                backupData: {
+                    dbData: localStorage.getItem('cloud_exp_db') || '[]',
+                    setsData: localStorage.getItem('cloud_exp_sets') || '{}',
+                    catsData: localStorage.getItem('cloud_exp_cats') || '{}',
+                    lastUpdate: new Date().toLocaleString()
+                }
             };
-            
-            fetch(GAS_URL, { 
-                method: "POST", 
-                body: JSON.stringify(payload) 
+
+            // 2. 寄送給 GAS
+            fetch(GAS_URL, {
+                method: "POST",
+                body: JSON.stringify(payload)
             })
             .then(res => res.json())
             .then(res => {
                 if (res.status === 'success') {
-                    if (!isSilent) toast('✅ 設定檔已備份至 Google Drive');
+                    if (!isSilent) toast("✅ 設定檔已備份至雲端硬碟！");
                 } else {
                     if (!isSilent) alert("❌ 備份失敗：" + res.message);
                 }
             })
             .catch(err => {
-                if (!isSilent) alert("❌ 連線錯誤，雲端備份失敗！");
+                if (!isSilent) alert("❌ 網路連線異常，備份失敗！");
             })
             .finally(() => {
                 if (btn && !isSilent) {
@@ -723,18 +730,18 @@
             });
         }
 
-        // 雲端還原設定檔 (完全對齊家用雲帳本)
+        // 🚀 功能 2：執行雲端還原 (套用新版公版邏輯)
         function restoreFromCloud() {
             if (!navigator.onLine) return toast('無網路連線，無法進行還原');
-            
-            if (!confirm('從雲端還原將會覆蓋您目前的分類與系統設定，確定要繼續嗎？')) return;
+            if (!confirm("⚠️ 警告：雲端還原將會覆蓋本機目前的分類與設定，確定繼續嗎？")) return;
             
             let btn = $('btn-cloud-restore');
             if (btn) {
                 btn.innerHTML = '🔄 還原中...';
                 btn.style.pointerEvents = 'none';
             }
-            
+
+            // 1. 向 GAS 請求還原檔案
             fetch(GAS_URL, { 
                 method: "POST", 
                 body: JSON.stringify({ action: "restore_from_cloud" }) 
@@ -743,22 +750,27 @@
             .then(res => {
                 if (res.status === 'success') {
                     try {
-                        // 家用雲帳本後端回傳的 res.data 是字串，需要 parse
+                        // 2. 將 GAS 傳回來的字串解壓縮成 JSON 物件
                         const d = JSON.parse(res.data);
-                        if (d.cats) cats = d.cats;
-                        if (d.sets) sets = d.sets;
-                        saveDB();
-                        alert('✅ 雲端設定還原成功！系統將重新載入。');
-                        window.location.reload();
+
+                        // 3. 將資料強制覆蓋回 localStorage (對應個人雲帳本的變數)
+                        if (d.dbData) localStorage.setItem('cloud_exp_db', d.dbData);
+                        if (d.setsData) localStorage.setItem('cloud_exp_sets', d.setsData);
+                        if (d.catsData) localStorage.setItem('cloud_exp_cats', d.catsData);
+
+                        // 4. 重整畫面以載入新資料
+                        alert("✅ 雲端還原成功！系統將重新載入。");
+                        location.reload(); 
+
                     } catch (e) {
-                        alert('❌ 解析雲端資料失敗。');
+                        alert("❌ 還原失敗：檔案格式解析錯誤。");
                     }
                 } else {
-                    alert("❌ 雲端還原失敗：" + res.message);
+                    alert("❌ 還原失敗：" + res.message);
                 }
             })
             .catch(err => {
-                alert("❌ 連線錯誤，無法從雲端還原！");
+                alert("❌ 網路連線異常，無法還原！");
             })
             .finally(() => {
                 if (btn) {
