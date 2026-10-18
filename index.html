@@ -175,6 +175,8 @@
         .mgr-title { font-size: 20px; font-weight: 900; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; color: #2c3e50; }
         .mgr-chip { display: inline-flex; align-items: center; background: #f8f9fa; padding: 10px 14px; border-radius: 12px; font-size: 16px; font-weight: bold; margin: 0 10px 10px 0; border: 1px solid #eee; }
         .mgr-del { margin-left: 10px; color: var(--expense); cursor: pointer; font-weight: 900; font-size: 18px; }
+        .mgr-move { margin-left: 8px; color: #95a5a6; cursor: pointer; font-size: 18px; user-select: none; transition: transform 0.1s; display: inline-block; }
+        .mgr-move:active { color: var(--primary); transform: scale(1.2); }
         
         .btn-big-action { width: calc(100% - 40px); margin: 0 20px 18px; padding: 18px; border-radius: 18px; font-size: 20px; font-weight: 900; border: none; cursor: pointer; text-align: center; display: flex; justify-content: center; align-items: center; gap: 10px; box-shadow: 0 4px 0 #DFE4EA; }
         .btn-big-action:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
@@ -1407,11 +1409,32 @@
         function renderAccMgr() {
             let accBals = {}; sets.a.forEach(a => accBals[a] = 0);
             db.forEach(r => { if(r.type==='deleted') return; let a = r.amount; if(r.type === 'income' ? accBals[r.account] !== undefined : false) accBals[r.account] += a; if(r.type === 'expense' ? accBals[r.account] !== undefined : false) accBals[r.account] -= a; if(r.type === 'transfer') { if(accBals[r.account] !== undefined) accBals[r.account] -= a; if(accBals[r.toAccount] !== undefined) accBals[r.toAccount] += a; } });
-            $('acc-mgr-container').innerHTML = sets.a.map(a => {
+            $('acc-mgr-container').innerHTML = sets.a.map((a, i) => {
                 let bal = accBals[a] ? accBals[a] : 0; let balColor = bal >= 0 ? 'var(--primary)' : 'var(--expense)';
                 return `<div class="mgr-card" onclick="openList('account', '${a}')" style="cursor:pointer; transition: transform 0.1s;">
-                    <div class="mgr-title"><span>💳 ${a} <span style="color:${balColor}; font-size:18px; margin-left:8px;">($${bal.toLocaleString()})</span></span><span class="mgr-del" onclick="event.stopPropagation(); delAcc('${a}')">刪除</span></div></div>`;
+                    <div class="mgr-title"><span>💳 ${a} <span style="color:${balColor}; font-size:18px; margin-left:8px;">($${bal.toLocaleString()})</span></span>
+                    <div>
+                        ${i > 0 ? `<span class="mgr-move" onclick="event.stopPropagation(); moveAcc(${i}, -1)">🔼</span>` : ''}
+                        ${i < sets.a.length - 1 ? `<span class="mgr-move" onclick="event.stopPropagation(); moveAcc(${i}, 1)">🔽</span>` : ''}
+                        <span class="mgr-del" onclick="event.stopPropagation(); delAcc('${a}')">刪除</span>
+                    </div></div></div>`;
             }).join('');
+        }
+        
+        // 新增：帳戶排序邏輯
+        function moveAcc(idx, dir) {
+            if (idx + dir < 0 || idx + dir >= sets.a.length) return;
+            let temp = sets.a[idx];
+            sets.a[idx] = sets.a[idx + dir];
+            sets.a[idx + dir] = temp;
+            saveDB(); renderAccMgr(); renderHome(); triggerAutoConfigBackup();
+        }
+
+        function addAcc() { let n = prompt('輸入新帳戶名稱：'); if(n ? (n.trim() ? !sets.a.includes(n.trim()) : false) : false){ sets.a.push(n.trim()); saveDB(); renderAccMgr(); renderHome(); triggerAutoConfigBackup(); } }
+        function delAcc(a) { 
+            let used = db.some(r => r.type!=='deleted' && (r.account === a || r.toAccount === a));
+            if(used ? !confirm('此帳戶已有歷史紀錄，確定刪除？') : false) return;
+            sets.a = sets.a.filter(x=>x!==a); if(!sets.a.length) sets.a=['💵 現金']; saveDB(); renderAccMgr(); renderHome(); triggerAutoConfigBackup();
         }
         function addAcc() { let n = prompt('輸入新帳戶名稱：'); if(n ? (n.trim() ? !sets.a.includes(n.trim()) : false) : false){ sets.a.push(n.trim()); saveDB(); renderAccMgr(); renderHome(); triggerAutoConfigBackup(); } }
         function delAcc(a) { 
@@ -1425,12 +1448,58 @@
             mgrCatTyp = typ; document.querySelectorAll('#cat-tabs .tab').forEach(t=>t.className='tab '+(t.classList.contains('exp')?'exp':'inc'));
             document.querySelector(`#cat-tabs .tab.${typ==='expense'?'exp':'inc'}`).classList.add('active');
             let html = '';
-            for(let m in cats[typ]) {
-                let emoji = getEmoji(m); let subs = cats[typ][m].map(s=>`<div class="mgr-chip">${emoji} ${s} <span class="mgr-del" onclick="delSubCat('${typ}','${m}','${s}')">✖</span></div>`).join('');
-                html += `<div class="mgr-card"><div class="mgr-title"><span>${m}</span><div><span class="mgr-del" style="color:var(--primary);" onclick="addSubCat('${typ}','${m}')">➕</span> <span class="mgr-del" onclick="delMainCat('${typ}','${m}')">🗑️</span></div></div><div>${subs}</div></div>`;
-            }
+            let mainKeys = Object.keys(cats[typ]);
+            
+            mainKeys.forEach((m, mIdx) => {
+                let emoji = getEmoji(m); 
+                let subs = cats[typ][m].map((s, sIdx) => {
+                    return `<div class="mgr-chip">${emoji} ${s} 
+                        ${sIdx > 0 ? `<span class="mgr-move" style="margin-left:12px;" onclick="moveSubCat('${typ}','${m}',${sIdx},-1)">◀</span>` : ''}
+                        ${sIdx < cats[typ][m].length - 1 ? `<span class="mgr-move" ${sIdx === 0 ? 'style="margin-left:12px;"' : ''} onclick="moveSubCat('${typ}','${m}',${sIdx},1)">▶</span>` : ''}
+                        <span class="mgr-del" onclick="delSubCat('${typ}','${m}','${s}')">✖</span></div>`;
+                }).join('');
+                
+                html += `<div class="mgr-card"><div class="mgr-title"><span>${m}</span><div>
+                    ${mIdx > 0 ? `<span class="mgr-move" onclick="moveMainCat('${typ}',${mIdx}, -1)">🔼</span>` : ''}
+                    ${mIdx < mainKeys.length - 1 ? `<span class="mgr-move" onclick="moveMainCat('${typ}',${mIdx}, 1)">🔽</span>` : ''}
+                    <span class="mgr-del" style="color:var(--primary); margin-left:15px;" onclick="addSubCat('${typ}','${m}')">➕</span> 
+                    <span class="mgr-del" onclick="delMainCat('${typ}','${m}')">🗑️</span></div></div><div>${subs}</div></div>`;
+            });
             $('cat-mgr-container').innerHTML = html;
         }
+
+        // 新增：主分類排序邏輯 (重建 Object 來保證 JS 的渲染順序)
+        function moveMainCat(typ, idx, dir) {
+            let keys = Object.keys(cats[typ]);
+            if (idx + dir < 0 || idx + dir >= keys.length) return;
+            
+            let temp = keys[idx];
+            keys[idx] = keys[idx + dir];
+            keys[idx + dir] = temp;
+            
+            let newObj = {};
+            keys.forEach(k => { newObj[k] = cats[typ][k]; });
+            cats[typ] = newObj;
+            
+            saveDB(); renderCatMgr(typ); triggerAutoConfigBackup();
+        }
+
+        // 新增：子分類排序邏輯
+        function moveSubCat(typ, m, idx, dir) {
+            let arr = cats[typ][m];
+            if (idx + dir < 0 || idx + dir >= arr.length) return;
+            
+            let temp = arr[idx];
+            arr[idx] = arr[idx + dir];
+            arr[idx + dir] = temp;
+            
+            saveDB(); renderCatMgr(typ); triggerAutoConfigBackup();
+        }
+
+        function addMainCat() { let n=prompt('輸入新主分類：'); if(n ? n.trim() : false){ cats[mgrCatTyp][n.trim()]=["一般"]; saveDB(); renderCatMgr(mgrCatTyp); triggerAutoConfigBackup(); } }
+        function addSubCat(t, m) { let n=prompt(`在「${m}」新增子分類：`); if(n ? n.trim() : false){ cats[t][m].push(n.trim()); saveDB(); renderCatMgr(t); triggerAutoConfigBackup(); } }
+        function delMainCat(t, m) { let u=db.some(r=>r.type!=='deleted' && r.type===t && r.mainCat===m); if(u ? !confirm('此分類已有紀錄，確定刪除？') : false)return; delete cats[t][m]; saveDB(); renderCatMgr(t); triggerAutoConfigBackup(); }
+        function delSubCat(t, m, s) { let u=db.some(r=>r.type!=='deleted' && r.type===t && r.mainCat===m && r.subCat===s); if(u ? !confirm('此子分類已有紀錄，確定刪除？') : false)return; cats[t][m]=cats[t][m].filter(x=>x!==s); saveDB(); renderCatMgr(t); triggerAutoConfigBackup(); }
         function addMainCat() { let n=prompt('輸入新主分類：'); if(n ? n.trim() : false){ cats[mgrCatTyp][n.trim()]=["一般"]; saveDB(); renderCatMgr(mgrCatTyp); triggerAutoConfigBackup(); } }
         function addSubCat(t, m) { let n=prompt(`在「${m}」新增子分類：`); if(n ? n.trim() : false){ cats[t][m].push(n.trim()); saveDB(); renderCatMgr(t); triggerAutoConfigBackup(); } }
         function delMainCat(t, m) { let u=db.some(r=>r.type!=='deleted' && r.type===t && r.mainCat===m); if(u ? !confirm('此分類已有紀錄，確定刪除？') : false)return; delete cats[t][m]; saveDB(); renderCatMgr(t); triggerAutoConfigBackup(); }
