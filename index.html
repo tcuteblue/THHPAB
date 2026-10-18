@@ -428,6 +428,7 @@
         <button class="btn-main btn-record" style="width:calc(100% - 40px); margin:20px; padding:18px; border-radius:18px; font-size:18px;" onclick="addAcc()">➕ 新增帳戶</button>
     </div>
 
+    <!-- 終極版：附帶四則運算、歸零、倒退的計算機鍵盤 -->
     <div id="v-keypad">
         <button class="key key-op-del" onclick="kp('clear')">C</button>
         <button class="key key-op-math" onclick="kp('÷')">÷</button>
@@ -1013,6 +1014,7 @@
 
         function checkCalcStatus() {
             const btnDone = $('kp-btn-done');
+            // 只要偵測到運算符號，就將按鈕切換成「=」
             if (/[\+\-×÷]/.test(kpStr)) {
                 isCalculating = true;
                 btnDone.innerHTML = '=';
@@ -1032,37 +1034,59 @@
                 $('r-amt').innerText = displayStr;
             }
             let amtBox = $('r-amt');
-            amtBox.scrollLeft = amtBox.scrollWidth;
+            amtBox.scrollLeft = amtBox.scrollWidth; // 數字太長時自動滾動到最右邊
         }
 
         function kp(v) {
+            // 1. 歸零鍵 (C)
             if(v === 'clear') {
                 kpStr = '0';
             } 
+            // 2. 倒退鍵 (⌫)
             else if(v === 'del') {
-                kpStr = kpStr.length > 1 ? kpStr.slice(0, -1) : '0';
+                if (kpStr.length > 1) {
+                    kpStr = kpStr.slice(0, -1);
+                } else {
+                    kpStr = '0';
+                }
             }
+            // 3. 運算符號 (+, -, ×, ÷)
             else if (['+', '-', '×', '÷'].includes(v)) {
                 const lastChar = kpStr.slice(-1);
                 if (['+', '-', '×', '÷'].includes(lastChar)) {
+                    // 如果最後已經是運算符，直接替換 (例如 5+ 變 5-)
                     kpStr = kpStr.slice(0, -1) + v;
-                } else if (lastChar !== '.') {
+                } else if (lastChar === '.') {
+                    // 如果最後是小數點，先補 0 再加運算符 (例如 5. 變 5.0+)
+                    kpStr += '0' + v;
+                } else {
                     kpStr += v;
                 }
             }
-            else { 
-                if(kpStr === '0' && v !== '.') {
-                    kpStr = v;
-                } else {
-                    if (v === '.') {
-                        const parts = kpStr.split(/[\+\-×÷]/);
-                        const currentPart = parts[parts.length - 1];
-                        if (!currentPart.includes('.')) {
-                            kpStr += v;
-                        }
+            // 4. 小數點 (.) 防呆
+            else if (v === '.') {
+                const parts = kpStr.split(/[\+\-×÷]/);
+                const currentPart = parts[parts.length - 1];
+                if (!currentPart.includes('.')) {
+                    if (currentPart === '') {
+                        kpStr += '0.'; // 運算符號後直接按小數點，補 0
                     } else {
-                        if(kpStr.length < 25) kpStr += v; 
+                        kpStr += '.';
                     }
+                }
+            }
+            // 5. 數字鍵 (0-9, 00)
+            else {
+                const parts = kpStr.split(/[\+\-×÷]/);
+                const currentPart = parts[parts.length - 1];
+                
+                // 避免出現 "05" 這種無效數字開頭
+                if (currentPart === '0') {
+                    if (v !== '0' && v !== '00') {
+                        kpStr = kpStr.slice(0, -1) + v; // 用新數字替換 0
+                    }
+                } else {
+                    if(kpStr.length < 30) kpStr += v; 
                 }
             }
             
@@ -1072,21 +1096,26 @@
 
         function doCalculate() {
             try {
+                // 將顯示的符號轉成電腦可計算的符號
                 let evalStr = kpStr.replace(/×/g, '*').replace(/÷/g, '/');
-                const lastChar = evalStr.slice(-1);
-                if (['+', '-', '*', '/'].includes(lastChar)) {
+                
+                // 如果最後一個字元是運算符號，自動截掉 (例如 "50+" 會被當成 "50" 算)
+                if (/[\+\-\*\/]$/.test(evalStr)) {
                     evalStr = evalStr.slice(0, -1);
                 }
                 
+                // 執行四則運算
                 let result = eval(evalStr);
                 
                 if (!isFinite(result) || isNaN(result)) {
-                    toast('計算錯誤');
+                    toast('無效算式');
                     return false;
                 }
                 
+                // 完美解決 JS 常見的浮點數誤差 (例如 0.1 + 0.2 變成 0.30000000004)
                 result = Math.round(result * 100) / 100;
                 
+                // 防止算出負數金額
                 if (result < 0) result = 0;
                 
                 kpStr = result.toString();
@@ -1094,16 +1123,16 @@
                 updateAmtUI();
                 return true;
             } catch (e) {
-                toast('計算公式格式錯誤');
+                toast('算式格式錯誤');
                 return false;
             }
         }
 
         function handleKeypadDone() {
             if (isCalculating) {
-                doCalculate();
+                doCalculate(); // 算式狀態下，點擊只會計算出結果，不會關閉鍵盤
             } else {
-                closeKeypad();
+                closeKeypad(); // 單純數字狀態下，點擊完成會關閉鍵盤
             }
         }
 
