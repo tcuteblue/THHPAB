@@ -189,6 +189,23 @@
         .btn-c-res { background: linear-gradient(135deg, #16a085, #1abc9c); color: white; }
         .btn-l-bak { background: linear-gradient(135deg, #607D8B, #455A64); color: white; }
         .btn-l-res { background: linear-gradient(135deg, #a2d9ce, #73c6b6); color: #0b5345; }
+
+        /* 替換下拉選單的客製化按鈕 */
+        .cat-selector { background: #fff; border: 2px solid var(--border); border-radius: 16px; padding: 16px 18px; font-size: 20px; font-weight: 900; color: #95a5a6; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
+        .cat-selector:active { border-color: var(--primary); background: #f8f9fa; transform: scale(0.98); }
+        .cat-selector.selected { border-color: var(--primary); background: #eef7fc; color: var(--primary-dark); box-shadow: 0 4px 12px rgba(0,168,255,0.15); }
+        
+        /* 動態分類九宮格面板 */
+        .cat-panel-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; padding: 10px 20px 40px; }
+        .cat-panel-item { display: flex; flex-direction: column; align-items: center; justify-content: center; background: #fff; border: 2px solid #DFE4EA; border-radius: 18px; padding: 16px 8px; cursor: pointer; transition: transform 0.1s, border-color 0.1s; box-shadow: 0 4px 10px rgba(0,0,0,0.03); }
+        .cat-panel-item:active { transform: scale(0.92); border-color: var(--primary); background: #fdfefe; }
+        .cat-panel-icon { font-size: 32px; margin-bottom: 8px; }
+        .cat-panel-name { font-size: 14px; font-weight: 900; color: #2F3640; text-align: center; line-height: 1.2; word-break: break-all; }
+        
+        /* 返回上一層按鈕 */
+        .cat-panel-back { width: calc(100% - 40px); background: #f1f2f6; border: 2px solid #DFE4EA; padding: 14px; border-radius: 16px; font-size: 16px; font-weight: 900; color: #7f8fa6; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin: 0 20px 10px; transition: all 0.1s; box-shadow: 0 4px 0 #DFE4EA; }
+        .cat-panel-back:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; background: #eef7fc; color: var(--primary-dark); }
+
     </style>
 </head>
 
@@ -299,9 +316,12 @@
             <div class="amt-val" id="r-amt">0</div>
         </div>
 
-        <div id="r-area-cat" class="form-row form-group">
-            <div style="flex:1"><label>主分類</label><select id="r-mcat" onchange="loadSubCat()"></select></div>
-            <div style="flex:1"><label>子分類</label><select id="r-scat" onchange="checkNewCat(this)"></select></div>
+        <div id="r-area-cat" class="form-group">
+            <label>分類</label>
+            <!-- 捨棄原生的 select，改成漂亮的大按鈕 -->
+            <div id="r-cat-selector" class="cat-selector" onclick="openCatPicker()">
+                <span>請選擇分類...</span><span>▼</span>
+            </div>
         </div>
         
         <div id="r-area-tra" class="form-row form-group" style="display:none;">
@@ -326,6 +346,13 @@
             <button class="btn-delete-modal" id="btn-modal-del" onclick="delRecFromModal()" style="display:none;">🗑️ 刪除</button>
             <button class="btn-save" onclick="saveRec()" id="btn-modal-save">💾 儲存紀錄</button>
         </div>
+    </div>
+
+    <!-- 新增：專業版動態分類面板 -->
+    <div id="m-cat-picker" class="modal" style="z-index: 1200; background: rgba(242, 245, 248, 0.98); backdrop-filter: blur(10px);">
+        <div class="m-header"><span id="cat-picker-title">選擇分類</span><button class="m-close" onclick="closeModal()">✖</button></div>
+        <div id="cat-picker-back" style="display:none;"></div>
+        <div id="cat-picker-container" class="cat-panel-grid"></div>
     </div>
 
     <div id="m-list" class="modal">
@@ -519,6 +546,8 @@
         if(needsUpdate) saveDB();
 
         let cDate = new Date(), weekSwipeOffset = 0, rTyp = 'expense', kpStr = '0', chartObj = null, cTyp = 'expense', lStart = '', lEnd = '', calPickDate = new Date(), mgrCatTyp = 'expense';
+        let formMainCat = '', formSubCat = ''; // 紀錄目前選中的分類
+        let pickerTempMain = ''; // 面板切換時暫存的主分類
         let currentInlineDate = "";
         let currentAccFilter = "";
         let editingRecordId = null; 
@@ -915,14 +944,15 @@
             $('btn-modal-del').style.display = 'none';
             rTyp = 'expense'; kpStr = '0'; isCalculating = false;
             updateAmtUI();
-            
             $('r-date').value = getDefaultDateStr();
-            
             $('r-note').value='';
+            
+            formMainCat = ''; formSubCat = ''; updateCatSelectorUI(); // 清空分類狀態
+            
             const opts = sets.a.map(a=>`<option value="${a}">${a}</option>`).join('');
             $('r-acc').innerHTML = opts; $('r-acc-out').innerHTML = opts; $('r-acc-in').innerHTML = opts;
             $('note-sugg').style.display = 'none';
-            updRT(); loadMainCat(); updBal(); $('m-record').style.display='block'; pushM('m-record');
+            updRT(); updBal(); $('m-record').style.display='block'; pushM('m-record');
         }
 
         function editRec(id) {
@@ -936,24 +966,141 @@
             const opts = sets.a.map(a=>`<option value="${a}">${a}</option>`).join('');
             $('r-acc').innerHTML = opts; $('r-acc-out').innerHTML = opts; $('r-acc-in').innerHTML = opts;
 
+            formMainCat = rec.mainCat || ''; formSubCat = rec.subCat || ''; updateCatSelectorUI(); // 帶入舊資料
+            
             updRT();
             if (rTyp === 'transfer') {
                 $('r-acc-out').value = rec.account; $('r-acc-in').value = rec.toAccount;
             } else {
-                $('r-acc').value = rec.account; loadMainCat(); $('r-mcat').value = rec.mainCat; loadSubCat();$('r-scat').value = rec.subCat;
+                $('r-acc').value = rec.account;
             }
 
             updBal(); $('note-sugg').style.display = 'none';$('m-record-title').innerText = '編輯紀錄'; 
             $('btn-modal-del').style.display = 'block';$('m-record').style.display='block'; pushM('m-record');
         }
 
-        $('r-tabs').addEventListener('click', e => { if(e.target.dataset.t) { rTyp = e.target.dataset.t; updRT(); loadMainCat(); } });
+        $('r-tabs').addEventListener('click', e => { 
+            if(e.target.dataset.t) { 
+                rTyp = e.target.dataset.t; 
+                formMainCat = ''; formSubCat = ''; updateCatSelectorUI(); // 切換收入/支出時重置分類
+                updRT(); 
+            } 
+        });
         
         function updRT() {
             document.querySelectorAll('#r-tabs .tab').forEach(t => t.classList.remove('active'));
             document.querySelector(`#r-tabs .tab[data-t="${rTyp}"]`).classList.add('active');
-            if(rTyp === 'transfer') { $('r-area-cat').style.display='none'; $('r-area-tra').style.display='flex';$('r-acc-container').style.display='none'; } 
-            else { $('r-area-cat').style.display='flex'; $('r-area-tra').style.display='none';$('r-acc-container').style.display='block'; }
+            if(rTyp === 'transfer') { 
+                $('r-area-cat').style.display='none'; $('r-area-tra').style.display='flex';$('r-acc-container').style.display='none'; 
+            } else { 
+                $('r-area-cat').style.display='block'; $('r-area-tra').style.display='none';$('r-acc-container').style.display='block'; 
+            }
+        }
+
+        function updBal() {
+            let acc = $('r-acc').value, b = 0;
+            db.forEach(r=>{ if(r.type==='deleted') return; if(r.account===acc) { if(r.type==='income')b+=r.amount; else b-=r.amount; } if(r.type==='transfer' ? r.toAccount===acc : false) b+=r.amount; });
+            $('r-bal').innerText = `餘額: $${b.toLocaleString()}`; $('r-bal').style.color = b >= 0 ? 'var(--primary)' : 'var(--expense)';
+        }
+
+        // ==========================================
+        // 全新：動態分類面板 (Custom Cat Picker) 邏輯
+        // ==========================================
+        function updateCatSelectorUI() {
+            const el = $('r-cat-selector');
+            if (formMainCat && formSubCat) {
+                let emoji = getEmoji(formMainCat);
+                let cleanMain = formMainCat.replace(emoji, '').trim();
+                el.innerHTML = `<span><span style="font-size:24px; margin-right:8px;">${emoji}</span>${cleanMain} ➔ ${formSubCat}</span><span style="color:var(--primary); font-size:18px;">✎ 更改</span>`;
+                el.classList.add('selected');
+            } else {
+                el.innerHTML = `<span>請選擇分類...</span><span>▼</span>`;
+                el.classList.remove('selected');
+            }
+        }
+
+        function openCatPicker() {
+            renderCatPickerMain();
+            $('m-cat-picker').style.display = 'block';
+            pushM('m-cat-picker');
+        }
+
+        function renderCatPickerMain() {
+            $('cat-picker-title').innerText = (rTyp === 'expense') ? '選擇支出類別' : '選擇收入類別';
+            $('cat-picker-back').style.display = 'none';
+            $('cat-picker-container').style.gridTemplateColumns = 'repeat(4, 1fr)'; // 主分類九宮格
+            
+            let html = '';
+            for (let m in cats[rTyp]) {
+                let emoji = getEmoji(m) || '📁';
+                let name = m.replace(emoji, '').trim();
+                html += `
+                <div class="cat-panel-item" onclick="selectPickerMain('${m}')">
+                    <div class="cat-panel-icon">${emoji}</div>
+                    <div class="cat-panel-name">${name}</div>
+                </div>`;
+            }
+            html += `
+                <div class="cat-panel-item" onclick="addPickerMainCat()" style="border: 2px dashed #bdc3c7; background: transparent; box-shadow: none;">
+                    <div class="cat-panel-icon">➕</div>
+                    <div class="cat-panel-name" style="color: #7f8fa6;">新增主類</div>
+                </div>`;
+            
+            $('cat-picker-container').innerHTML = html;
+        }
+
+        function selectPickerMain(m) {
+            pickerTempMain = m;
+            renderCatPickerSub(m); // 點擊主分類瞬間，0秒無縫切換渲染子分類！
+        }
+
+        function renderCatPickerSub(m) {
+            let emoji = getEmoji(m) || '📁';
+            let name = m.replace(emoji, '').trim();
+            $('cat-picker-title').innerText = `${emoji} ${name} (選擇子分類)`;
+            
+            $('cat-picker-back').innerHTML = `<button class="cat-panel-back" onclick="renderCatPickerMain()">🔙 重新選擇主分類</button>`;
+            $('cat-picker-back').style.display = 'block';
+            $('cat-picker-container').style.gridTemplateColumns = 'repeat(2, 1fr)'; // 子分類變成左右兩大格，更好點擊
+            
+            let html = '';
+            cats[rTyp][m].forEach(s => {
+                html += `
+                <div class="cat-panel-item" onclick="selectPickerSub('${s}')" style="flex-direction: row; justify-content: flex-start; padding: 16px 20px; gap: 12px; border-radius: 20px;">
+                    <div class="cat-panel-icon" style="margin:0; font-size: 26px;">${emoji}</div>
+                    <div class="cat-panel-name" style="font-size: 18px; text-align: left;">${s}</div>
+                </div>`;
+            });
+            html += `
+                <div class="cat-panel-item" onclick="addPickerSubCat('${m}')" style="flex-direction: row; justify-content: flex-start; padding: 16px 20px; gap: 12px; border-radius: 20px; border: 2px dashed #bdc3c7; background: transparent;">
+                    <div class="cat-panel-icon" style="margin:0; font-size: 26px;">➕</div>
+                    <div class="cat-panel-name" style="color: #7f8fa6; font-size: 18px;">新增子分類</div>
+                </div>`;
+            
+            $('cat-picker-container').innerHTML = html;
+        }
+
+        function selectPickerSub(s) {
+            formMainCat = pickerTempMain;
+            formSubCat = s;
+            updateCatSelectorUI(); // 更新新增紀錄表單的按鈕字眼
+            closeModal(); // 選完瞬間自動關閉面板！
+        }
+        
+        function addPickerMainCat() {
+            let n = prompt('輸入新主分類名稱 (建議加上 Emoji)：');
+            if (n && n.trim()) {
+                cats[rTyp][n.trim()] = ["一般"];
+                saveDB(); triggerAutoConfigBackup(); renderCatPickerMain();
+            }
+        }
+        
+        function addPickerSubCat(m) {
+            let n = prompt(`在「${m}」新增子分類：`);
+            if (n && n.trim()) {
+                cats[rTyp][m].push(n.trim());
+                saveDB(); triggerAutoConfigBackup(); renderCatPickerSub(m);
+            }
         }
 
         function handleNoteInput(val) {
@@ -964,42 +1111,8 @@
             if(matched.length > 0) { box.innerHTML = matched.map(m => `<div class="ac-item" onclick="setNote('${m}')">${m}</div>`).join(''); box.style.display = 'block'; } 
             else { box.style.display = 'none'; }
         }
+        
         function setNote(val) { $('r-note').value = val; $('note-sugg').style.display = 'none'; }
-
-        function loadMainCat() {
-            if(rTyp==='transfer') return;
-            let opts = Object.keys(cats[rTyp]).map(c=>`<option value="${c}">${c}</option>`);
-            opts.push('<option value="_ADD_">➕ 新增分類...</option>');
-            $('r-mcat').innerHTML = opts.join(''); loadSubCat();
-        }
-        function loadSubCat() {
-            const m = $('r-mcat').value;
-            if(m === '_ADD_') { checkNewCat($('r-mcat'), true); return; }
-            if(m ? cats[rTyp][m] : false) {
-                let emoji = getEmoji(m);
-                $('r-scat').innerHTML = cats[rTyp][m].map(c=>`<option value="${c}">${emoji} ${c}</option>`).join('') + '<option value="_ADD_">➕ 新增分類...</option>';
-            }
-        }
-        
-        function checkNewCat(el, isMain = false) {
-            if(el.value==='_ADD_') {
-                let n = prompt(`輸入新${isMain?'主':'子'}分類名稱 (支援 Emoji)：`);
-                if(n ? n.trim() : false) { 
-                    n = n.trim();
-                    if(isMain) { cats[rTyp][n] = ["一般"]; }
-                    else { cats[rTyp][$('r-mcat').value].push(n); }
-                    saveDB(); 
-                    if(isMain) { loadMainCat(); $('r-mcat').value = n; loadSubCat(); } else { loadSubCat(); el.value = n; }
-                    triggerAutoConfigBackup(); 
-                } else { if(isMain) loadMainCat(); else loadSubCat(); }
-            }
-        }
-        
-        function updBal() {
-            let acc = $('r-acc').value, b = 0;
-            db.forEach(r=>{ if(r.type==='deleted') return; if(r.account===acc) { if(r.type==='income')b+=r.amount; else b-=r.amount; } if(r.type==='transfer' ? r.toAccount===acc : false) b+=r.amount; });
-            $('r-bal').innerText = `餘額: $${b.toLocaleString()}`; $('r-bal').style.color = b >= 0 ? 'var(--primary)' : 'var(--expense)';
-        }
 
         function openKeypad() { 
             $('v-keypad').style.display='grid';
@@ -1146,6 +1259,10 @@
             if(a === 0) return toast('金額不能為 0');
             
             let isTransfer = (rTyp === 'transfer');
+            
+            // 🚨 新增：防呆檢查，如果不是轉帳，一定要選分類！
+            if (!isTransfer && (!formMainCat || !formSubCat)) return toast('⚠️ 請選擇分類！');
+            
             let accOut = isTransfer ? $('r-acc-out').value :$('r-acc').value;
             let accIn = isTransfer ? $('r-acc-in').value : '';
             if(isTransfer ? accOut === accIn : false) return toast('轉出與轉入不可相同');
@@ -1155,14 +1272,15 @@
                 if (idx > -1) {
                     db[idx].type = rTyp; db[idx].date = $('r-date').value; db[idx].amount = a; db[idx].note =$('r-note').value.trim(); db[idx].syncStatus = 'pending';
                     if (isTransfer) { db[idx].account = accOut; db[idx].toAccount = accIn; delete db[idx].mainCat; delete db[idx].subCat; } 
-                    else { db[idx].mainCat = $('r-mcat').value; db[idx].subCat =$('r-scat').value; db[idx].account = accOut; delete db[idx].toAccount; }
+                    else { db[idx].mainCat = formMainCat; db[idx].subCat = formSubCat; db[idx].account = accOut; delete db[idx].toAccount; }
                 }
                 editingRecordId = null; toast('✅ 已更新 (背景同步中)');
             } else {
                 let rec = { id:'c_'+Date.now(), type:rTyp, date:$('r-date').value, amount:a, note:$('r-note').value.trim(), syncStatus:'pending' };
-                if(isTransfer) { rec.account = accOut; rec.toAccount = accIn; } else { rec.mainCat=$('r-mcat').value; rec.subCat=$('r-scat').value; rec.account=accOut; }
+                if(isTransfer) { rec.account = accOut; rec.toAccount = accIn; } else { rec.mainCat=formMainCat; rec.subCat=formSubCat; rec.account=accOut; }
                 db.push(rec); toast('✅ 已儲存 (背景同步中)');
             }
+
             saveDB(); closeKeypad(); closeModal(); renderHome();
             if($('m-list').style.display === 'block') renderListModal(); 
             syncToGAS(false); // 觸發靜默自動同步
@@ -1465,12 +1583,6 @@
             if(used ? !confirm('此帳戶已有歷史紀錄，確定刪除？') : false) return;
             sets.a = sets.a.filter(x=>x!==a); if(!sets.a.length) sets.a=['💵 現金']; saveDB(); renderAccMgr(); renderHome(); triggerAutoConfigBackup();
         }
-        function addAcc() { let n = prompt('輸入新帳戶名稱：'); if(n ? (n.trim() ? !sets.a.includes(n.trim()) : false) : false){ sets.a.push(n.trim()); saveDB(); renderAccMgr(); renderHome(); triggerAutoConfigBackup(); } }
-        function delAcc(a) { 
-            let used = db.some(r => r.type!=='deleted' && (r.account === a || r.toAccount === a));
-            if(used ? !confirm('此帳戶已有歷史紀錄，確定刪除？') : false) return;
-            sets.a = sets.a.filter(x=>x!==a); if(!sets.a.length) sets.a=['💵 現金']; saveDB(); renderAccMgr(); renderHome(); triggerAutoConfigBackup();
-        }
 
         function openCatMgr() { mgrCatTyp = 'expense'; renderCatMgr('expense'); $('m-cat-mgr').style.display='block'; pushM('m-cat-mgr'); }
         function renderCatMgr(typ) {
@@ -1525,10 +1637,6 @@
             saveDB(); renderCatMgr(typ); triggerAutoConfigBackup();
         }
 
-        function addMainCat() { let n=prompt('輸入新主分類：'); if(n ? n.trim() : false){ cats[mgrCatTyp][n.trim()]=["一般"]; saveDB(); renderCatMgr(mgrCatTyp); triggerAutoConfigBackup(); } }
-        function addSubCat(t, m) { let n=prompt(`在「${m}」新增子分類：`); if(n ? n.trim() : false){ cats[t][m].push(n.trim()); saveDB(); renderCatMgr(t); triggerAutoConfigBackup(); } }
-        function delMainCat(t, m) { let u=db.some(r=>r.type!=='deleted' && r.type===t && r.mainCat===m); if(u ? !confirm('此分類已有紀錄，確定刪除？') : false)return; delete cats[t][m]; saveDB(); renderCatMgr(t); triggerAutoConfigBackup(); }
-        function delSubCat(t, m, s) { let u=db.some(r=>r.type!=='deleted' && r.type===t && r.mainCat===m && r.subCat===s); if(u ? !confirm('此子分類已有紀錄，確定刪除？') : false)return; cats[t][m]=cats[t][m].filter(x=>x!==s); saveDB(); renderCatMgr(t); triggerAutoConfigBackup(); }
         function addMainCat() { let n=prompt('輸入新主分類：'); if(n ? n.trim() : false){ cats[mgrCatTyp][n.trim()]=["一般"]; saveDB(); renderCatMgr(mgrCatTyp); triggerAutoConfigBackup(); } }
         function addSubCat(t, m) { let n=prompt(`在「${m}」新增子分類：`); if(n ? n.trim() : false){ cats[t][m].push(n.trim()); saveDB(); renderCatMgr(t); triggerAutoConfigBackup(); } }
         function delMainCat(t, m) { let u=db.some(r=>r.type!=='deleted' && r.type===t && r.mainCat===m); if(u ? !confirm('此分類已有紀錄，確定刪除？') : false)return; delete cats[t][m]; saveDB(); renderCatMgr(t); triggerAutoConfigBackup(); }
