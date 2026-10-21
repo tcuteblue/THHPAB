@@ -314,24 +314,10 @@
             <div class="tab tra" data-t="transfer">轉帳</div>
         </div>
 
-        <!-- 記帳欄位順序：日期、分類、備註、金額與帳戶 -->
+        <!-- 記帳欄位順序：日期、金額與帳戶、分類、項目說明 -->
         <div class="form-group">
             <label>日期</label>
             <input type="date" id="r-date">
-        </div>
-
-        <div id="r-area-cat" class="form-group">
-            <label>分類</label>
-            <!-- 捨棄原生的 select，改成漂亮的大按鈕 -->
-            <div id="r-cat-selector" class="cat-selector" onclick="openCatPicker()">
-                <span>請選擇分類...</span><span>▼</span>
-            </div>
-        </div>
-
-        <div class="form-group" style="position:relative;">
-            <label>備註 (選填)</label>
-            <input type="text" id="r-note" placeholder="寫點什麼..." oninput="handleNoteInput(this.value)">
-            <div id="note-sugg" class="autocomplete-list"></div>
         </div>
 
         <div class="form-row form-group r-amount-account-row">
@@ -347,6 +333,20 @@
                 <select id="r-acc" onchange="updBal()"></select>
                 <div class="bal-hint" id="r-bal">餘額: $0</div>
             </div>
+        </div>
+
+        <div id="r-area-cat" class="form-group">
+            <label>分類</label>
+            <!-- 捨棄原生的 select，改成漂亮的大按鈕 -->
+            <div id="r-cat-selector" class="cat-selector" onclick="openCatPicker()">
+                <span>請選擇分類...</span><span>▼</span>
+            </div>
+        </div>
+
+        <div class="form-group" style="position:relative;">
+            <label>項目說明</label>
+            <input type="text" id="r-note" placeholder="輸入項目說明..." oninput="handleNoteInput(this.value)">
+            <div id="note-sugg" class="autocomplete-list"></div>
         </div>
 
         <div id="r-area-tra" class="form-row form-group" style="display:none;">
