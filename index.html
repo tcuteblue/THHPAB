@@ -126,10 +126,14 @@
         .tab.active.tot { background: var(--income); color: #fff; box-shadow: 0 4px 12px rgba(32,191,107,.4); } 
         #c-time-tabs .tab.active { background: #34495e; color: #fff; box-shadow: 0 4px 10px rgba(52,73,94,.3); }
 
-        .amt-box { background: #fff; margin: 0 20px 25px; padding: 25px; border-radius: 22px; text-align: right; box-shadow: 0 5px 15px rgba(0,0,0,.08); border: 2px solid transparent; transition: all .2s; }
-        .amt-box.active { border-color: var(--primary); background: #fdfefe; box-shadow: 0 0 0 5px rgba(0,168,255,.2); }
-        .amt-val { font-size: 46px; font-weight: 900; font-family: monospace; letter-spacing: 1px; color: var(--text-color); overflow-x: auto; white-space: nowrap; }
-        .bal-hint { font-size: 16px; margin-top: 10px; text-align: right; font-weight: 900; }
+        /* 記帳金額與帳戶並排：金額 3/5、帳戶 2/5；金額框高度與一般輸入欄位一致 */
+        .r-amount-field { flex: 3; min-width: 0; }
+        #r-acc-container { flex: 2; min-width: 0; }
+        .r-amount-account-row { align-items: flex-start; }
+        .amt-box { background: #fff; width: 100%; height: 60px; margin: 0; padding: 10px 12px; border-radius: 16px; text-align: right; display: flex; align-items: center; justify-content: flex-end; overflow: hidden; box-shadow: 0 5px 15px rgba(0,0,0,.08); border: 2px solid transparent; transition: all .2s; cursor: pointer; }
+        .amt-box.active { border-color: var(--primary); background: #fdfefe; box-shadow: 0 0 0 4px rgba(0,168,255,.15); }
+        .amt-val { width: 100%; min-width: 0; font-size: 23px; line-height: 1.2; font-weight: 900; font-family: monospace; letter-spacing: 0; color: var(--text-color); overflow-x: auto; white-space: nowrap; }
+        .bal-hint { font-size: 14px; margin-top: 8px; text-align: right; font-weight: 900; white-space: nowrap; }
 
         .r-actions-row { display: flex; gap: 15px; margin: 20px; }
         .btn-save { background: var(--primary); color: #fff; padding: 20px; border-radius: 22px; font-size: 22px; font-weight: 900; border: none; box-shadow: 0 6px 0 var(--primary-dark), 0 8px 20px rgba(0,168,255,.3); cursor: pointer; flex: 2; transition: all 0.1s; }
@@ -310,10 +314,10 @@
             <div class="tab tra" data-t="transfer">轉帳</div>
         </div>
 
-        <div class="amt-box" id="r-amt-box" onclick="openKeypad()">
-            <div style="font-size:16px; color:#95a5a6; font-weight:900; margin-bottom:8px;">點擊輸入金額</div>
-            <!-- 確保可以橫向捲動長數字/算式 -->
-            <div class="amt-val" id="r-amt">0</div>
+        <!-- 記帳欄位順序：日期、分類、備註、金額與帳戶 -->
+        <div class="form-group">
+            <label>日期</label>
+            <input type="date" id="r-date">
         </div>
 
         <div id="r-area-cat" class="form-group">
@@ -323,23 +327,31 @@
                 <span>請選擇分類...</span><span>▼</span>
             </div>
         </div>
-        
-        <div id="r-area-tra" class="form-row form-group" style="display:none;">
-            <div style="flex:1"><label>轉出帳戶</label><select id="r-acc-out"></select></div>
-            <div style="flex:1"><label>轉入帳戶</label><select id="r-acc-in"></select></div>
-        </div>
 
-        <div class="form-row form-group">
-            <div style="flex:1"><label>日期</label><input type="date" id="r-date"></div>
-            <div style="flex:1" id="r-acc-container">
-                <label>帳戶</label><select id="r-acc" onchange="updBal()"></select>
-                <div class="bal-hint" id="r-bal">餘額: $0</div>
-            </div>
-        </div>
         <div class="form-group" style="position:relative;">
             <label>備註 (選填)</label>
             <input type="text" id="r-note" placeholder="寫點什麼..." oninput="handleNoteInput(this.value)">
             <div id="note-sugg" class="autocomplete-list"></div>
+        </div>
+
+        <div class="form-row form-group r-amount-account-row">
+            <div id="r-amount-field" class="r-amount-field">
+                <label>金額</label>
+                <div class="amt-box" id="r-amt-box" onclick="openKeypad()" role="button" aria-label="點擊輸入金額">
+                    <!-- 保留長數字與算式的橫向捲動 -->
+                    <div class="amt-val" id="r-amt">0</div>
+                </div>
+            </div>
+            <div id="r-acc-container">
+                <label>帳戶</label>
+                <select id="r-acc" onchange="updBal()"></select>
+                <div class="bal-hint" id="r-bal">餘額: $0</div>
+            </div>
+        </div>
+
+        <div id="r-area-tra" class="form-row form-group" style="display:none;">
+            <div style="flex:1; min-width:0;"><label>轉出帳戶</label><select id="r-acc-out"></select></div>
+            <div style="flex:1; min-width:0;"><label>轉入帳戶</label><select id="r-acc-in"></select></div>
         </div>
 
         <div class="r-actions-row">
@@ -991,9 +1003,11 @@
             document.querySelectorAll('#r-tabs .tab').forEach(t => t.classList.remove('active'));
             document.querySelector(`#r-tabs .tab[data-t="${rTyp}"]`).classList.add('active');
             if(rTyp === 'transfer') { 
-                $('r-area-cat').style.display='none'; $('r-area-tra').style.display='flex';$('r-acc-container').style.display='none'; 
+                $('r-area-cat').style.display='none'; $('r-area-tra').style.display='flex';$('r-acc-container').style.display='none';
+                $('r-amount-field').style.flex = '1'; // 轉帳時一般帳戶欄位隱藏，金額改為全寬
             } else { 
-                $('r-area-cat').style.display='block'; $('r-area-tra').style.display='none';$('r-acc-container').style.display='block'; 
+                $('r-area-cat').style.display='block'; $('r-area-tra').style.display='none';$('r-acc-container').style.display='block';
+                $('r-amount-field').style.flex = '3'; // 一般記帳：金額 3/5、帳戶 2/5
             }
         }
 
