@@ -1449,8 +1449,21 @@
                     chartObj = new Chart(ctx, { 
                         type: 'bar', 
                         data: { labels: ['總收入', '總支出', '總結餘'], datasets: [{ data: [ti, te, ti - te], backgroundColor: ['#00A8FF', '#FF4757', '#20BF6B'], borderRadius: 12 }] }, 
-                        options: { plugins: { legend: { display: false } } } 
-                    }); 
+                        options: {
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: {
+                                    ticks: {
+                                        callback: function(value, index) {
+                                            const labels = this.chart.data.labels;
+                                            const amount = Number(this.chart.data.datasets[0].data[index] || 0);
+                                            return [labels[index], '$' + amount.toLocaleString('en-US', { maximumFractionDigits: 2 })];
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
                 } else {
                     let lbl = Object.keys(dt), val = Object.values(dt); 
                     let currentColors = (cTyp === 'expense') ? expColors : incColors;
@@ -1523,7 +1536,20 @@
                             labels: months.map(m => m.substring(5)), 
                             datasets: [{ label: '淨結餘', data: netData, backgroundColor: bgColors, borderRadius: 8 }]
                         },
-                        options: { plugins: { legend: { display: false } } }
+                        options: {
+                            plugins: { legend: { display: false } },
+                            scales: {
+                                x: {
+                                    ticks: {
+                                        callback: function(value, index) {
+                                            const label = this.chart.data.labels[index];
+                                            const amount = Number(this.chart.data.datasets[0].data[index] || 0);
+                                            return [label, '$' + amount.toLocaleString('en-US', { maximumFractionDigits: 2 })];
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     });
 
                 } else {
