@@ -1455,7 +1455,44 @@
                     let lbl = Object.keys(dt), val = Object.values(dt); 
                     let currentColors = (cTyp === 'expense') ? expColors : incColors;
                     if (!lbl.length) chartObj = new Chart(ctx, { type: 'doughnut', data: { labels: ['無資料'], datasets: [{ data: [1], backgroundColor: ['#DFE4EA'] }] } });
-                    else chartObj = new Chart(ctx, { type: 'doughnut', data: { labels: lbl, datasets: [{ data: val, backgroundColor: currentColors, borderWidth: 0 }] }, options: { cutout: '60%', plugins: { legend: { position: 'bottom' } } } });
+                    else chartObj = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: { labels: lbl, datasets: [{ data: val, backgroundColor: currentColors, borderWidth: 0 }] },
+                        options: {
+                            cutout: '60%',
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        boxWidth: 12,
+                                        boxHeight: 12,
+                                        padding: 12,
+                                        usePointStyle: true,
+                                        font: { size: 13 },
+                                        generateLabels: function(chart) {
+                                            const labels = Chart.overrides.doughnut.plugins.legend.labels.generateLabels(chart);
+                                            const data = chart.data.datasets[0].data;
+                                            return labels.map(item => {
+                                                const amount = Number(data[item.index] || 0);
+                                                item.text = `${item.text}  $${amount.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+                                                return item;
+                                            });
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const amount = Number(context.raw || 0);
+                                            return `${context.label}: $${amount.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
                 }
             } 
             else if (cTime === 'trend') {
@@ -1531,7 +1568,37 @@
                             datasets: datasets
                         },
                         options: {
-                            plugins: { legend: { position: 'bottom' } },
+                            responsive: true,
+                            maintainAspectRatio: true,
+                            plugins: {
+                                legend: {
+                                    position: 'bottom',
+                                    labels: {
+                                        boxWidth: 12,
+                                        boxHeight: 12,
+                                        padding: 12,
+                                        usePointStyle: true,
+                                        font: { size: 13 },
+                                        generateLabels: function(chart) {
+                                            const labels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
+                                            return labels.map(item => {
+                                                const dataset = chart.data.datasets[item.datasetIndex];
+                                                const total = (dataset.data || []).reduce((sum, value) => sum + (Number(value) || 0), 0);
+                                                item.text = `${item.text}  $${total.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+                                                return item;
+                                            });
+                                        }
+                                    }
+                                },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            const amount = Number(context.raw || 0);
+                                            return `${context.dataset.label}: $${amount.toLocaleString('en-US', { maximumFractionDigits: 2 })}`;
+                                        }
+                                    }
+                                }
+                            },
                             scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } }
                         }
                     });
