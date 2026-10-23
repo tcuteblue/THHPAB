@@ -443,7 +443,8 @@
         <button class="btn-big-action" style="background:#fff; color:var(--text-color); border:2px solid #DFE4EA;" onclick="openAccMgr()">💳 帳戶管理</button>
         
         <div style="margin: 40px 20px 20px; padding-top: 25px; border-top: 2px dashed #DFE4EA;">
-            <label style="display:block; font-size:18px; font-weight:900; text-align:center; color:#7f8fa6;">設定檔備份還原</label>
+            <label style="display:block; font-size:18px; font-weight:900; text-align:center; color:#7f8fa6;">備份與還原</label>
+            <div style="font-size:13px; color:#7f8fa6; text-align:center; margin-top:6px; line-height:1.5;">手動備份包含帳目與設定；自動雲端備份仍只保存設定。</div>
             <div class="backup-grid">
                 <button class="btn-grid btn-c-bak" onclick="backupToCloud()" id="btn-cloud-backup">☁️ 雲端備份</button>
                 <button class="btn-grid btn-c-res" onclick="restoreFromCloud()" id="btn-cloud-restore">☁️ 雲端還原</button>
@@ -531,7 +532,31 @@
 
         let pDB = JSON.parse(localStorage.getItem('cloud_exp_db'));
         let db = pDB ? pDB : [];
-        
+        let isSyncingGAS = false, syncQueued = false, syncRetryTimer = null, syncRetryAttempt = 0;
+        let lastSuccessfulSyncAt = localStorage.getItem('cloud_exp_last_sync_at') || '';
+        let syncLastMessage = '';
+
+        function nowIso() { return new Date().toISOString(); }
+        function makeMutationId() {
+            try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (e) {}
+            return 'm_' + Date.now() + '_' + Math.random().toString(36).slice(2, 12);
+        }
+        function createdAtFromId(id) {
+            const m = String(id || '').match(/^c_(\d{13})$/);
+            if (!m) return '';
+            const n = Number(m[1]);
+            if (!Number.isFinite(n) || n < 946684800000 || n > Date.now() + 86400000) return '';
+            try { return new Date(n).toISOString(); } catch (e) { return ''; }
+        }
+        function ensureRecordMetadata(rec) {
+            if (!rec || typeof rec !== 'object') return rec;
+            if (!rec.createdAt) rec.createdAt = createdAtFromId(rec.id); // 舊資料只從既有 ID 推算建立時間；推不出就留白
+            if (typeof rec.updatedAt !== 'string') rec.updatedAt = '';
+            if (!rec.mutationId && rec.syncStatus === 'pending') rec.mutationId = makeMutationId();
+            return rec;
+        }
+        db.forEach(ensureRecordMetadata);
+
         let pSets = JSON.parse(localStorage.getItem('cloud_exp_sets'));
         let sets = pSets ? pSets : { b: 0, a: ["💵 現金", "🏦 銀行"], l: "", pAmt: 5000, pDay: 1, pEn: true, tz: 'tw' };
         
@@ -657,6 +682,7 @@
             renderHome(); initSwipeCalendar();
             
             // 載入即自動同步一次背景資料
+            updateSyncIndicator();
             syncToGAS(false); 
             if(defPrompt) $('install-btn').style.display = 'block';
         };
@@ -722,94 +748,134 @@
             syncToGAS(false);
         });
 
+        // 自動備份只保存設定；與手動完整備份使用不同雲端檔案，避免互相覆蓋。
         function triggerAutoConfigBackup() {
-            try { backupToCloud(true); } catch (e) {}
+            try { backupSettingsToCloud(true); } catch (e) {}
         }
 
-        // 雲端備份設定檔 (完全對齊家用雲帳本)
+        function backupSettingsToCloud(isSilent = true) {
+            if (!navigator.onLine) {
+                if (!isSilent) toast('無網路連線，無法備份設定');
+                return;
+            }
+            const payload = {
+                action: 'auto_backup',
+                data: { schemaVersion: 2, backupType: 'settings', backupCreatedAt: nowIso(), cats: cats, sets: sets }
+            };
+            fetch(GAS_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.status !== 'success') throw new Error(res.message || '設定備份失敗');
+                    if (!isSilent) toast('✅ 設定已備份至 Google Drive');
+                })
+                .catch(err => { if (!isSilent) alert('❌ 設定備份失敗：' + (err.message || '連線錯誤')); });
+        }
+
+        function buildFullBackup() {
+            return {
+                schemaVersion: 2,
+                backupType: 'full',
+                appName: '個人雲帳本',
+                backupCreatedAt: nowIso(),
+                recordCount: db.length,
+                cats: cats,
+                sets: sets,
+                db: db.map(r => ({ ...r }))
+            };
+        }
+
+        // 手動雲端備份：設定與帳目完整快照；後端另外保留一份有時間戳的歷史檔。
         function backupToCloud(isSilent = false) {
             if (!navigator.onLine) {
                 if (!isSilent) toast('無網路連線，無法備份到雲端');
                 return;
             }
-            
-            let btn = $('btn-cloud-backup');
-            if (btn && !isSilent) {
-                btn.innerHTML = '🔄 上傳中...';
-                btn.style.pointerEvents = 'none';
-            }
-            
-            const payload = {
-                action: "auto_backup",
-                data: { cats: cats, sets: sets }
-            };
-            
-            fetch(GAS_URL, { 
-                method: "POST", 
-                body: JSON.stringify(payload) 
+            const btn = $('btn-cloud-backup');
+            if (btn && !isSilent) { btn.innerHTML = '🔄 完整備份中...'; btn.style.pointerEvents = 'none'; }
+            fetch(GAS_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify({ action: 'full_backup', data: buildFullBackup() })
             })
             .then(res => res.json())
             .then(res => {
-                if (res.status === 'success') {
-                    if (!isSilent) toast('✅ 設定檔已備份至 Google Drive');
-                } else {
-                    if (!isSilent) alert("❌ 備份失敗：" + res.message);
-                }
+                if (res.status !== 'success') throw new Error(res.message || '完整備份失敗');
+                if (!isSilent) toast('✅ 完整備份成功（含帳目與設定）');
             })
-            .catch(err => {
-                if (!isSilent) alert("❌ 連線錯誤，雲端備份失敗！");
-            })
+            .catch(err => { if (!isSilent) alert('❌ 完整備份失敗：' + (err.message || '連線錯誤')); })
             .finally(() => {
-                if (btn && !isSilent) {
-                    btn.innerHTML = '☁️ 雲端備份';
-                    btn.style.pointerEvents = 'auto';
-                }
+                if (btn && !isSilent) { btn.innerHTML = '☁️ 雲端備份'; btn.style.pointerEvents = 'auto'; }
             });
         }
 
-        // 雲端還原設定檔 (完全對齊家用雲帳本)
-        function restoreFromCloud() {
-            if (!navigator.onLine) return toast('無網路連線，無法進行還原');
-            
-            if (!confirm('從雲端還原將會覆蓋您目前的分類與系統設定，確定要繼續嗎？')) return;
-            
-            let btn = $('btn-cloud-restore');
-            if (btn) {
-                btn.innerHTML = '🔄 還原中...';
-                btn.style.pointerEvents = 'none';
-            }
-            
-            fetch(GAS_URL, { 
-                method: "POST", 
-                body: JSON.stringify({ action: "restore_from_cloud" }) 
-            })
-            .then(res => res.json())
-            .then(res => {
-                if (res.status === 'success') {
-                    try {
-                        // 家用雲帳本後端回傳的 res.data 是字串，需要 parse
-                        const d = JSON.parse(res.data);
-                        if (d.cats) cats = d.cats;
-                        if (d.sets) sets = d.sets;
-                        saveDB();
-                        alert('✅ 雲端設定還原成功！系統將重新載入。');
-                        window.location.reload();
-                    } catch (e) {
-                        alert('❌ 解析雲端資料失敗。');
+        function backupSettingsBeforeRestore() {
+            // 還原前另存設定快照；帳目採合併、不整批覆蓋。
+            const key = 'cloud_exp_restore_settings_rollback';
+            const snapshot = { createdAt: nowIso(), cats: cats, sets: sets };
+            try { localStorage.setItem(key, JSON.stringify(snapshot)); return true; }
+            catch (e) { return false; }
+        }
+
+        function applyBackupData(d, sourceLabel) {
+            if (!d || typeof d !== 'object') throw new Error('備份格式不正確');
+            const backupRecords = Array.isArray(d.db) ? d.db : (Array.isArray(d.records) ? d.records : null);
+            if (!d.cats && !d.sets && !backupRecords) throw new Error('備份中沒有可還原的設定或帳目');
+            if (!backupSettingsBeforeRestore()) throw new Error('無法建立還原前設定快照，為保護目前資料，本次還原已取消。請先匯出本機備份或釋放瀏覽器儲存空間。');
+
+            if (d.cats) cats = d.cats;
+            if (d.sets) sets = d.sets;
+
+            let added = 0;
+            if (backupRecords) {
+                const localIds = new Set(db.map(r => String(r.id)));
+                backupRecords.forEach(raw => {
+                    if (!raw || !raw.id) return;
+                    const id = String(raw.id);
+                    // 還原採「只補本機沒有的 ID」；不以舊備份覆蓋本機現有帳目。
+                    if (localIds.has(id)) return;
+                    const rec = { ...raw, id };
+                    delete rec._uiConflict;
+                    if (!rec.createdAt) rec.createdAt = createdAtFromId(rec.id);
+                    if (rec.type === 'deleted') {
+                        // 只保留備份中的待同步刪除；已完成的舊刪除不拿來覆蓋雲端。
+                        if (raw.syncStatus !== 'pending') return;
                     }
-                } else {
-                    alert("❌ 雲端還原失敗：" + res.message);
-                }
-            })
-            .catch(err => {
-                alert("❌ 連線錯誤，無法從雲端還原！");
-            })
-            .finally(() => {
-                if (btn) {
-                    btn.innerHTML = '☁️ 雲端還原';
-                    btn.style.pointerEvents = 'auto';
-                }
-            });
+                    rec.syncStatus = raw.syncStatus === 'conflict' ? 'conflict' : 'pending';
+                    if (rec.syncStatus === 'pending' && !rec.mutationId) rec.mutationId = makeMutationId();
+                    db.push(rec);
+                    localIds.add(id);
+                    added++;
+                });
+            }
+
+            saveDB();
+            renderHome();
+            const kind = backupRecords ? `，新增合併 ${added} 筆帳目` : '（舊版設定檔，不含帳目）';
+            alert(`✅ ${sourceLabel}成功${kind}。\n現有帳目不會被整批覆蓋；合併的帳目會經雲端版本檢查後再同步。`);
+            if (backupRecords && added) syncToGAS(false);
+            return { added, hasRecords: !!backupRecords };
+        }
+
+        // 雲端還原優先讀取最新手動完整備份；若不存在，後端會退回舊版設定備份。
+        async function restoreFromCloud() {
+            if (!navigator.onLine) return toast('無網路連線，無法進行還原');
+            if (!confirm('將讀取雲端最新完整備份（若沒有，則讀取舊版設定備份）。設定會還原；帳目採安全合併，不會整批覆蓋目前帳本。確定繼續？')) return;
+            const btn = $('btn-cloud-restore');
+            if (btn) { btn.innerHTML = '🔄 還原中...'; btn.style.pointerEvents = 'none'; }
+            try {
+                const response = await fetch(GAS_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'restore_from_cloud' })
+                });
+                const res = await response.json();
+                if (res.status !== 'success') throw new Error(res.message || '雲端還原失敗');
+                const d = typeof res.data === 'string' ? JSON.parse(res.data) : res.data;
+                applyBackupData(d, res.backupKind === 'full' || d.backupType === 'full' ? '雲端完整備份還原' : '雲端設定還原');
+            } catch (err) {
+                alert('❌ 雲端還原失敗：' + (err.message || '資料解析或連線錯誤'));
+            } finally {
+                if (btn) { btn.innerHTML = '☁️ 雲端還原'; btn.style.pointerEvents = 'auto'; }
+            }
         }
         function autoPocket() {
             if (!sets.pEn ? true : !sets.pAmt) return;
@@ -822,9 +888,11 @@
                 const targetDay = Math.min(sets.pDay, daysInMonth);
                 if (parseInt(d) >= targetDay) {
                     const recordDate = `${mStr}-${String(targetDay).padStart(2,'0')}`;
+                    const createdAt = nowIso();
                     db.push({ 
                         id: 'c_' + Date.now(), type: 'income', mainCat: '💰 個人收入', subCat: '每月零用', 
-                        date: recordDate, account: sets.a[0], amount: Number(sets.pAmt), note: '系統自動入帳', syncStatus: 'pending' 
+                        date: recordDate, account: sets.a[0], amount: Number(sets.pAmt), note: '系統自動入帳',
+                        createdAt, updatedAt: createdAt, serverVersion: 0, mutationId: makeMutationId(), syncStatus: 'pending' 
                     });
                     sets.l = mStr; saveDB(); syncToGAS(false); toast(`已自動存入本月零用錢 $${sets.pAmt}`);
                 }
@@ -940,7 +1008,7 @@
             return `
             <div class="record-item ${cls}" onclick="editRec('${r.id}')">
                 <div class="r-header">
-                    <div class="r-date">${r.date} · ${r.account} ${r.syncStatus==='pending'?'⏳':''}</div>
+                    <div class="r-date">${r.date} · ${r.account} ${r.syncStatus==='pending'?'⏳':(r.syncStatus==='conflict'?'⚠️衝突':'')}</div>
                 </div>
                 <div class="r-cat">${mStr}</div>
                 ${r.note ? `<div class="r-sub">${r.note}</div>` : ''}
@@ -970,25 +1038,41 @@
         function editRec(id) {
             let rec = db.find(r => r.id === id);
             if (!rec) return;
+            if (rec.syncStatus === 'conflict' && rec.conflictRemote) {
+                const conflictPrompt = rec.conflictLocalDelete
+                    ? '本機原本要刪除這筆帳目，但雲端已有更新版本。\n\n確定：採用雲端版本，不刪除。\n取消：繼續查看目前版本，之後可重新確認是否刪除。'
+                    : '這筆帳目與雲端版本衝突。\n\n按「確定」：放棄本機這筆未同步版本，採用雲端版本。\n按「取消」：繼續查看／編輯本機版本。';
+                const useCloud = confirm(conflictPrompt);
+                if (useCloud) {
+                    const remote = rec.conflictRemote;
+                    if (remote.type === 'deleted') db = db.filter(r => r.id !== id);
+                    else {
+                        const clean = { ...remote, syncStatus: 'synced' };
+                        delete clean.conflictRemote;
+                        const idx = db.findIndex(r => r.id === id);
+                        if (idx >= 0) db[idx] = clean;
+                    }
+                    saveDB(); renderHome(); toast('已採用雲端版本'); return;
+                }
+            }
             editingRecordId = id; rTyp = rec.type; kpStr = rec.amount.toString(); isCalculating = false;
             updateAmtUI();
-            $('r-date').value = rec.date; 
+            $('r-date').value = rec.date;
             $('r-note').value = rec.note ? rec.note : '';
 
             const opts = sets.a.map(a=>`<option value="${a}">${a}</option>`).join('');
             $('r-acc').innerHTML = opts; $('r-acc-out').innerHTML = opts; $('r-acc-in').innerHTML = opts;
 
-            formMainCat = rec.mainCat || ''; formSubCat = rec.subCat || ''; updateCatSelectorUI(); // 帶入舊資料
-            
+            formMainCat = rec.mainCat || ''; formSubCat = rec.subCat || ''; updateCatSelectorUI();
             updRT();
             if (rTyp === 'transfer') {
                 $('r-acc-out').value = rec.account; $('r-acc-in').value = rec.toAccount;
             } else {
                 $('r-acc').value = rec.account;
             }
-
-            updBal(); $('note-sugg').style.display = 'none';$('m-record-title').innerText = '編輯紀錄'; 
-            $('btn-modal-del').style.display = 'block';$('m-record').style.display='block'; pushM('m-record');
+            updBal(); $('note-sugg').style.display = 'none';
+            $('m-record-title').innerText = rec.syncStatus === 'conflict' ? (rec.conflictLocalDelete ? '⚠️ 衝突（本機原要刪除）' : '⚠️ 衝突帳目（本機版本）') : '編輯紀錄';
+            $('btn-modal-del').style.display = 'block'; $('m-record').style.display = 'block'; pushM('m-record');
         }
 
         $('r-tabs').addEventListener('click', e => { 
@@ -1264,53 +1348,71 @@
         }
 
         function saveRec() {
-            if (isCalculating) {
-                if (!doCalculate()) return; 
-            }
-            
-            let a = Number(kpStr); 
-            if(isNaN(a) || a < 0) return toast('請輸入有效金額'); 
-            if(a === 0) return toast('金額不能為 0');
-            
+            if (isCalculating) { if (!doCalculate()) return; }
+            let a = Number(kpStr);
+            if (isNaN(a) || a < 0) return toast('請輸入有效金額');
+            if (a === 0) return toast('金額不能為 0');
             let isTransfer = (rTyp === 'transfer');
-            
-            // 🚨 新增：防呆檢查，如果不是轉帳，一定要選分類！
             if (!isTransfer && (!formMainCat || !formSubCat)) return toast('⚠️ 請選擇分類！');
-            
-            let accOut = isTransfer ? $('r-acc-out').value :$('r-acc').value;
+            let accOut = isTransfer ? $('r-acc-out').value : $('r-acc').value;
             let accIn = isTransfer ? $('r-acc-in').value : '';
-            if(isTransfer ? accOut === accIn : false) return toast('轉出與轉入不可相同');
+            if (isTransfer && accOut === accIn) return toast('轉出與轉入不可相同');
 
+            const timestamp = nowIso();
             if (editingRecordId) {
                 let idx = db.findIndex(r => r.id === editingRecordId);
                 if (idx > -1) {
-                    db[idx].type = rTyp; db[idx].date = $('r-date').value; db[idx].amount = a; db[idx].note =$('r-note').value.trim(); db[idx].syncStatus = 'pending';
-                    if (isTransfer) { db[idx].account = accOut; db[idx].toAccount = accIn; delete db[idx].mainCat; delete db[idx].subCat; } 
-                    else { db[idx].mainCat = formMainCat; db[idx].subCat = formSubCat; db[idx].account = accOut; delete db[idx].toAccount; }
+                    const existing = db[idx];
+                    if (existing.syncStatus === 'conflict') {
+                        const proceed = confirm('這筆帳目的雲端版本已更新。按「確定」以目前表單內容覆蓋雲端最新版；按「取消」放棄本次編輯並保留衝突資料。');
+                        if (!proceed) return;
+                        if (existing.conflictRemote && existing.conflictRemote.type === 'deleted') {
+                            if (!confirm('雲端這筆帳目已被刪除。確定要用本機表單內容重新建立為有效帳目嗎？')) return;
+                            existing.allowResurrect = true; // 只有使用者明確確認，後端才允許復活墓碑紀錄
+                        }
+                        if (existing.conflictRemote && Number.isFinite(Number(existing.conflictRemote.serverVersion))) existing.serverVersion = Number(existing.conflictRemote.serverVersion);
+                        delete existing.conflictRemote;
+                    }
+                    existing.type = rTyp; existing.date = $('r-date').value; existing.amount = a;
+                    existing.note = $('r-note').value.trim(); existing.updatedAt = timestamp;
+                    existing.mutationId = makeMutationId(); existing.syncStatus = 'pending';
+                    if (isTransfer) { existing.account = accOut; existing.toAccount = accIn; delete existing.mainCat; delete existing.subCat; }
+                    else { existing.mainCat = formMainCat; existing.subCat = formSubCat; existing.account = accOut; delete existing.toAccount; }
                 }
-                editingRecordId = null; toast('✅ 已更新 (背景同步中)');
+                editingRecordId = null; toast('✅ 已更新（待雲端確認）');
             } else {
-                let rec = { id:'c_'+Date.now(), type:rTyp, date:$('r-date').value, amount:a, note:$('r-note').value.trim(), syncStatus:'pending' };
-                if(isTransfer) { rec.account = accOut; rec.toAccount = accIn; } else { rec.mainCat=formMainCat; rec.subCat=formSubCat; rec.account=accOut; }
-                db.push(rec); toast('✅ 已儲存 (背景同步中)');
+                let rec = { id: 'c_' + Date.now(), type: rTyp, date: $('r-date').value, amount: a, note: $('r-note').value.trim(),
+                    createdAt: timestamp, updatedAt: timestamp, serverVersion: 0, mutationId: makeMutationId(), syncStatus: 'pending' };
+                if (isTransfer) { rec.account = accOut; rec.toAccount = accIn; }
+                else { rec.mainCat = formMainCat; rec.subCat = formSubCat; rec.account = accOut; }
+                db.push(rec); toast('✅ 已儲存（待雲端確認）');
             }
-
             saveDB(); closeKeypad(); closeModal(); renderHome();
-            if($('m-list').style.display === 'block') renderListModal(); 
-            syncToGAS(false); // 觸發靜默自動同步
+            if ($('m-list').style.display === 'block') renderListModal();
+            syncToGAS(false);
         }
-        
+
         function delRecFromModal() {
-            if(!editingRecordId) return;
-            if(confirm('確定刪除這筆紀錄嗎？')) { 
+            if (!editingRecordId) return;
+            if (confirm('確定刪除這筆紀錄嗎？')) {
                 let idx = db.findIndex(r => r.id === editingRecordId);
                 if (idx > -1) {
-                    db[idx].type = 'deleted';
-                    db[idx].syncStatus = 'pending';
+                    const rec = db[idx];
+                    if (rec.syncStatus === 'conflict' && rec.conflictRemote && rec.conflictRemote.type === 'deleted') {
+                        // 雲端已刪除，不再送出可能復活或重複的刪除請求。
+                        db.splice(idx, 1);
+                    } else {
+                        if (rec.syncStatus === 'conflict' && rec.conflictRemote) {
+                            if (!confirm('這筆帳目在雲端已有更新。確定仍要刪除雲端目前版本嗎？')) return;
+                            if (Number.isFinite(Number(rec.conflictRemote.serverVersion))) rec.serverVersion = Number(rec.conflictRemote.serverVersion);
+                        }
+                        const timestamp = nowIso();
+                        rec.type = 'deleted'; rec.deletedAt = timestamp; rec.updatedAt = timestamp;
+                        rec.mutationId = makeMutationId(); rec.syncStatus = 'pending'; delete rec.conflictRemote; delete rec.conflictLocalDelete;
+                    }
                 }
-                saveDB(); renderHome(); if($('m-list').style.display === 'block') renderListModal(); 
-                closeModal(); toast('✅ 已刪除 (背景同步中)');
-                syncToGAS(false); // 觸發靜默自動同步
+                saveDB(); renderHome(); if ($('m-list').style.display === 'block') renderListModal();
+                closeModal(); toast('✅ 已標記刪除（待雲端確認）'); syncToGAS(false);
             }
         }
 
@@ -1752,72 +1854,177 @@
         function expData(t) {
             let url = '';
             try {
-                const n=new Date(), ds=`${n.getFullYear()}${String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}`;
-                const c=JSON.stringify({cats,sets}); const f=`個人雲帳本_設定備份_${ds}.json`; const m='application/json'; 
-                const blob = new Blob([new Uint8Array([0xEF,0xBB,0xBF]), c], {type:m});
+                const n = new Date();
+                const ds = `${n.getFullYear()}${String(n.getMonth()+1).padStart(2,'0')}${String(n.getDate()).padStart(2,'0')}_${String(n.getHours()).padStart(2,'0')}${String(n.getMinutes()).padStart(2,'0')}${String(n.getSeconds()).padStart(2,'0')}`;
+                const payload = JSON.stringify(buildFullBackup());
+                const blob = new Blob([new Uint8Array([0xEF,0xBB,0xBF]), payload], { type: 'application/json' });
                 url = URL.createObjectURL(blob);
-                const a=document.createElement('a'); a.href=url; a.download=f; a.style.display='none';
+                const a = document.createElement('a'); a.href = url; a.download = `個人雲帳本_完整備份_${ds}.json`; a.style.display = 'none';
                 document.body.appendChild(a); a.click(); a.remove(); closeModal();
-                toast('✅ 已匯出設定檔'); setTimeout(() => URL.revokeObjectURL(url), 1500);
+                toast('✅ 已匯出完整備份（含帳目與設定）'); setTimeout(() => URL.revokeObjectURL(url), 1500);
             } catch (err) { closeModal(); toast('⚠️ 匯出失敗'); }
         }
-        
+
         function impData(e) {
-            const f=e.target.files[0]; if(!f) return; const r=new FileReader();
-            r.onload = ev => { 
-                try{ 
-                    let d=JSON.parse(ev.target.result); 
-                    if(d.cats) cats=d.cats; if(d.sets) sets=d.sets; 
-                    saveDB(); alert('設定檔還原成功！'); window.location.reload(); 
-                }catch(err){alert('格式錯誤');} 
-            }; r.readAsText(f);
+            const f = e.target.files[0]; if (!f) return;
+            const r = new FileReader();
+            r.onload = ev => {
+                try {
+                    const d = JSON.parse(ev.target.result);
+                    const hasLedger = Array.isArray(d.db) || Array.isArray(d.records);
+                    const count = Array.isArray(d.db) ? d.db.length : (Array.isArray(d.records) ? d.records.length : 0);
+                    const promptText = hasLedger
+                        ? `此完整備份包含 ${count} 筆帳目。設定將還原；帳目只會補入本機不存在的系統 ID，不會整批覆蓋現有資料，之後還要經雲端版本檢查。確定繼續？`
+                        : '這是舊版設定備份，只會還原分類與系統設定，不包含帳目。確定繼續？';
+                    if (!confirm(promptText)) return;
+                    applyBackupData(d, hasLedger ? '本機完整備份還原' : '本機設定備份還原');
+                } catch (err) { alert('❌ 備份格式錯誤或還原失敗：' + (err.message || '未知錯誤')); }
+                finally { e.target.value = ''; }
+            };
+            r.onerror = () => { alert('❌ 無法讀取備份檔'); e.target.value = ''; };
+            r.readAsText(f);
         }
 
-        // 靜默自動同步邏輯 (showUI = false 即可背景運作)
+        function updateSyncIndicator() {
+            const b = $('btn-sync'); if (!b) return;
+            const pending = db.filter(r => r.syncStatus === 'pending').length;
+            const conflicts = db.filter(r => r.syncStatus === 'conflict').length;
+            if (isSyncingGAS) b.innerHTML = '🔄 同步中';
+            else b.innerHTML = `🔄 同步${pending ? ` · ${pending}` : ''}${conflicts ? ` ⚠${conflicts}` : ''}`;
+            const last = lastSuccessfulSyncAt ? new Date(lastSuccessfulSyncAt).toLocaleString() : '尚無成功同步紀錄';
+            b.title = `待同步 ${pending} 筆；衝突 ${conflicts} 筆；上次成功同步：${last}${syncLastMessage ? '；最近錯誤：' + syncLastMessage : ''}`;
+        }
+
+        function scheduleSyncRetry() {
+            if (syncRetryTimer) clearTimeout(syncRetryTimer);
+            const delay = Math.min(120000, 5000 * Math.pow(2, syncRetryAttempt));
+            syncRetryAttempt = Math.min(syncRetryAttempt + 1, 5);
+            syncRetryTimer = setTimeout(() => {
+                syncRetryTimer = null;
+                if (navigator.onLine) syncToGAS(false);
+            }, delay);
+        }
+
+        // 版本鎖定同步：只把伺服器明確確認的變更標記為完成，衝突和失敗資料都留在本機。
         async function syncToGAS(showUI = false) {
-            if(!navigator.onLine) {
-                if(showUI) toast('無網路連線');
+            if (!navigator.onLine) {
+                if (showUI) toast('無網路連線；本機資料已保留，恢復網路後會重試');
                 return;
             }
-            
-            let p = db.filter(r=>r.syncStatus==='pending'); 
-            let isForcePull = (db.length === 0);
-            
-            let b = $('btn-sync'), ot = b ? b.innerHTML : '🔄 同步'; 
-            if(showUI && b) { b.innerHTML='🔄 同步中'; b.style.pointerEvents='none'; }
-            
+            if (isSyncingGAS) { syncQueued = true; return; }
+            isSyncingGAS = true; updateSyncIndicator();
+            const b = $('btn-sync');
+            const sent = db.filter(r => r.syncStatus === 'pending').map(r => ({ ...r }));
+            const sentMutationById = new Map(sent.map(r => [String(r.id), String(r.mutationId || '')]));
             try {
-                const reqBody = { action: 'sync', data: (p.length > 0 || isForcePull) ? p : [] };
-                const res = await fetch(GAS_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body:JSON.stringify(reqBody) });
-                const r = await res.json();
-                
-                if(r.status === 'success' || r.status === 'ok') { 
-                    if (r.data && r.data.length > 0) {
-                        db = r.data;
-                    } else if (p.length > 0) {
-                        db.forEach(record => {
-                            if (record.syncStatus === 'pending') record.syncStatus = 'synced';
-                        });
-                        db = db.filter(record => record.type !== 'deleted');
+                const response = await fetch(GAS_URL, {
+                    method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'sync', data: sent })
+                });
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                const r = await response.json();
+                if (r.status !== 'success' && r.status !== 'ok') throw new Error(r.message || '雲端同步失敗');
+
+                const remote = Array.isArray(r.data) ? r.data : [];
+                const remoteById = new Map(remote.map(x => [String(x.id), x]));
+                const successIds = new Set((r.syncedIds || []).map(String));
+                const deletedIds = new Set((r.deletedIds || []).map(String));
+                const conflictById = new Map((r.conflicts || []).map(x => [String(x.id), x]));
+                const original = db;
+                const next = [];
+                const handled = new Set();
+
+                original.forEach(current => {
+                    const id = String(current.id);
+                    const conflict = conflictById.get(id);
+                    const sentMutation = sentMutationById.get(id);
+                    const sameMutationAsRequest = sentMutation !== undefined && String(current.mutationId || '') === sentMutation;
+
+                    if (conflict) {
+                        if (current.type === 'deleted' && conflict.serverRecord && conflict.serverRecord.type === 'deleted') {
+                            // 雲端已確定刪除；本機刪除請求已達成，收斂成一份墓碑，不留隱藏衝突。
+                            handled.add(id); return;
+                        }
+                        if (current.type === 'deleted' && conflict.serverRecord && conflict.serverRecord.type !== 'deleted') {
+                            // 本機刪除與雲端更新衝突時，以雲端有效資料顯示，並保留「曾要求刪除」提示，讓使用者重新確認。
+                            next.push({ ...conflict.serverRecord, syncStatus: 'conflict', conflictRemote: conflict.serverRecord, conflictLocalDelete: true });
+                            handled.add(id); return;
+                        }
+                        current.syncStatus = 'conflict';
+                        if (conflict.serverRecord) current.conflictRemote = conflict.serverRecord;
+                        next.push(current); handled.add(id); return;
                     }
-                    saveDB(); 
-                    renderHome(); 
-                    
-                    if(showUI) {
-                        if (isForcePull && r.data && r.data.length > 0) toast('✅ 已從雲端載入所有歷史明細');
-                        else if (p.length === 0) toast('✅ 已與雲端同步');
-                        else toast('✅ 資料已上傳並同步');
+
+                    if (successIds.has(id) && sameMutationAsRequest) {
+                        if (current.type === 'deleted' || deletedIds.has(id)) { handled.add(id); return; }
+                        const cloud = remoteById.get(id);
+                        if (cloud) { next.push({ ...cloud, syncStatus: 'synced' }); handled.add(id); return; }
+                        current.syncStatus = 'synced'; next.push(current); handled.add(id); return;
                     }
-                } else throw new Error();
-            } catch(e) { 
-                if(showUI) toast('⚠️ 同步失敗，請檢查網路'); 
-            } finally { 
-                if(showUI && b) { b.innerHTML=ot; b.style.pointerEvents='auto'; }
+
+                    // 請求送出後若使用者又修改了同一筆，保留較新的本機 mutation，不可被舊回應洗掉。
+                    if (current.syncStatus === 'pending') {
+                        next.push(current); handled.add(id); return;
+                    }
+
+                    if (current.syncStatus === 'conflict') {
+                        if (remoteById.has(id)) current.conflictRemote = remoteById.get(id);
+                        else if (deletedIds.has(id)) {
+                            current.conflictRemote = current.conflictRemote || { id: current.id, type: 'deleted' };
+                        }
+                        next.push(current); handled.add(id); return;
+                    }
+
+                    if (deletedIds.has(id)) { handled.add(id); return; }
+                    if (remoteById.has(id)) {
+                        next.push({ ...remoteById.get(id), syncStatus: 'synced' }); handled.add(id); return;
+                    }
+                    // 雲端缺少本機曾同步的 ID 且沒有 tombstone：不丟棄本機副本，改成待補回雲端。
+                    current.syncStatus = 'pending';
+                    if (!current.mutationId) current.mutationId = makeMutationId();
+                    next.push(current); handled.add(id);
+                });
+
+                remote.forEach(cloud => {
+                    const id = String(cloud.id);
+                    if (!handled.has(id) && !deletedIds.has(id)) next.push({ ...cloud, syncStatus: 'synced' });
+                });
+
+                db = next;
+                lastSuccessfulSyncAt = nowIso();
+                localStorage.setItem('cloud_exp_last_sync_at', lastSuccessfulSyncAt);
+                syncRetryAttempt = 0;
+                syncLastMessage = '';
+                if (syncRetryTimer) { clearTimeout(syncRetryTimer); syncRetryTimer = null; }
+                saveDB(); renderHome();
+
+                const conflictCount = (r.conflicts || []).length || db.filter(x => x.syncStatus === 'conflict').length;
+                const stillPending = db.filter(x => x.syncStatus === 'pending').length;
+                if (showUI) {
+                    if (conflictCount) toast(`⚠️ ${conflictCount} 筆版本衝突：本機資料已保留，未覆蓋雲端`);
+                    else if (stillPending) toast(`⚠️ 尚有 ${stillPending} 筆待同步，系統會保留並重試`);
+                    else toast('✅ 雲端同步完成');
+                }
+                if (stillPending) scheduleSyncRetry();
+            } catch (e) {
+                // 同步失敗絕不清除 pending／刪除意圖，也不宣告成功；保留在 localStorage 等重試。
+                syncLastMessage = e && e.message ? e.message : '連線失敗';
+                saveDB();
+                if (showUI) toast('⚠️ 同步失敗；資料已保留本機並安排重試');
+                scheduleSyncRetry();
+            } finally {
+                isSyncingGAS = false;
+                updateSyncIndicator();
+                if (syncQueued) { syncQueued = false; setTimeout(() => syncToGAS(false), 100); }
             }
         }
 
-        function saveDB() { localStorage.setItem('cloud_exp_db',JSON.stringify(db)); localStorage.setItem('cloud_exp_cats',JSON.stringify(cats)); localStorage.setItem('cloud_exp_sets',JSON.stringify(sets)); }
-        
+        function saveDB() {
+            localStorage.setItem('cloud_exp_db', JSON.stringify(db));
+            localStorage.setItem('cloud_exp_cats', JSON.stringify(cats));
+            localStorage.setItem('cloud_exp_sets', JSON.stringify(sets));
+            updateSyncIndicator();
+        }
         window.addEventListener('beforeinstallprompt', e => { 
             e.preventDefault(); 
             defPrompt = e; 
