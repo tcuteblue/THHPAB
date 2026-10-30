@@ -44,6 +44,14 @@
         .month-header { font-size: 26px; font-weight: 900; text-align: center; color: var(--text-color); display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 8px; }
         .month-header span { cursor: pointer; padding: 5px 15px; border-radius: 12px; transition: background 0.2s; }
         .month-header span:active { background: #f1f2f6; }
+
+        /* 日期選擇器：左右箭頭使用等寬欄位，年月文字固定在畫面正中央 */
+        .cal-picker-row { display: grid; grid-template-columns: minmax(0, 1fr) 170px minmax(0, 1fr); align-items: center; width: 100%; padding: 0 14px; }
+        .cal-picker-nav { justify-self: center; display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 12px; background: transparent; color: var(--text-color); font-size: 26px; font-weight: 900; cursor: pointer; }
+        .cal-picker-nav:active { background: #f1f2f6; }
+        .cal-picker-month-wrap { position: relative; justify-self: center; display: flex; align-items: center; justify-content: center; width: 170px; height: 48px; }
+        .cal-picker-month-label { display: block; width: 100%; text-align: center; white-space: nowrap; font-size: 24px; line-height: 1.2; font-weight: 900; color: var(--text-color); pointer-events: none; }
+        #m-cal-picker-input { position: absolute; inset: 0; z-index: 2; width: 100% !important; height: 100%; margin: 0; padding: 0 !important; border: 0 !important; border-radius: 0; opacity: 0; background: transparent !important; appearance: none; -webkit-appearance: none; cursor: pointer; }
         
         .week-calendar-wrap { overflow: hidden; touch-action: pan-y; margin-top: 5px; border-top: 1px solid #f1f2f6; padding-top: 10px; }
         .week-calendar { display: flex; width: 300%; transform: translateX(-33.333%); }
@@ -396,10 +404,13 @@
 
     <div id="m-cal" class="modal">
         <div class="m-header"><span>選擇日期</span><button class="m-close" onclick="closeModal()">✖</button></div>
-        <div class="month-header" style="margin-top:20px;">
-            <span onclick="chgCalPicker(-1)">◀</span>
-            <input type="month" id="m-cal-picker-input" onchange="chgCalPickerFromInput()" style="font-size:24px; text-align:center; padding:5px; border:none; outline:none; background:transparent; font-weight:900; color:var(--text-color); width: 170px;">
-            <span onclick="chgCalPicker(1)">▶</span>
+        <div class="cal-picker-row" style="margin-top:20px;">
+            <button type="button" class="cal-picker-nav" onclick="chgCalPicker(-1)" aria-label="前一個月">◀</button>
+            <div class="cal-picker-month-wrap">
+                <span id="cal-picker-month-label" class="cal-picker-month-label"></span>
+                <input type="month" id="m-cal-picker-input" onchange="chgCalPickerFromInput()" aria-label="選擇年月" title="選擇年月">
+            </div>
+            <button type="button" class="cal-picker-nav" onclick="chgCalPicker(1)" aria-label="下一個月">▶</button>
         </div>
         <div class="cal-grid" id="ui-cal-grid"></div>
     </div>
@@ -588,6 +599,60 @@
 
         let pCats = JSON.parse(localStorage.getItem('cloud_exp_cats'));
         let cats = pCats ? pCats : defCats;
+
+        // 記住最近一次成功記帳使用的分類；收入與支出分開保存，轉帳不使用分類。
+        const LAST_CATEGORY_STORAGE_KEY = 'cloud_exp_last_category_v1';
+        function loadLastUsedCategories() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(LAST_CATEGORY_STORAGE_KEY) || '{}');
+                return {
+                    expense: saved && saved.expense ? saved.expense : null,
+                    income: saved && saved.income ? saved.income : null
+                };
+            } catch (e) {
+                return { expense: null, income: null };
+            }
+        }
+        let lastUsedCategories = loadLastUsedCategories();
+
+        function isAvailableCategory(type, mainCat, subCat) {
+            return !!(cats[type] && mainCat && subCat &&
+                Array.isArray(cats[type][mainCat]) && cats[type][mainCat].includes(subCat));
+        }
+
+        function getLastCategoryForType(type) {
+            if (type !== 'expense' && type !== 'income') return { mainCat: '', subCat: '' };
+
+            const saved = lastUsedCategories[type];
+            if (saved && isAvailableCategory(type, saved.mainCat, saved.subCat)) {
+                return { mainCat: saved.mainCat, subCat: saved.subCat };
+            }
+
+            // 第一次啟用此功能時，從既有帳目找出最近建立且仍存在的分類，避免一開始就要求重新選分類。
+            const candidates = db.map((rec, index) => ({
+                rec,
+                index,
+                time: Date.parse(rec.createdAt || createdAtFromId(rec.id) || '')
+            })).filter(item => item.rec && item.rec.type === type && item.rec.type !== 'deleted' &&
+                isAvailableCategory(type, item.rec.mainCat, item.rec.subCat));
+
+            if (!candidates.length) return { mainCat: '', subCat: '' };
+            const withTime = candidates.filter(item => Number.isFinite(item.time));
+            const latest = withTime.length
+                ? withTime.reduce((best, item) => item.time > best.time ? item : best)
+                : candidates.reduce((best, item) => item.index > best.index ? item : best);
+            return { mainCat: latest.rec.mainCat, subCat: latest.rec.subCat };
+        }
+
+        function rememberLastCategory(type, mainCat, subCat) {
+            if (!isAvailableCategory(type, mainCat, subCat)) return;
+            lastUsedCategories[type] = { mainCat, subCat };
+            try {
+                localStorage.setItem(LAST_CATEGORY_STORAGE_KEY, JSON.stringify(lastUsedCategories));
+            } catch (e) {
+                console.warn('無法保存上次使用的分類：', e);
+            }
+        }
         
         let needsUpdate = false;
         if(['現金', '銀行', '信用卡'].some(x => sets.a.includes(x))) {
@@ -1135,7 +1200,10 @@
             $('r-date').value = getDefaultDateStr();
             $('r-note').value='';
             
-            formMainCat = ''; formSubCat = ''; updateCatSelectorUI(); // 清空分類狀態
+            const lastExpenseCategory = getLastCategoryForType(rTyp);
+            formMainCat = lastExpenseCategory.mainCat;
+            formSubCat = lastExpenseCategory.subCat;
+            updateCatSelectorUI(); // 自動帶入上次成功記帳使用的支出分類
             
             const opts = sets.a.map(a=>`<option value="${a}">${a}</option>`).join('');
             $('r-acc').innerHTML = opts; $('r-acc-out').innerHTML = opts; $('r-acc-in').innerHTML = opts;
@@ -1184,9 +1252,14 @@
         }
 
         $('r-tabs').addEventListener('click', e => { 
-            if(e.target.dataset.t) { 
-                rTyp = e.target.dataset.t; 
-                formMainCat = ''; formSubCat = ''; updateCatSelectorUI(); // 切換收入/支出時重置分類
+            if(e.target.dataset.t) {
+                const selectedType = e.target.dataset.t;
+                if (selectedType === rTyp) return; // 點擊目前已選中的類型，不重設正在編輯的分類
+                rTyp = selectedType;
+                const rememberedCategory = getLastCategoryForType(rTyp);
+                formMainCat = rememberedCategory.mainCat;
+                formSubCat = rememberedCategory.subCat;
+                updateCatSelectorUI(); // 依收入／支出類型分別還原上次成功記帳的分類
                 updRT(); 
             } 
         });
@@ -1217,7 +1290,7 @@
             if (formMainCat && formSubCat) {
                 let emoji = getEmoji(formMainCat);
                 let cleanMain = formMainCat.replace(emoji, '').trim();
-                el.innerHTML = `<span><span style="font-size:24px; margin-right:8px;">${emoji}</span>${cleanMain} ➔ ${formSubCat}</span><span style="color:var(--primary); font-size:18px;">✎ 更改</span>`;
+                el.innerHTML = `<span><span style="font-size:24px; margin-right:8px;">${emoji}</span>${cleanMain} ➔ ${formSubCat}</span>`;
                 el.classList.add('selected');
             } else {
                 el.innerHTML = `<span>請選擇分類...</span><span>▼</span>`;
@@ -1495,6 +1568,7 @@
                 else { rec.mainCat = formMainCat; rec.subCat = formSubCat; rec.account = accOut; }
                 db.push(rec); toast('✅ 已儲存（待雲端確認）');
             }
+            if (!isTransfer) rememberLastCategory(rTyp, formMainCat, formSubCat);
             saveDB(); closeKeypad(); closeModal(); renderHome();
             if ($('m-list').style.display === 'block') renderListModal();
             syncToGAS(false);
@@ -1574,6 +1648,7 @@
         function renderCalPicker() {
             let y = calPickDate.getFullYear(), m = calPickDate.getMonth();
             $('m-cal-picker-input').value = `${y}-${String(m+1).padStart(2,'0')}`;
+            $('cal-picker-month-label').innerText = `${y}年${m+1}月`;
             
             let firstDay = new Date(y, m, 1).getDay(), daysInM = new Date(y, m+1, 0).getDate();
             let html = '<div class="cal-head">日</div><div class="cal-head">一</div><div class="cal-head">二</div><div class="cal-head">三</div><div class="cal-head">四</div><div class="cal-head">五</div><div class="cal-head">六</div>';
