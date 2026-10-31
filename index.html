@@ -149,10 +149,52 @@
         .btn-delete-modal { background: #FF4757; color: #fff; padding: 20px; border-radius: 22px; font-size: 20px; font-weight: 900; border: none; box-shadow: 0 6px 0 #c0392b, 0 8px 20px rgba(255,71,87,.3); cursor: pointer; flex: 1; text-align: center; transition: all 0.1s; }
         .btn-delete-modal:active { transform: translateY(6px); box-shadow: 0 0 0 #c0392b; }
 
+        /* 項目說明歷史提示：一般情況在輸入框下方；手機鍵盤開啟時移至鍵盤上緣 */
         .autocomplete-list { display: none; position: absolute; top: calc(100% + 5px); left: 20px; right: 20px; background: #fff; border: 2px solid var(--primary); border-radius: 14px; z-index: 100; max-height: 200px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,.15); }
         .ac-item { padding: 14px 18px; border-bottom: 1px solid #f1f2f6; font-size: 18px; font-weight: 900; color: #2F3640; cursor: pointer; }
         .ac-item:active { background: #eef7fc; }
         .ac-item:last-child { border-bottom: none; }
+        /* 手機輸入法鍵盤上方的歷史待選詞列：橫向滑動，不再往下展開遮住儲存按鈕 */
+        .autocomplete-list.keyboard-suggestions {
+            display: flex !important;
+            position: fixed;
+            top: auto !important;
+            left: 8px;
+            right: 8px;
+            width: auto;
+            max-height: 62px;
+            padding: 5px;
+            gap: 5px;
+            align-items: stretch;
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: nowrap;
+            z-index: 1700;
+            border-radius: 13px;
+            box-shadow: 0 -3px 18px rgba(0,0,0,.16);
+            overscroll-behavior-x: contain;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-x;
+            scrollbar-width: none;
+        }
+        .autocomplete-list.keyboard-suggestions::-webkit-scrollbar { display: none; }
+        .autocomplete-list.keyboard-suggestions .ac-item {
+            display: inline-flex;
+            flex: 0 0 auto;
+            align-items: center;
+            justify-content: center;
+            max-width: 72vw;
+            min-height: 46px;
+            padding: 8px 14px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            border: 0;
+            border-right: 1px solid #e8edf2;
+            border-radius: 9px;
+            background: #fff;
+            font-size: 16px;
+        }
 
         #v-keypad { position: fixed; bottom: 0; left: 0; width: 100%; background: #DFE4EA; padding: 15px 15px 40px 15px; display: none; grid-template-columns: repeat(4, 1fr); gap: 10px; z-index: 1500; box-shadow: 0 -10px 40px rgba(0,0,0,.2); border-radius: 30px 30px 0 0; }
         .key { background: #fff; border: none; padding: 20px 0; font-size: 26px; font-weight: 900; color: #2F3640; border-radius: 16px; box-shadow: 0 4px 0 #CED6E0; cursor: pointer; transition: all 0.1s; display: flex; justify-content: center; align-items: center; }
@@ -691,7 +733,7 @@
             if(e.state) { 
                 curS = e.state.s; 
                 if(e.state.t === 'main') closeAll(); 
-                else if(e.state.t === 'modal') { $('v-keypad').style.display='none'; $('r-amt-box').classList.remove('active'); $('note-sugg').style.display='none'; } 
+                else if(e.state.t === 'modal') { $('v-keypad').style.display='none'; $('r-amt-box').classList.remove('active'); hideNoteSuggestions(); } 
             } 
             if (pendingRecordAction) {
                 const nextAction = pendingRecordAction;
@@ -713,14 +755,14 @@
             } 
         }
         
-        function closeAll() { document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); if ($('m-record-actions')) $('m-record-actions').style.display='none'; recordActionId = null; $('v-keypad').style.display='none'; $('note-sugg').style.display='none'; }
+        function closeAll() { document.querySelectorAll('.modal').forEach(m=>m.style.display='none'); if ($('m-record-actions')) $('m-record-actions').style.display='none'; recordActionId = null; $('v-keypad').style.display='none'; hideNoteSuggestions(); }
         function closeModal() {
             const visibleModals = [...document.querySelectorAll('.modal')].filter(m => getComputedStyle(m).display !== 'none');
             if (visibleModals.length) {
                 visibleModals.sort((a, b) => (parseInt(a.style.zIndex) ? parseInt(a.style.zIndex) : 1000) - (parseInt(b.style.zIndex) ? parseInt(b.style.zIndex) : 1000));
                 visibleModals[visibleModals.length - 1].style.display = 'none';
             }
-            $('v-keypad').style.display = 'none'; $('r-amt-box').classList.remove('active'); $('note-sugg').style.display = 'none';
+            $('v-keypad').style.display = 'none'; $('r-amt-box').classList.remove('active'); hideNoteSuggestions();
             try { if (history.state ? history.state.t !== 'main' : false) history.back(); } catch(e) {}
         }
         function closeKeypad() { 
@@ -1186,7 +1228,7 @@
 
             $('m-record-title').innerText = '複製新增';
             $('btn-modal-del').style.display = 'none';
-            $('note-sugg').style.display = 'none';
+            hideNoteSuggestions();
             updBal();
             toast('已帶入原帳目，修改後按儲存紀錄');
         }
@@ -1207,7 +1249,7 @@
             
             const opts = sets.a.map(a=>`<option value="${a}">${a}</option>`).join('');
             $('r-acc').innerHTML = opts; $('r-acc-out').innerHTML = opts; $('r-acc-in').innerHTML = opts;
-            $('note-sugg').style.display = 'none';
+            hideNoteSuggestions();
             updRT(); updBal(); $('m-record').style.display='block'; pushM('m-record');
         }
 
@@ -1246,7 +1288,7 @@
             } else {
                 $('r-acc').value = rec.account;
             }
-            updBal(); $('note-sugg').style.display = 'none';
+            updBal(); hideNoteSuggestions();
             $('m-record-title').innerText = rec.syncStatus === 'conflict' ? (rec.conflictLocalDelete ? '⚠️ 衝突（本機原要刪除）' : '⚠️ 衝突帳目（本機版本）') : '編輯紀錄';
             $('btn-modal-del').style.display = 'block'; $('m-record').style.display = 'block'; pushM('m-record');
         }
@@ -1382,16 +1424,83 @@
             }
         }
 
+        // 依手機虛擬鍵盤實際佔用的高度，把歷史待選詞列固定在鍵盤正上方。
+        // 桌面版或鍵盤尚未出現時，維持輸入欄下方的原有提示位置。
+        function updateNoteSuggestionPosition() {
+            const box = $('note-sugg');
+            const input = $('r-note');
+            if (!box || !input || box.style.display === 'none' || !box.children.length) return;
+
+            const isNarrowScreen = window.matchMedia('(max-width: 900px)').matches;
+            const vv = window.visualViewport;
+            const keyboardGap = vv ? Math.max(0, window.innerHeight - vv.height) : 0;
+            const keyboardVisible = isNarrowScreen && document.activeElement === input && keyboardGap > 120;
+
+            if (keyboardVisible) {
+                // visualViewport.height 會在手機軟體鍵盤出現時縮小；加上 offsetTop 可兼容頁面被推動的情況。
+                const viewportBottom = vv.height + (vv.offsetTop || 0);
+                const bottomGap = Math.max(0, window.innerHeight - viewportBottom);
+                box.classList.add('keyboard-suggestions');
+                box.style.bottom = (bottomGap + 7) + 'px';
+            } else {
+                box.classList.remove('keyboard-suggestions');
+                box.style.removeProperty('bottom');
+            }
+        }
+
+        function hideNoteSuggestions() {
+            const box = $('note-sugg');
+            if (!box) return;
+            box.style.display = 'none';
+            box.classList.remove('keyboard-suggestions');
+            box.style.removeProperty('bottom');
+        }
+
         function handleNoteInput(val) {
-            let box = $('note-sugg'); let q = val.trim();
-            if(!q) { box.style.display = 'none'; return; }
-            let historyNotes = [...new Set(db.filter(r=>r.type!=='deleted').map(r => r.note).filter(n => n))];
-            let matched = historyNotes.filter(n => n.includes(q) ? n !== q : false);
-            if(matched.length > 0) { box.innerHTML = matched.map(m => `<div class="ac-item" onclick="setNote('${m}')">${m}</div>`).join(''); box.style.display = 'block'; } 
-            else { box.style.display = 'none'; }
+            const box = $('note-sugg');
+            const q = String(val || '').trim();
+            if (!q) { hideNoteSuggestions(); return; }
+
+            const historyNotes = [...new Set(db
+                .filter(r => r && r.type !== 'deleted')
+                .map(r => r.note == null ? '' : String(r.note).trim())
+                .filter(Boolean))];
+            const matched = historyNotes.filter(note => note.includes(q) && note !== q);
+
+            box.innerHTML = '';
+            if (!matched.length) { hideNoteSuggestions(); return; }
+
+            matched.forEach(note => {
+                const item = document.createElement('div');
+                item.className = 'ac-item';
+                item.textContent = note; // 使用文字節點，避免歷史備註中的符號破壞 HTML 或 onclick
+                item.addEventListener('pointerdown', event => event.preventDefault());
+                item.addEventListener('click', () => setNote(note));
+                box.appendChild(item);
+            });
+            box.style.display = 'block';
+            updateNoteSuggestionPosition();
         }
         
-        function setNote(val) { $('r-note').value = val; $('note-sugg').style.display = 'none'; }
+        function setNote(val) {
+            const input = $('r-note');
+            input.value = val;
+            hideNoteSuggestions();
+            // 保持輸入焦點，方便選取歷史文字後立即繼續編輯。
+            try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); }
+        }
+
+        // 手機鍵盤開啟、收合或系統推動畫面時，重新計算待選詞列位置。
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', updateNoteSuggestionPosition);
+            window.visualViewport.addEventListener('scroll', updateNoteSuggestionPosition);
+        }
+        window.addEventListener('resize', updateNoteSuggestionPosition);
+        window.addEventListener('orientationchange', () => setTimeout(updateNoteSuggestionPosition, 80));
+        $('r-note').addEventListener('focus', () => setTimeout(updateNoteSuggestionPosition, 80));
+        $('r-note').addEventListener('blur', () => setTimeout(() => {
+            if (document.activeElement !== $('r-note')) hideNoteSuggestions();
+        }, 120));
 
         function openKeypad() { 
             $('v-keypad').style.display='grid';
