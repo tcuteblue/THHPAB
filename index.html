@@ -149,52 +149,13 @@
         .btn-delete-modal { background: #FF4757; color: #fff; padding: 20px; border-radius: 22px; font-size: 20px; font-weight: 900; border: none; box-shadow: 0 6px 0 #c0392b, 0 8px 20px rgba(255,71,87,.3); cursor: pointer; flex: 1; text-align: center; transition: all 0.1s; }
         .btn-delete-modal:active { transform: translateY(6px); box-shadow: 0 0 0 #c0392b; }
 
-        /* 項目說明歷史提示：一般情況在輸入框下方；手機鍵盤開啟時移至鍵盤上緣 */
-        .autocomplete-list { display: none; position: absolute; top: calc(100% + 5px); left: 20px; right: 20px; background: #fff; border: 2px solid var(--primary); border-radius: 14px; z-index: 100; max-height: 200px; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,.15); }
-        .ac-item { padding: 14px 18px; border-bottom: 1px solid #f1f2f6; font-size: 18px; font-weight: 900; color: #2F3640; cursor: pointer; }
-        .ac-item:active { background: #eef7fc; }
-        .ac-item:last-child { border-bottom: none; }
-        /* 手機輸入法鍵盤上方的歷史待選詞列：橫向滑動，不再往下展開遮住儲存按鈕 */
-        .autocomplete-list.keyboard-suggestions {
-            display: flex !important;
-            position: fixed;
-            top: auto !important;
-            left: 8px;
-            right: 8px;
-            width: auto;
-            max-height: 62px;
-            padding: 5px;
-            gap: 5px;
-            align-items: stretch;
-            overflow-x: auto;
-            overflow-y: hidden;
-            white-space: nowrap;
-            z-index: 1700;
-            border-radius: 13px;
-            box-shadow: 0 -3px 18px rgba(0,0,0,.16);
-            overscroll-behavior-x: contain;
-            -webkit-overflow-scrolling: touch;
-            touch-action: pan-x;
-            scrollbar-width: none;
-        }
-        .autocomplete-list.keyboard-suggestions::-webkit-scrollbar { display: none; }
-        .autocomplete-list.keyboard-suggestions .ac-item {
-            display: inline-flex;
-            flex: 0 0 auto;
-            align-items: center;
-            justify-content: center;
-            max-width: 72vw;
-            min-height: 46px;
-            padding: 8px 14px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-            border: 0;
-            border-right: 1px solid #e8edf2;
-            border-radius: 9px;
-            background: #fff;
-            font-size: 16px;
-        }
+        /* 項目說明歷史候選詞改用原生 datalist，由手機系統顯示在輸入法候選區；不建立網頁下拉面板。 */
+        #r-note { width: 100%; }
+
+        /* 電子票證扣款勾選列 */
+        .transit-deduction-option { margin: 0 20px 20px; padding: 14px 16px; border: 1.5px solid #b9dff3; border-radius: 14px; background: #f0f9ff; }
+        .transit-deduction-option label { display: flex; align-items: center; gap: 10px; margin: 0; font-size: 16px; font-weight: 900; color: #075985; cursor: pointer; }
+        .transit-deduction-option input { width: 22px; height: 22px; accent-color: #0284c7; flex: 0 0 auto; }
 
         #v-keypad { position: fixed; bottom: 0; left: 0; width: 100%; background: #DFE4EA; padding: 15px 15px 40px 15px; display: none; grid-template-columns: repeat(4, 1fr); gap: 10px; z-index: 1500; box-shadow: 0 -10px 40px rgba(0,0,0,.2); border-radius: 30px 30px 0 0; }
         .key { background: #fff; border: none; padding: 20px 0; font-size: 26px; font-weight: 900; color: #2F3640; border-radius: 16px; box-shadow: 0 4px 0 #CED6E0; cursor: pointer; transition: all 0.1s; display: flex; justify-content: center; align-items: center; }
@@ -414,10 +375,14 @@
             </div>
         </div>
 
-        <div class="form-group" style="position:relative;">
+        <div class="form-group">
             <label>項目說明</label>
-            <input type="text" id="r-note" placeholder="輸入項目說明..." oninput="handleNoteInput(this.value)">
-            <div id="note-sugg" class="autocomplete-list"></div>
+            <input type="text" id="r-note" list="r-note-history" placeholder="輸入項目說明...">
+            <datalist id="r-note-history"></datalist>
+        </div>
+
+        <div id="r-transit-deduction-option" class="transit-deduction-option" style="display:none;">
+            <label><input type="checkbox" id="r-send-to-transit"> 將這筆支出帶入電子票證管家扣款</label>
         </div>
 
         <div id="r-area-tra" class="form-row form-group" style="display:none;">
@@ -574,6 +539,103 @@
         
         // ⚠️ 請替換成您的 Google Apps Script 網址
         const GAS_URL = "https://script.google.com/macros/s/AKfycbz9Tohi--mDE6Pk5u6P20xBiHsQ-yMR1rDmfG5Q7LBmxaOeLxedtHp0iMwh4AuCyt4Ncw/exec";
+
+        // 電子票證扣款交接以個人雲帳本 GAS 作為中繼，
+        // 可支援 iOS 上兩個獨立安裝 PWA 各自隔離 localStorage 的情況。
+        const TRANSIT_REQUEST_PREFIX = 'tcuteblue:ledger-transit:request:';
+        const TRANSIT_LAST_REQUEST_KEY = 'tcuteblue:ledger-transit:last-request-id';
+        const TRANSIT_APP_URL = 'https://tcuteblue.github.io/THHJCB/';
+
+        function makeExternalRequestId() {
+            try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (e) {}
+            return 'ledger_' + Date.now() + '_' + Math.random().toString(36).slice(2, 12);
+        }
+
+        function saveTransitDeductionRequest(record) {
+            const requestId = makeExternalRequestId();
+            const request = {
+                requestId,
+                source: 'personal-cloud-ledger',
+                sourceRecordId: String(record.id),
+                amount: Number(record.amount),
+                memo: String(record.note || ''),
+                date: String(record.date || ''),
+                timeZone: sets.tz === 'tw' ? 'tw' : 'local',
+                createdAt: nowIso(),
+                status: 'pending'
+            };
+            if (!Number.isFinite(request.amount) || request.amount <= 0 || !/^\d{4}-\d{2}-\d{2}$/.test(request.date)) {
+                throw new Error('帳目金額或日期格式不正確，無法交接電子票證扣款');
+            }
+            // 本機只留一份方便回到帳本時查詢的快取；真正交接資料由 GAS 保存。
+            localStorage.setItem(TRANSIT_REQUEST_PREFIX + requestId, JSON.stringify(request));
+            localStorage.setItem(TRANSIT_LAST_REQUEST_KEY, requestId);
+            return request;
+        }
+
+        async function callLedgerGas(payload) {
+            const response = await fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' }
+            });
+            if (!response.ok) throw new Error('雲端交接服務連線失敗（HTTP ' + response.status + '）');
+            const result = await response.json();
+            if (!result || result.status !== 'success') throw new Error((result && result.message) || '雲端交接服務回應異常');
+            return result;
+        }
+
+        function buildTransitAppUrl(requestId) {
+            const url = new URL(TRANSIT_APP_URL);
+            url.searchParams.set('ledgerDeduction', '1');
+            url.searchParams.set('requestId', requestId);
+            return url.href;
+        }
+
+        function openTransitAppForRequest(requestId, preopenedWindow) {
+            const targetUrl = buildTransitAppUrl(requestId);
+            if (preopenedWindow && !preopenedWindow.closed) {
+                preopenedWindow.location.replace(targetUrl);
+            } else {
+                // 若瀏覽器封鎖新分頁，改在目前頁面開啟；帳目已先保存，不會遺失。
+                window.location.assign(targetUrl);
+            }
+        }
+
+        async function notifyTransitRequestResult(requestId) {
+            if (!requestId) return;
+            const noticeKey = 'tcuteblue:ledger-transit:notice:' + requestId;
+            if (localStorage.getItem(noticeKey)) return;
+            try {
+                const result = await callLedgerGas({ action: 'get_transit_handoff', requestId });
+                const request = result.data;
+                if (!request || !['completed', 'cancelled'].includes(request.status)) return;
+                if (request.status === 'completed') {
+                    const cardText = request.cardName ? `（${request.cardName}）` : '';
+                    toast(`電子票證扣款完成${cardText}，金額 $${Number(request.completedAmount || request.amount).toLocaleString()}`);
+                } else {
+                    toast('電子票證扣款已取消；帳本紀錄仍保留');
+                }
+                localStorage.setItem(noticeKey, nowIso());
+            } catch (e) {
+                // 網路暫時中斷時，返回帳本或恢復連線後會再查詢，不影響已儲存的帳目。
+            }
+        }
+
+        window.addEventListener('storage', event => {
+            if (document.visibilityState === 'hidden') return;
+            if (event.key && event.key.startsWith(TRANSIT_REQUEST_PREFIX)) {
+                const requestId = event.key.slice(TRANSIT_REQUEST_PREFIX.length);
+                notifyTransitRequestResult(requestId);
+            }
+        });
+        function checkLastTransitRequestResult() {
+            if (document.visibilityState === 'hidden') return;
+            const requestId = localStorage.getItem(TRANSIT_LAST_REQUEST_KEY);
+            if (requestId) notifyTransitRequestResult(requestId);
+        }
+        window.addEventListener('pageshow', checkLastTransitRequestResult);
+        document.addEventListener('visibilitychange', checkLastTransitRequestResult);
         
         const defCats = {
             expense: {
@@ -820,6 +882,7 @@
 
         window.onload = () => { 
             setupPWA(); autoPocket(); 
+            updateNoteDatalist();
             cDate = sets.tz === 'tw' ? getTwDateObj() : new Date();
             currentInlineDate = getDefaultDateStr();
             renderHome(); initSwipeCalendar();
@@ -1227,6 +1290,7 @@
             }
 
             $('m-record-title').innerText = '複製新增';
+            $('r-send-to-transit').checked = false;
             $('btn-modal-del').style.display = 'none';
             hideNoteSuggestions();
             updBal();
@@ -1241,6 +1305,7 @@
             updateAmtUI();
             $('r-date').value = getDefaultDateStr();
             $('r-note').value='';
+            $('r-send-to-transit').checked = false;
             
             const lastExpenseCategory = getLastCategoryForType(rTyp);
             formMainCat = lastExpenseCategory.mainCat;
@@ -1277,6 +1342,7 @@
             updateAmtUI();
             $('r-date').value = rec.date;
             $('r-note').value = rec.note ? rec.note : '';
+            $('r-send-to-transit').checked = false;
 
             const opts = sets.a.map(a=>`<option value="${a}">${a}</option>`).join('');
             $('r-acc').innerHTML = opts; $('r-acc-out').innerHTML = opts; $('r-acc-in').innerHTML = opts;
@@ -1316,6 +1382,9 @@
                 $('r-area-cat').style.display='block'; $('r-area-tra').style.display='none';$('r-acc-container').style.display='block';
                 $('r-amount-field').style.flex = '3'; // 一般記帳：金額 3/5、帳戶 2/5
             }
+            const showTransitOption = rTyp === 'expense' && !editingRecordId;
+            $('r-transit-deduction-option').style.display = showTransitOption ? 'block' : 'none';
+            if (!showTransitOption) $('r-send-to-transit').checked = false;
         }
 
         function updBal() {
@@ -1424,83 +1493,33 @@
             }
         }
 
-        // 依手機虛擬鍵盤實際佔用的高度，把歷史待選詞列固定在鍵盤正上方。
-        // 桌面版或鍵盤尚未出現時，維持輸入欄下方的原有提示位置。
-        function updateNoteSuggestionPosition() {
-            const box = $('note-sugg');
-            const input = $('r-note');
-            if (!box || !input || box.style.display === 'none' || !box.children.length) return;
-
-            const isNarrowScreen = window.matchMedia('(max-width: 900px)').matches;
-            const vv = window.visualViewport;
-            const keyboardGap = vv ? Math.max(0, window.innerHeight - vv.height) : 0;
-            const keyboardVisible = isNarrowScreen && document.activeElement === input && keyboardGap > 120;
-
-            if (keyboardVisible) {
-                // visualViewport.height 會在手機軟體鍵盤出現時縮小；加上 offsetTop 可兼容頁面被推動的情況。
-                const viewportBottom = vv.height + (vv.offsetTop || 0);
-                const bottomGap = Math.max(0, window.innerHeight - viewportBottom);
-                box.classList.add('keyboard-suggestions');
-                box.style.bottom = (bottomGap + 7) + 'px';
-            } else {
-                box.classList.remove('keyboard-suggestions');
-                box.style.removeProperty('bottom');
-            }
-        }
-
-        function hideNoteSuggestions() {
-            const box = $('note-sugg');
-            if (!box) return;
-            box.style.display = 'none';
-            box.classList.remove('keyboard-suggestions');
-            box.style.removeProperty('bottom');
-        }
-
-        function handleNoteInput(val) {
-            const box = $('note-sugg');
-            const q = String(val || '').trim();
-            if (!q) { hideNoteSuggestions(); return; }
-
-            const historyNotes = [...new Set(db
-                .filter(r => r && r.type !== 'deleted')
-                .map(r => r.note == null ? '' : String(r.note).trim())
-                .filter(Boolean))];
-            const matched = historyNotes.filter(note => note.includes(q) && note !== q);
-
-            box.innerHTML = '';
-            if (!matched.length) { hideNoteSuggestions(); return; }
-
-            matched.forEach(note => {
-                const item = document.createElement('div');
-                item.className = 'ac-item';
-                item.textContent = note; // 使用文字節點，避免歷史備註中的符號破壞 HTML 或 onclick
-                item.addEventListener('pointerdown', event => event.preventDefault());
-                item.addEventListener('click', () => setNote(note));
-                box.appendChild(item);
+        // 使用原生 datalist 顯示歷史項目說明；不建立任何網頁下拉視窗。
+        // 歷史備註本身就是使用者輸入的原文，因此不額外刪除日期、金額或特殊符號。
+        function updateNoteDatalist() {
+            const datalist = $('r-note-history');
+            if (!datalist) return;
+            const counts = new Map();
+            db.filter(r => r && r.type !== 'deleted').forEach(r => {
+                const note = String(r.note == null ? '' : r.note).trim();
+                if (note) counts.set(note, (counts.get(note) || 0) + 1);
             });
-            box.style.display = 'block';
-            updateNoteSuggestionPosition();
-        }
-        
-        function setNote(val) {
-            const input = $('r-note');
-            input.value = val;
-            hideNoteSuggestions();
-            // 保持輸入焦點，方便選取歷史文字後立即繼續編輯。
-            try { input.focus({ preventScroll: true }); } catch (e) { input.focus(); }
+            const suggestions = [...counts.entries()]
+                .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'zh-TW'))
+                .slice(0, 100)
+                .map(([note]) => note);
+            datalist.replaceChildren();
+            suggestions.forEach(note => {
+                const option = document.createElement('option');
+                option.value = note;
+                datalist.appendChild(option);
+            });
         }
 
-        // 手機鍵盤開啟、收合或系統推動畫面時，重新計算待選詞列位置。
-        if (window.visualViewport) {
-            window.visualViewport.addEventListener('resize', updateNoteSuggestionPosition);
-            window.visualViewport.addEventListener('scroll', updateNoteSuggestionPosition);
+        // 原生 datalist 的候選面板由瀏覽器／手機輸入法管理；關閉記帳畫面時只需移除輸入焦點。
+        function hideNoteSuggestions() {
+            const input = $('r-note');
+            if (input && document.activeElement === input) input.blur();
         }
-        window.addEventListener('resize', updateNoteSuggestionPosition);
-        window.addEventListener('orientationchange', () => setTimeout(updateNoteSuggestionPosition, 80));
-        $('r-note').addEventListener('focus', () => setTimeout(updateNoteSuggestionPosition, 80));
-        $('r-note').addEventListener('blur', () => setTimeout(() => {
-            if (document.activeElement !== $('r-note')) hideNoteSuggestions();
-        }, 120));
 
         function openKeypad() { 
             $('v-keypad').style.display='grid';
@@ -1637,7 +1656,7 @@
             }
         }
 
-        function saveRec() {
+        async function saveRec() {
             if (isCalculating) { if (!doCalculate()) return; }
             let a = Number(kpStr);
             if (isNaN(a) || a < 0) return toast('請輸入有效金額');
@@ -1649,6 +1668,10 @@
             if (isTransfer && accOut === accIn) return toast('轉出與轉入不可相同');
 
             const timestamp = nowIso();
+            const shouldSendToTransit = !editingRecordId && rTyp === 'expense' && $('r-send-to-transit').checked;
+            // 在使用者點擊儲存的同步流程先開空白分頁，避免等待 GAS 回應後才 window.open 被瀏覽器封鎖。
+            const transitWindow = shouldSendToTransit ? window.open('about:blank', '_blank') : null;
+            let newlyCreatedRecord = null;
             if (editingRecordId) {
                 let idx = db.findIndex(r => r.id === editingRecordId);
                 if (idx > -1) {
@@ -1675,12 +1698,26 @@
                     createdAt: timestamp, updatedAt: timestamp, serverVersion: 0, mutationId: makeMutationId(), syncStatus: 'pending' };
                 if (isTransfer) { rec.account = accOut; rec.toAccount = accIn; }
                 else { rec.mainCat = formMainCat; rec.subCat = formSubCat; rec.account = accOut; }
-                db.push(rec); toast('✅ 已儲存（待雲端確認）');
+                db.push(rec); newlyCreatedRecord = rec; toast('✅ 已儲存（待雲端確認）');
             }
             if (!isTransfer) rememberLastCategory(rTyp, formMainCat, formSubCat);
             saveDB(); closeKeypad(); closeModal(); renderHome();
             if ($('m-list').style.display === 'block') renderListModal();
             syncToGAS(false);
+
+            // 先完成帳本本機保存，再建立跨程式請求；只有新增支出且有勾選時才會執行。
+            if (shouldSendToTransit && newlyCreatedRecord) {
+                let request = null;
+                try {
+                    request = saveTransitDeductionRequest(newlyCreatedRecord);
+                    toast('帳目已儲存，正在準備電子票證扣款');
+                    await callLedgerGas({ action: 'create_transit_handoff', request });
+                    openTransitAppForRequest(request.requestId, transitWindow);
+                } catch (err) {
+                    if (transitWindow && !transitWindow.closed) transitWindow.close();
+                    toast('帳目已儲存，但電子票證交接未建立：' + (err.message || '請檢查網路後重試'));
+                }
+            }
         }
 
         function delRecFromModal() {
@@ -2325,6 +2362,7 @@
             localStorage.setItem('cloud_exp_db', JSON.stringify(db));
             localStorage.setItem('cloud_exp_cats', JSON.stringify(cats));
             localStorage.setItem('cloud_exp_sets', JSON.stringify(sets));
+            updateNoteDatalist();
             updateSyncIndicator();
         }
         window.addEventListener('beforeinstallprompt', e => { 
